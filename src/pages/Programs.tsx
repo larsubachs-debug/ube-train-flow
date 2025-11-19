@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { programs } from "@/data/programs";
+import { programs as staticPrograms } from "@/data/programs";
+import { usePrograms } from "@/hooks/usePrograms";
 import { Link } from "react-router-dom";
 import { Dumbbell, Zap, Activity, ChevronRight } from "lucide-react";
 
@@ -11,6 +12,11 @@ const iconMap = {
 };
 
 const Programs = () => {
+  const { data: programs = [], isLoading } = usePrograms();
+  
+  // Fallback to static programs if database is empty
+  const displayPrograms = programs.length > 0 ? programs : staticPrograms;
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-6">
@@ -19,8 +25,11 @@ const Programs = () => {
           Choose your path to peak performance
         </p>
 
-        <div className="space-y-4">
-          {programs.map((program) => {
+        {isLoading ? (
+          <div className="text-center py-8 text-muted-foreground">Loading programs...</div>
+        ) : (
+          <div className="space-y-4">
+            {displayPrograms.map((program) => {
             const Icon = iconMap[program.icon as keyof typeof iconMap];
             
             return (
@@ -54,8 +63,10 @@ const Programs = () => {
             );
           })}
         </div>
+        )}
 
         {/* Current Program Details */}
+        {displayPrograms.length > 0 && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">Current Program</h2>
           <Card className="p-6 bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20">
@@ -64,8 +75,8 @@ const Programs = () => {
                 <Dumbbell className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h3 className="text-xl font-bold">{programs[0].name}</h3>
-                <p className="text-sm text-muted-foreground">Week 1 of 6</p>
+                <h3 className="text-xl font-bold">{displayPrograms[0].name}</h3>
+                <p className="text-sm text-muted-foreground">Week 1 of {displayPrograms[0].weeks.length}</p>
               </div>
             </div>
 
@@ -79,13 +90,14 @@ const Programs = () => {
               </div>
             </div>
 
-            <Link to={`/program/${programs[0].id}`}>
+            <Link to={`/program/${displayPrograms[0].id}`}>
               <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
                 Continue Program
               </Button>
             </Link>
           </Card>
         </div>
+        )}
       </div>
     </div>
   );

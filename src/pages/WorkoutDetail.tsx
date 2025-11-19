@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { programs } from "@/data/programs";
+import { programs as staticPrograms } from "@/data/programs";
+import { usePrograms } from "@/hooks/usePrograms";
 import { ArrowLeft, Play, Calendar, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
@@ -13,12 +14,16 @@ const WorkoutDetail = () => {
   const { workoutId } = useParams();
   const [notes, setNotes] = useState("");
   const [completed, setCompleted] = useState(false);
+  const { data: programs = [], isLoading } = usePrograms();
+
+  // Fallback to static programs if database is empty
+  const displayPrograms = programs.length > 0 ? programs : staticPrograms;
 
   // Find workout across all programs
   let workout;
   let program;
   
-  for (const prog of programs) {
+  for (const prog of displayPrograms) {
     for (const week of prog.weeks) {
       const found = week.workouts.find((w) => w.id === workoutId);
       if (found) {
@@ -28,6 +33,10 @@ const WorkoutDetail = () => {
       }
     }
     if (workout) break;
+  }
+
+  if (isLoading) {
+    return <div className="p-6">Loading workout...</div>;
   }
 
   if (!workout || !program) {

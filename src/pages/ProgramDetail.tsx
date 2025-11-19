@@ -2,13 +2,22 @@ import { useParams, Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { programs } from "@/data/programs";
+import { programs as staticPrograms } from "@/data/programs";
+import { usePrograms } from "@/hooks/usePrograms";
 import { ChevronLeft, Calendar, Clock, Award } from "lucide-react";
 import heroImage from "@/assets/gym-hero.jpg";
 
 const ProgramDetail = () => {
   const { programId } = useParams();
-  const program = programs.find((p) => p.id === programId);
+  const { data: programs = [], isLoading } = usePrograms();
+  
+  // Fallback to static programs if database is empty
+  const displayPrograms = programs.length > 0 ? programs : staticPrograms;
+  const program = displayPrograms.find((p) => p.id === programId);
+
+  if (isLoading) {
+    return <div className="p-6">Loading program...</div>;
+  }
 
   if (!program) {
     return <div className="p-6">Program not found</div>;
