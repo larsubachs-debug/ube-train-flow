@@ -4,15 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Calendar, TrendingUp, Award, Play } from "lucide-react";
 import { programs } from "@/data/programs";
 import ubeLogo from "@/assets/ube-logo.png";
-
 const Home = () => {
   // Mock data - in real app this would come from user state
   const currentProgram = programs[0];
   const nextWorkout = currentProgram.weeks[0].workouts[0];
   const thisWeek = currentProgram.weeks[0];
-
-  return (
-    <div className="min-h-screen bg-background pb-20">
+  return <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="bg-background border-b border-border px-6 py-4">
         <div className="flex items-center justify-between mb-4">
@@ -22,12 +19,8 @@ const Home = () => {
         
         {/* Program Tabs */}
         <div className="flex gap-3 mb-4">
-          <button className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium">
-            {currentProgram.name.split(" ")[1]}
-          </button>
-          <button className="px-4 py-2 text-sm text-muted-foreground">
-            Train
-          </button>
+          
+          
         </div>
 
         {/* Weekly Progress */}
@@ -85,8 +78,7 @@ const Home = () => {
 
           {/* Workouts */}
           <div className="space-y-3">
-            {thisWeek.workouts.map((workout) => (
-              <Link key={workout.id} to={`/workout/${workout.id}`}>
+            {thisWeek.workouts.map(workout => <Link key={workout.id} to={`/workout/${workout.id}`}>
                 <Card className="p-4 shadow-md hover:shadow-lg transition-shadow">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -95,25 +87,18 @@ const Home = () => {
                       </p>
                       <h4 className="font-bold mb-1">{workout.name}</h4>
                       <div className="flex gap-4 text-xs text-muted-foreground">
-                        <span>Time<br/><span className="text-foreground font-medium">52:16</span></span>
-                        <span>Weight<br/><span className="text-foreground font-medium">1068kg</span></span>
-                        <span>Sets<br/><span className="text-foreground font-medium">24</span></span>
-                        <span>PB<br/><span className="text-foreground font-medium">2</span></span>
+                        <span>Time<br /><span className="text-foreground font-medium">52:16</span></span>
+                        <span>Weight<br /><span className="text-foreground font-medium">1068kg</span></span>
+                        <span>Sets<br /><span className="text-foreground font-medium">24</span></span>
+                        <span>PB<br /><span className="text-foreground font-medium">2</span></span>
                       </div>
                     </div>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                      workout.completed ? 'border-ube-green bg-ube-green/10' : 'border-border'
-                    }`}>
-                      {workout.completed ? (
-                        <Award className="w-5 h-5 text-ube-green" />
-                      ) : (
-                        <span className="text-sm">→</span>
-                      )}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${workout.completed ? 'border-ube-green bg-ube-green/10' : 'border-border'}`}>
+                      {workout.completed ? <Award className="w-5 h-5 text-ube-green" /> : <span className="text-sm">→</span>}
                     </div>
                   </div>
                 </Card>
-              </Link>
-            ))}
+              </Link>)}
           </div>
         </div>
 
@@ -138,8 +123,6 @@ const Home = () => {
           </Card>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Home;
