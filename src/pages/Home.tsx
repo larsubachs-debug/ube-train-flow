@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar, TrendingUp, Award, Play } from "lucide-react";
+import { Calendar, TrendingUp, Award, Play, Zap, Users, BookOpen, ArrowRight, CheckCircle2 } from "lucide-react";
 import ubeLogo from "@/assets/ube-logo.png";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,55 +46,89 @@ const Home = () => {
   if (!currentProgram) {
     return (
       <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center animate-fade-in">
           <p className="text-muted-foreground">Geen programma toegewezen</p>
         </div>
       </div>
     );
   }
-  return <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="bg-background border-b border-border px-6 py-4">
-        <div className="flex flex-col items-center mb-4">
-          <img src={ubeLogo} alt="U.be" className="h-8 mb-2" />
-          <p className="text-sm font-medium text-muted-foreground">All About U</p>
-        </div>
+
+  const completedWorkouts = 3;
+  const totalWorkouts = 5;
+  const progressPercentage = (completedWorkouts / totalWorkouts) * 100;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 pb-20">
+      {/* Hero Header with Gradient */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-accent/20 text-primary-foreground">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCAzNmMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjAyIi8+PC9nPjwvc3ZnPg==')] opacity-40" />
         
-        {/* Program Tabs */}
-        <div className="flex gap-3 mb-4">
-          
-          
-        </div>
-
-        {/* Weekly Progress */}
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <p className="text-sm font-medium">Weekly progress</p>
-            <p className="text-sm text-muted-foreground">3/5 sessions</p>
+        <div className="relative px-6 py-8 animate-fade-in">
+          {/* Logo Section */}
+          <div className="flex flex-col items-center mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary-foreground/20 blur-xl rounded-full" />
+              <img src={ubeLogo} alt="U.be" className="h-12 mb-3 relative z-10 drop-shadow-lg" />
+            </div>
+            <p className="text-sm font-semibold tracking-wide opacity-90">ALL ABOUT U</p>
           </div>
-          <div className="flex gap-1">
-            <div className="h-1 flex-1 bg-primary rounded-full" />
-            <div className="h-1 flex-1 bg-primary rounded-full" />
-            <div className="h-1 flex-1 bg-primary rounded-full" />
-            <div className="h-1 flex-1 bg-muted rounded-full" />
-            <div className="h-1 flex-1 bg-muted rounded-full" />
-          </div>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="flex gap-3">
-          <Link to="/community" className="flex-1 bg-muted/50 rounded-2xl p-3 flex flex-col items-center gap-1">
-            <Calendar className="w-5 h-5" />
-            <span className="text-xs">Locker room</span>
-          </Link>
-          <Link to="/education" className="flex-1 bg-muted/50 rounded-2xl p-3 flex flex-col items-center gap-1">
-            <Calendar className="w-5 h-5" />
-            <span className="text-xs">Guides</span>
-          </Link>
-          <button className="flex-1 bg-muted/50 rounded-2xl p-3 flex flex-col items-center gap-1">
-            <Calendar className="w-5 h-5" />
-            <span className="text-xs">Rearrange</span>
-          </button>
+          {/* Weekly Progress Card */}
+          <div className="bg-primary-foreground/10 backdrop-blur-md rounded-3xl p-5 border border-primary-foreground/20 shadow-xl">
+            <div className="flex justify-between items-center mb-3">
+              <div>
+                <p className="text-xs font-medium opacity-80 uppercase tracking-wider">Weekly Progress</p>
+                <p className="text-2xl font-bold mt-1">{completedWorkouts}/{totalWorkouts}</p>
+              </div>
+              <div className="bg-primary-foreground/20 rounded-full p-3">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+            </div>
+            
+            {/* Animated Progress Bar */}
+            <div className="relative h-2 bg-primary-foreground/20 rounded-full overflow-hidden">
+              <div 
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-accent to-accent-foreground rounded-full transition-all duration-1000 ease-out shadow-glow"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              {Array.from({ length: totalWorkouts }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${
+                    i < completedWorkouts
+                      ? 'bg-accent shadow-glow-green scale-105'
+                      : 'bg-primary-foreground/20'
+                  }`}
+                  style={{ transitionDelay: `${i * 100}ms` }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-3 gap-3 mt-6">
+            <Link to="/community" className="group">
+              <div className="bg-primary-foreground/10 backdrop-blur-sm hover:bg-primary-foreground/20 border border-primary-foreground/20 rounded-2xl p-4 flex flex-col items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                <Users className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium">Community</span>
+              </div>
+            </Link>
+            <Link to="/education" className="group">
+              <div className="bg-primary-foreground/10 backdrop-blur-sm hover:bg-primary-foreground/20 border border-primary-foreground/20 rounded-2xl p-4 flex flex-col items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                <BookOpen className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium">Guides</span>
+              </div>
+            </Link>
+            <Link to="/programs" className="group">
+              <div className="bg-primary-foreground/10 backdrop-blur-sm hover:bg-primary-foreground/20 border border-primary-foreground/20 rounded-2xl p-4 flex flex-col items-center gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                <Calendar className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium">Program</span>
+              </div>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -128,60 +162,96 @@ const Home = () => {
           </div>
         </Card>
 
-        {/* Training Plan */}
-        <div>
-          <div className="mb-4">
-            <h3 className="text-lg font-bold mb-1">Your training plan</h3>
-            <p className="text-sm text-muted-foreground">Next week's workouts drop Sunday</p>
+        {/* This Week's Workouts */}
+        <div className="space-y-4 animate-fade-in" style={{ animationDelay: '150ms' }}>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <div className="w-1 h-6 bg-gradient-to-b from-accent to-accent-foreground rounded-full" />
+              Deze Week
+            </h2>
+            <Link to={`/programs/${currentProgram.id}`} className="text-sm text-accent hover:text-accent-foreground transition-colors font-medium flex items-center gap-1">
+              Alles bekijken
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
 
-          {/* Workouts */}
-          <div className="space-y-3">
-            {thisWeek.workouts.map(workout => <Link key={workout.id} to={`/workout/${workout.id}`}>
-                <Card className="p-4 shadow-md hover:shadow-lg transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground mb-1">
-                        {workout.completed ? "Completed" : "Thurs 7th"}
+          <div className="grid gap-3">
+            {thisWeek?.workouts.slice(0, 3).map((workout, index) => (
+              <Link 
+                key={workout.id} 
+                to={`/programs/${currentProgram.id}/workout/${workout.id}`}
+                className="group"
+                style={{ animationDelay: `${200 + index * 100}ms` }}
+              >
+                <Card className="p-4 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-l-4 border-l-accent/50 hover:border-l-accent animate-fade-in">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-gradient-to-br from-muted to-muted/50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0 group-hover:from-accent/20 group-hover:to-accent/10 transition-all duration-300">
+                      <Play className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors truncate">
+                        {workout.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {workout.duration} min • {workout.warmUp?.length + workout.mainLifts?.length + workout.accessories?.length || 0} oefeningen
                       </p>
-                      <h4 className="font-bold mb-1">{workout.name}</h4>
-                      <div className="flex gap-4 text-xs text-muted-foreground">
-                        <span>Time<br /><span className="text-foreground font-medium">52:16</span></span>
-                        <span>Weight<br /><span className="text-foreground font-medium">1068kg</span></span>
-                        <span>Sets<br /><span className="text-foreground font-medium">24</span></span>
-                        <span>PB<br /><span className="text-foreground font-medium">2</span></span>
-                      </div>
                     </div>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${workout.completed ? 'border-ube-green bg-ube-green/10' : 'border-border'}`}>
-                      {workout.completed ? <Award className="w-5 h-5 text-ube-green" /> : <span className="text-sm">→</span>}
-                    </div>
+                    {workout.completed && (
+                      <CheckCircle2 className="w-5 h-5 text-accent flex-shrink-0 animate-scale-in" />
+                    )}
                   </div>
                 </Card>
-              </Link>)}
+              </Link>
+            ))}
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-accent" />
-              <p className="text-sm text-muted-foreground">This Month</p>
-            </div>
-            <p className="text-2xl font-bold">12</p>
-            <p className="text-xs text-muted-foreground">Workouts completed</p>
-          </Card>
+        {/* Stats Overview */}
+        <div className="grid grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
+          <Link to="/achievements">
+            <Card className="p-5 hover:shadow-lg transition-all duration-300 group hover:scale-105 bg-gradient-to-br from-card to-muted/30">
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="bg-gradient-to-br from-accent/20 to-accent/10 rounded-2xl p-3 group-hover:scale-110 transition-transform duration-300">
+                  <Award className="w-6 h-6 text-accent" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">12</p>
+                  <p className="text-xs text-muted-foreground font-medium">Achievements</p>
+                </div>
+              </div>
+            </Card>
+          </Link>
 
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Award className="w-4 h-4 text-accent" />
-              <p className="text-sm text-muted-foreground">PR's</p>
-            </div>
-            <p className="text-2xl font-bold">5</p>
-            <p className="text-xs text-muted-foreground">Personal records</p>
-          </Card>
+          <Link to="/leaderboard">
+            <Card className="p-5 hover:shadow-lg transition-all duration-300 group hover:scale-105 bg-gradient-to-br from-card to-muted/30">
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl p-3 group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">#5</p>
+                  <p className="text-xs text-muted-foreground font-medium">Leaderboard</p>
+                </div>
+              </div>
+            </Card>
+          </Link>
         </div>
+
+        {/* Motivational Quote Card */}
+        <Card className="p-6 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent border-2 border-dashed border-muted-foreground/20 animate-fade-in" style={{ animationDelay: '400ms' }}>
+          <div className="flex items-start gap-4">
+            <div className="text-4xl">💪</div>
+            <div className="flex-1">
+              <p className="font-semibold text-foreground mb-1">Keep Going!</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                "Je bent sterker dan je denkt. Elke workout brengt je dichter bij je doel."
+              </p>
+            </div>
+          </div>
+        </Card>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Home;
