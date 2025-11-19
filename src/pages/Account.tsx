@@ -3,11 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronRight, Crown, Settings, BookOpen, LogOut, Image } from "lucide-react";
 import { Link } from "react-router-dom";
+import ubeLogo from "@/assets/ube-logo.png";
 
 const Account = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-6">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <img src={ubeLogo} alt="U.be" className="h-12" />
+        </div>
+
         {/* Profile Header */}
         <Card className="p-6 mb-6">
           <div className="flex items-center gap-4 mb-4">

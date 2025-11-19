@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dumbbell, Zap, Activity, ArrowRight } from "lucide-react";
 import gymHero from "@/assets/gym-hero.jpg";
+import ubeLogo from "@/assets/ube-logo.png";
 
 const programs = [
   { id: "strength-muscle", name: "Strength & Muscle", icon: Dumbbell },
@@ -43,7 +44,7 @@ const Onboarding = () => {
           </div>
           
           <div className="relative z-10 flex flex-col items-center justify-center flex-1 p-6 text-center text-primary-foreground">
-            <h1 className="text-5xl font-bold mb-4">Welcome to U.be</h1>
+            <img src={ubeLogo} alt="U.be" className="h-24 mb-6 brightness-0 invert" />
             <p className="text-xl mb-2 opacity-90">Online Training</p>
             <p className="text-lg opacity-80 mb-12 max-w-md">
               Transform your body and mind with world-class training programs
