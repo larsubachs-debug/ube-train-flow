@@ -4,13 +4,46 @@ import { Badge } from "@/components/ui/badge";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/gym-hero.jpg";
 
 const Programs = () => {
   const { data: programs = [], isLoading } = usePrograms();
+  const [programImages, setProgramImages] = useState<Record<string, string>>({});
   
   // Fallback to static programs if database is empty
   const displayPrograms = programs.length > 0 ? programs : staticPrograms;
+
+  useEffect(() => {
+    const loadProgramImages = async () => {
+      const images: Record<string, string> = {};
+      
+      for (const program of displayPrograms) {
+        try {
+          const { data: programMedia } = await supabase
+            .from('program_media')
+            .select('media_id, media(file_path)')
+            .eq('program_id', program.id)
+            .eq('media_type', 'tile')
+            .single();
+
+          if (programMedia?.media) {
+            const mediaData = programMedia.media as any;
+            images[program.id] = mediaData.file_path;
+          }
+        } catch (error) {
+          console.error(`Error loading image for program ${program.id}:`, error);
+        }
+      }
+      
+      setProgramImages(images);
+    };
+
+    if (displayPrograms.length > 0) {
+      loadProgramImages();
+    }
+  }, [displayPrograms.length]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -32,7 +65,7 @@ const Programs = () => {
                   {/* Hero Image with Overlay */}
                   <div className="relative h-[400px] overflow-hidden">
                     <img 
-                      src={heroImage}
+                      src={programImages[program.id] || heroImage}
                       alt={program.name}
                       className="w-full h-full object-cover"
                     />

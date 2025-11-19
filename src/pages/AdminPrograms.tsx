@@ -1,16 +1,21 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowLeft, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { usePrograms } from "@/hooks/usePrograms";
 import { ProgramBuilder } from "@/components/admin/ProgramBuilder";
+import { ProgramImageEditor } from "@/components/admin/ProgramImageEditor";
 
 const AdminPrograms = () => {
   const { toast } = useToast();
   const { data: programs = [], refetch } = usePrograms();
   const [isCreating, setIsCreating] = useState(false);
+  const [editingImageProgram, setEditingImageProgram] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const handleDelete = async (programId: string) => {
     if (!confirm("Are you sure you want to delete this program?")) return;
@@ -93,8 +98,12 @@ const AdminPrograms = () => {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Edit className="h-4 w-4" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingImageProgram({ id: program.id, name: program.name })}
+                  >
+                    <Image className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
@@ -109,6 +118,16 @@ const AdminPrograms = () => {
           ))}
         </div>
       </div>
+
+      {editingImageProgram && (
+        <ProgramImageEditor
+          programId={editingImageProgram.id}
+          programName={editingImageProgram.name}
+          open={!!editingImageProgram}
+          onOpenChange={(open) => !open && setEditingImageProgram(null)}
+          onSuccess={() => refetch()}
+        />
+      )}
     </div>
   );
 };
