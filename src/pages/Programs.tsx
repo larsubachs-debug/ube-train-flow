@@ -7,10 +7,14 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/gym-hero.jpg";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Programs = () => {
   const { data: programs = [], isLoading } = usePrograms();
+  const { hasRole } = useAuth();
   const [programImages, setProgramImages] = useState<Record<string, string>>({});
+  
+  const isCoachOrAdmin = hasRole("coach") || hasRole("admin");
   
   // Fallback to static programs if database is empty
   const displayPrograms = programs.length > 0 ? programs : staticPrograms;
@@ -93,15 +97,27 @@ const Programs = () => {
                   </div>
                 </Card>
                 
-                {/* Action Button */}
-                <Link to={`/program/${program.id}`} className="block">
-                  <Button 
-                    size="lg" 
-                    className="w-full bg-black hover:bg-black/90 text-white h-14 text-lg font-semibold rounded-full"
-                  >
-                    Start training
-                  </Button>
-                </Link>
+                {/* Action Button - Only for coaches/admins */}
+                {isCoachOrAdmin ? (
+                  <Link to={`/program/${program.id}`} className="block">
+                    <Button 
+                      size="lg" 
+                      className="w-full bg-black hover:bg-black/90 text-white h-14 text-lg font-semibold rounded-full"
+                    >
+                      Programma beheren
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to={`/program/${program.id}`} className="block">
+                    <Button 
+                      size="lg" 
+                      variant="outline"
+                      className="w-full h-14 text-lg font-semibold rounded-full"
+                    >
+                      Bekijk programma details
+                    </Button>
+                  </Link>
+                )}
               </div>
             ))}
           </div>
