@@ -4,8 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Image as ImageIcon, Heart } from "lucide-react";
+import { Send, Heart, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { MediaUploadZone } from "@/components/media/MediaUploadZone";
 
 const mockMessages = [
   {
@@ -36,11 +44,20 @@ const mockMessages = [
 
 const Community = () => {
   const [message, setMessage] = useState("");
+  const [showMediaDialog, setShowMediaDialog] = useState(false);
+  const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string>("");
 
   const handleSend = () => {
     if (!message.trim()) return;
     toast.success("Message posted!");
     setMessage("");
+    setUploadedMediaUrl("");
+  };
+
+  const handleMediaUpload = (mediaId: string, publicUrl: string) => {
+    setUploadedMediaUrl(publicUrl);
+    setShowMediaDialog(false);
+    toast.success("Media attached!");
   };
 
   return (
@@ -66,11 +83,43 @@ const Community = () => {
                 className="resize-none mb-3"
                 rows={3}
               />
+              {uploadedMediaUrl && (
+                <div className="mb-3 relative">
+                  <img
+                    src={uploadedMediaUrl}
+                    alt="Uploaded media"
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => setUploadedMediaUrl("")}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <ImageIcon className="w-4 h-4" />
-                  Photo
-                </Button>
+                <Dialog open={showMediaDialog} onOpenChange={setShowMediaDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <ImageIcon className="w-4 h-4" />
+                      Photo
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Upload Media</DialogTitle>
+                    </DialogHeader>
+                    <MediaUploadZone
+                      bucket="community-uploads"
+                      accept="all"
+                      aspectRatio="1:1"
+                      onUploadComplete={handleMediaUpload}
+                    />
+                  </DialogContent>
+                </Dialog>
                 <Button
                   onClick={handleSend}
                   className="ml-auto bg-accent hover:bg-accent/90 text-accent-foreground gap-2"

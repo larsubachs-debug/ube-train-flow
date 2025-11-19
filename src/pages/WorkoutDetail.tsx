@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { programs } from "@/data/programs";
 import { ArrowLeft, Play, Calendar, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
@@ -141,10 +142,28 @@ const WorkoutDetail = () => {
           ))}
         </div>
 
-        {/* Coaches Notes */}
-        <Card className="p-4 shadow-md bg-muted/30">
-          <h3 className="text-sm font-bold mb-2 text-muted-foreground">Coaches Notes:</h3>
-          <p className="text-sm">This is where all the notes go that the coaches have to say</p>
+        {/* Coaches Notes & Video */}
+        <Card className="p-4 shadow-md">
+          <Tabs defaultValue="notes" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="notes">Notes</TabsTrigger>
+              <TabsTrigger value="video">Coach Video</TabsTrigger>
+            </TabsList>
+            <TabsContent value="notes" className="mt-4">
+              <h3 className="text-sm font-bold mb-2 text-muted-foreground">Coaches Notes:</h3>
+              <p className="text-sm">This is where all the notes go that the coaches have to say</p>
+            </TabsContent>
+            <TabsContent value="video" className="mt-4">
+              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <Play className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Coach video will appear here when uploaded
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </Card>
 
         {/* Detailed Lift Tracking */}

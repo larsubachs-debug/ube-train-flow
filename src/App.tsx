@@ -13,6 +13,7 @@ import Community from "./pages/Community";
 import Account from "./pages/Account";
 import Education from "./pages/Education";
 import Membership from "./pages/Membership";
+import Media from "./pages/Media";
 import BottomNav from "./components/BottomNav";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/account" element={<><Account /><BottomNav /></>} />
           <Route path="/education" element={<><Education /><BottomNav /></>} />
           <Route path="/membership" element={<><Membership /><BottomNav /></>} />
+          <Route path="/media" element={<><Media /><BottomNav /></>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

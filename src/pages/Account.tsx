@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronRight, Crown, Settings, BookOpen, LogOut } from "lucide-react";
+import { ChevronRight, Crown, Settings, BookOpen, LogOut, Image } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Account = () => {
@@ -48,6 +48,23 @@ const Account = () => {
 
         {/* Menu Items */}
         <div className="space-y-2 mb-6">
+          <Link to="/media">
+            <Card className="p-4 hover:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-accent/10 p-2 rounded-lg">
+                    <Image className="w-5 h-5 text-accent" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Media Management</p>
+                    <p className="text-sm text-muted-foreground">Upload & manage photos and videos</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </div>
+            </Card>
+          </Link>
+
           <Link to="/education">
             <Card className="p-4 hover:bg-muted/50 transition-colors">
               <div className="flex items-center justify-between">
