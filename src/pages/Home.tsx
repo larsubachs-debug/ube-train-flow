@@ -12,77 +12,109 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Hero Section */}
-      <div className="relative h-64 bg-primary overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/80 to-primary" />
-        <div className="relative h-full flex flex-col justify-end p-6 text-primary-foreground">
-          <h1 className="text-4xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-lg opacity-90">Let's get stronger today</p>
+      {/* Header */}
+      <div className="bg-background border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold">This week</h1>
+          <div className="w-10 h-10 rounded-full bg-muted" />
+        </div>
+        
+        {/* Program Tabs */}
+        <div className="flex gap-3 mb-4">
+          <button className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+            {currentProgram.name.split(" ")[1]}
+          </button>
+          <button className="px-4 py-2 text-sm text-muted-foreground">
+            Train
+          </button>
+        </div>
+
+        {/* Weekly Progress */}
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-sm font-medium">Weekly progress</p>
+            <p className="text-sm text-muted-foreground">3/5 sessions</p>
+          </div>
+          <div className="flex gap-1">
+            <div className="h-1 flex-1 bg-primary rounded-full" />
+            <div className="h-1 flex-1 bg-primary rounded-full" />
+            <div className="h-1 flex-1 bg-primary rounded-full" />
+            <div className="h-1 flex-1 bg-muted rounded-full" />
+            <div className="h-1 flex-1 bg-muted rounded-full" />
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="flex gap-3">
+          <button className="flex-1 bg-muted/50 rounded-2xl p-3 flex flex-col items-center gap-1">
+            <Calendar className="w-5 h-5" />
+            <span className="text-xs">Locker room</span>
+          </button>
+          <button className="flex-1 bg-muted/50 rounded-2xl p-3 flex flex-col items-center gap-1">
+            <Calendar className="w-5 h-5" />
+            <span className="text-xs">Guides</span>
+          </button>
+          <button className="flex-1 bg-muted/50 rounded-2xl p-3 flex flex-col items-center gap-1">
+            <Calendar className="w-5 h-5" />
+            <span className="text-xs">Rearrange</span>
+          </button>
         </div>
       </div>
 
-      <div className="px-6 -mt-8 space-y-6">
-        {/* Next Workout Card */}
-        <Card className="p-6 shadow-lg">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">NEXT WORKOUT</p>
-              <h2 className="text-2xl font-bold">{nextWorkout.name}</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {currentProgram.name} • Week {thisWeek.weekNumber} • Day {nextWorkout.dayNumber}
-              </p>
-            </div>
-            <div className="bg-accent/10 p-3 rounded-full">
-              <Play className="w-6 h-6 text-accent" />
+      <div className="px-6 mt-6 space-y-6">
+        {/* Program Block Card */}
+        <Card className="p-0 shadow-xl bg-primary text-primary-foreground overflow-hidden">
+          <div className="p-6">
+            <div className="flex items-start gap-4 mb-3">
+              <div className="w-12 h-12 rounded-full bg-primary-foreground/20" />
+              <div className="flex-1">
+                <h3 className="text-lg font-bold mb-1">Weeks 1-4, Accumulation</h3>
+                <p className="text-sm opacity-90">You'll gradually increase the volume of work, like adding sets or reps. This...</p>
+              </div>
             </div>
           </div>
-          
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              {nextWorkout.duration} min
-            </span>
-            <span>
-              {nextWorkout.mainLifts.length} main lifts • {nextWorkout.accessories.length} accessories
-            </span>
-          </div>
-
-          <Link to={`/workout/${nextWorkout.id}`}>
-            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-              Start Workout
-            </Button>
-          </Link>
         </Card>
 
-        {/* This Week Overview */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className="w-5 h-5 text-accent" />
-            <h3 className="text-lg font-semibold">This Week</h3>
+        {/* Training Plan */}
+        <div>
+          <div className="mb-4">
+            <h3 className="text-lg font-bold mb-1">Your training plan</h3>
+            <p className="text-sm text-muted-foreground">Next week's workouts drop Sunday</p>
           </div>
-          
+
+          {/* Workouts */}
           <div className="space-y-3">
             {thisWeek.workouts.map((workout) => (
               <Link key={workout.id} to={`/workout/${workout.id}`}>
-                <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div>
-                    <p className="font-medium">Day {workout.dayNumber}: {workout.name}</p>
-                    <p className="text-sm text-muted-foreground">{workout.duration} minutes</p>
+                <Card className="p-4 shadow-md hover:shadow-lg transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {workout.completed ? "Completed" : "Thurs 7th"}
+                      </p>
+                      <h4 className="font-bold mb-1">{workout.name}</h4>
+                      <div className="flex gap-4 text-xs text-muted-foreground">
+                        <span>Time<br/><span className="text-foreground font-medium">52:16</span></span>
+                        <span>Weight<br/><span className="text-foreground font-medium">1068kg</span></span>
+                        <span>Sets<br/><span className="text-foreground font-medium">24</span></span>
+                        <span>PB<br/><span className="text-foreground font-medium">2</span></span>
+                      </div>
+                    </div>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
+                      workout.completed ? 'border-ube-green bg-ube-green/10' : 'border-border'
+                    }`}>
+                      {workout.completed ? (
+                        <Award className="w-5 h-5 text-ube-green" />
+                      ) : (
+                        <span className="text-sm">→</span>
+                      )}
+                    </div>
                   </div>
-                  {workout.completed ? (
-                    <div className="bg-green-500/10 p-2 rounded-full">
-                      <Award className="w-5 h-5 text-green-600" />
-                    </div>
-                  ) : (
-                    <div className="bg-muted p-2 rounded-full">
-                      <Calendar className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                  )}
-                </div>
+                </Card>
               </Link>
             ))}
           </div>
-        </Card>
+        </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-4">
