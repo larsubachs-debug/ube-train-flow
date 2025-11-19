@@ -1,15 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
 import { Link } from "react-router-dom";
-import { Dumbbell, Zap, Activity, ChevronRight } from "lucide-react";
-
-const iconMap = {
-  Dumbbell,
-  Zap,
-  Activity,
-};
+import heroImage from "@/assets/gym-hero.jpg";
 
 const Programs = () => {
   const { data: programs = [], isLoading } = usePrograms();
@@ -20,84 +15,63 @@ const Programs = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-6">
-        <h1 className="text-3xl font-bold mb-2">Training Programs</h1>
-        <p className="text-muted-foreground mb-6">
-          Choose your path to peak performance
-        </p>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2">Choose a Program</h1>
+          <p className="text-muted-foreground">
+            You can change at anytime
+          </p>
+        </div>
 
         {isLoading ? (
           <div className="text-center py-8 text-muted-foreground">Loading programs...</div>
         ) : (
-          <div className="space-y-4">
-            {displayPrograms.map((program) => {
-            const Icon = iconMap[program.icon as keyof typeof iconMap];
-            
-            return (
-              <Card key={program.id} className="p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start gap-4">
-                  <div className="bg-accent/10 p-3 rounded-lg">
-                    <Icon className="w-6 h-6 text-accent" />
-                  </div>
-                  
-                  <div className="flex-1">
-                    <h2 className="text-xl font-bold mb-1">{program.name}</h2>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {program.description}
-                    </p>
+          <div className="space-y-6">
+            {displayPrograms.map((program) => (
+              <div key={program.id} className="space-y-4">
+                <Card className="overflow-hidden border-0 shadow-xl">
+                  {/* Hero Image with Overlay */}
+                  <div className="relative h-[400px] overflow-hidden">
+                    <img 
+                      src={heroImage}
+                      alt={program.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
                     
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        {program.weeks.length} weeks
-                        {program.weeks[0]?.workouts && ` • ${program.weeks[0].workouts.length} days/week`}
-                      </span>
+                    {/* Content Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                      <h2 className="text-4xl font-bold mb-3 uppercase tracking-wide">
+                        {program.name}
+                      </h2>
+                      <p className="text-white/90 mb-4 leading-relaxed">
+                        {program.description}
+                      </p>
                       
-                      <Link to={`/program/${program.id}`}>
-                        <Button variant="ghost" size="sm" className="gap-1">
-                          View Program
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </Link>
+                      {/* Badges */}
+                      <div className="flex gap-2 flex-wrap">
+                        <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-sm px-3 py-1">
+                          <span className="mr-1">⚡</span> Hybrid
+                        </Badge>
+                        <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-sm px-3 py-1">
+                          <span className="mr-1">🏃</span> Functional Fitness
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-        )}
-
-        {/* Current Program Details */}
-        {displayPrograms.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Current Program</h2>
-          <Card className="p-6 bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-accent/20 p-3 rounded-lg">
-                <Dumbbell className="w-6 h-6 text-accent" />
+                </Card>
+                
+                {/* Action Button */}
+                <Link to={`/program/${program.id}`} className="block">
+                  <Button 
+                    size="lg" 
+                    className="w-full bg-black hover:bg-black/90 text-white h-14 text-lg font-semibold rounded-full"
+                  >
+                    Start training
+                  </Button>
+                </Link>
               </div>
-              <div>
-                <h3 className="text-xl font-bold">{displayPrograms[0].name}</h3>
-                <p className="text-sm text-muted-foreground">Week 1 of {displayPrograms[0].weeks.length}</p>
-              </div>
-            </div>
-
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Progress</span>
-                <span className="font-medium">25%</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div className="bg-accent rounded-full h-2 w-1/4" />
-              </div>
-            </div>
-
-            <Link to={`/program/${displayPrograms[0].id}`}>
-              <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                Continue Program
-              </Button>
-            </Link>
-          </Card>
-        </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
