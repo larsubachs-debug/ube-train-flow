@@ -52,6 +52,8 @@ interface Workout {
 interface Week {
   name: string;
   weekNumber: number;
+  description?: string;
+  phase_name?: string;
   workouts: Workout[];
 }
 
@@ -404,7 +406,14 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
 
       for (const week of weeks) {
         const weekId = `${programId}-week-${week.weekNumber}`;
-        await supabase.from("weeks").insert([{ id: weekId, program_id: programId, week_number: week.weekNumber, name: week.name }]);
+        await supabase.from("weeks").insert([{ 
+          id: weekId, 
+          program_id: programId, 
+          week_number: week.weekNumber, 
+          name: week.name,
+          description: week.description || null,
+          phase_name: week.phase_name || null,
+        }]);
 
         for (let w = 0; w < week.workouts.length; w++) {
           const workout = week.workouts[w];
@@ -528,6 +537,44 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
                     </div>
                     <AccordionContent className="pt-4">
                       <div className="space-y-4">
+                        <div className="grid gap-4">
+                          <div>
+                            <Label>Week Naam</Label>
+                            <Input
+                              value={week.name}
+                              onChange={(e) => {
+                                const newWeeks = [...weeks];
+                                newWeeks[weekIndex].name = e.target.value;
+                                setWeeks(newWeeks);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label>Fase Naam (optioneel)</Label>
+                            <Input
+                              placeholder="bijv: Weeks 1-4, Accumulation"
+                              value={week.phase_name || ""}
+                              onChange={(e) => {
+                                const newWeeks = [...weeks];
+                                newWeeks[weekIndex].phase_name = e.target.value;
+                                setWeeks(newWeeks);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label>Fase Beschrijving (optioneel)</Label>
+                            <Textarea
+                              placeholder="Wat gaan we bereiken in deze fase?"
+                              rows={3}
+                              value={week.description || ""}
+                              onChange={(e) => {
+                                const newWeeks = [...weeks];
+                                newWeeks[weekIndex].description = e.target.value;
+                                setWeeks(newWeeks);
+                              }}
+                            />
+                          </div>
+                        </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium">Workouts (sleep om te herschikken)</span>
                           <Button onClick={() => addWorkout(weekIndex)} size="sm" variant="outline"><Plus className="mr-2 h-4 w-4" />Workout</Button>
