@@ -58,23 +58,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch role immediately, not deferred
-          await fetchUserRole(session.user.id);
+          fetchUserRole(session.user.id);
         } else {
           setUserRole(null);
           setApprovalStatus(null);
         }
-        
-        setLoading(false);
       }
     );
 
-    // Check for existing session
+    // Check for existing session and fetch role before setting loading to false
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
