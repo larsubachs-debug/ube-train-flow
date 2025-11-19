@@ -178,30 +178,71 @@ const Home = () => {
             </Link>
           </div>
 
-          <div className="grid gap-3">
+          <div className="space-y-4">
             {thisWeek?.workouts.slice(0, 3).map((workout, index) => (
               <Link 
                 key={workout.id} 
                 to={`/programs/${currentProgram.id}/workout/${workout.id}`}
-                className="group"
+                className="group block"
                 style={{ animationDelay: `${200 + index * 100}ms` }}
               >
-                <Card className="p-4 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-l-4 border-l-accent/50 hover:border-l-accent animate-fade-in bg-background/80 backdrop-blur-sm">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-gradient-to-br from-muted to-muted/50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0 group-hover:from-accent/20 group-hover:to-accent/10 transition-all duration-300">
-                      <Play className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
+                <Card className="relative overflow-hidden hover:shadow-xl transition-all duration-500 animate-fade-in bg-background/90 backdrop-blur-md border-2 group-hover:border-accent/50">
+                  {/* Gradient accent bar on top */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent via-accent-foreground to-accent transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+                  
+                  <div className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-accent/20 blur-md rounded-full group-hover:blur-lg transition-all" />
+                          <div className="relative bg-gradient-to-br from-accent to-accent-foreground rounded-2xl w-14 h-14 flex items-center justify-center shadow-md">
+                            <Play className="w-6 h-6 text-white fill-white" />
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h3 className="font-bold text-lg text-foreground group-hover:text-accent transition-colors">
+                            {workout.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Dag {index + 1}
+                          </p>
+                        </div>
+                      </div>
+
+                      {workout.completed && (
+                        <div className="bg-accent/10 rounded-full p-2 animate-scale-in">
+                          <CheckCircle2 className="w-6 h-6 text-accent" />
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors truncate">
-                        {workout.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {workout.duration} min • {workout.warmUp?.length + workout.mainLifts?.length + workout.accessories?.length || 0} oefeningen
-                      </p>
+
+                    {/* Stats row */}
+                    <div className="flex items-center gap-6 pt-3 border-t border-border/50">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Duur</p>
+                          <p className="text-sm font-semibold">{workout.duration} min</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center">
+                          <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Oefeningen</p>
+                          <p className="text-sm font-semibold">{workout.warmUp?.length + workout.mainLifts?.length + workout.accessories?.length || 0}</p>
+                        </div>
+                      </div>
+
+                      <div className="ml-auto">
+                        <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-accent group-hover:translate-x-1 transition-all" />
+                      </div>
                     </div>
-                    {workout.completed && (
-                      <CheckCircle2 className="w-5 h-5 text-accent flex-shrink-0 animate-scale-in" />
-                    )}
                   </div>
                 </Card>
               </Link>
