@@ -61,6 +61,8 @@ export type Database = {
           coach_id: string
           created_at: string | null
           id: string
+          media_type: string | null
+          media_url: string | null
           member_id: string
           message: string
           read_at: string | null
@@ -70,6 +72,8 @@ export type Database = {
           coach_id: string
           created_at?: string | null
           id?: string
+          media_type?: string | null
+          media_url?: string | null
           member_id: string
           message: string
           read_at?: string | null
@@ -79,6 +83,8 @@ export type Database = {
           coach_id?: string
           created_at?: string | null
           id?: string
+          media_type?: string | null
+          media_url?: string | null
           member_id?: string
           message?: string
           read_at?: string | null
