@@ -17,6 +17,7 @@ import Education from "./pages/Education";
 import Membership from "./pages/Membership";
 import Media from "./pages/Media";
 import Achievements from "./pages/Achievements";
+import Leaderboard from "./pages/Leaderboard";
 import BottomNav from "./components/BottomNav";
 import NotFound from "./pages/NotFound";
 
@@ -64,6 +65,7 @@ const App = () => {
               <Route path="/membership" element={<><Membership /><BottomNav /></>} />
               <Route path="/media" element={<><Media /><BottomNav /></>} />
               <Route path="/achievements" element={<><Achievements /><BottomNav /></>} />
+              <Route path="/leaderboard" element={<><Leaderboard /><BottomNav /></>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
