@@ -4,9 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { programs } from "@/data/programs";
-import { ChevronLeft, Play, Check } from "lucide-react";
+import { ArrowLeft, Play, Calendar, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 const WorkoutDetail = () => {
@@ -16,21 +15,21 @@ const WorkoutDetail = () => {
 
   // Find workout across all programs
   let workout;
-  let programName = "";
+  let program;
   
-  for (const program of programs) {
-    for (const week of program.weeks) {
+  for (const prog of programs) {
+    for (const week of prog.weeks) {
       const found = week.workouts.find((w) => w.id === workoutId);
       if (found) {
         workout = found;
-        programName = program.name;
+        program = prog;
         break;
       }
     }
     if (workout) break;
   }
 
-  if (!workout) {
+  if (!workout || !program) {
     return <div className="p-6">Workout not found</div>;
   }
 
@@ -41,94 +40,185 @@ const WorkoutDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="p-6">
-        <Link to="/programs">
-          <Button variant="ghost" size="sm" className="mb-4 gap-2">
-            <ChevronLeft className="w-4 h-4" />
-            Back
-          </Button>
+      {/* Header */}
+      <div className="bg-background border-b border-border p-6">
+        <Link to="/" className="inline-flex items-center text-sm mb-4 text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Back
         </Link>
-
-        {/* Header */}
-        <div className="mb-6">
-          <Badge variant="secondary" className="mb-2">
-            {programName} • Day {workout.dayNumber}
-          </Badge>
-          <h1 className="text-3xl font-bold mb-2">{workout.name}</h1>
-          <p className="text-muted-foreground">{workout.duration} minutes</p>
+        
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <p className="text-sm text-muted-foreground mb-1">{program.name}</p>
+            <h1 className="text-3xl font-bold">{workout.name}</h1>
+          </div>
+          <div className="flex gap-2">
+            <button className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+              ⏸
+            </button>
+            <button className="px-4 py-2 rounded-full bg-muted text-sm font-medium">
+              End
+            </button>
+          </div>
         </div>
+
+        {/* Day Pills */}
+        <div className="flex gap-2 mb-4">
+          {['W', 'A', 'B', 'C', 'D', 'E'].map((day, idx) => {
+            const isCompleted = idx < workout.dayNumber - 1;
+            const isCurrent = idx === workout.dayNumber - 1;
+            return (
+              <div
+                key={day}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
+                  isCompleted
+                    ? 'bg-ube-green-light text-ube-green'
+                    : isCurrent
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {day}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="px-6 py-6 space-y-6">
+        {/* EMOM Info */}
+        <Card className="p-4 shadow-md bg-muted/30">
+          <p className="text-sm">
+            <span className="text-muted-foreground">EMOM |</span>{" "}
+            <span className="font-medium">Every 1 min</span>{" "}
+            <span className="text-muted-foreground">for</span>{" "}
+            <span className="font-medium">{workout.duration}mins</span>
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">🔄 6</p>
+        </Card>
 
         {/* Warm-up */}
         {workout.warmUp.length > 0 && (
-          <Card className="p-5 mb-4">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <span className="text-accent">01</span> Warm-up
-            </h2>
-            <div className="space-y-3">
+          <Card className="p-5 shadow-md">
+            <h2 className="text-base font-bold mb-3">Warm-up</h2>
+            <ul className="space-y-2">
               {workout.warmUp.map((exercise) => (
-                <div key={exercise.id} className="border-l-2 border-accent/30 pl-4">
-                  <p className="font-medium">{exercise.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {exercise.sets && `${exercise.sets} sets • `}
-                    {exercise.reps || exercise.time}
-                  </p>
-                </div>
+                <li key={exercise.id} className="text-sm flex items-start gap-2">
+                  <span className="text-muted-foreground">•</span>
+                  <div>
+                    <span className="font-medium">{exercise.name}</span>
+                    {(exercise.sets || exercise.reps || exercise.time) && (
+                      <span className="text-muted-foreground">
+                        {" "}— {exercise.sets && `${exercise.sets} sets`}
+                        {exercise.reps && ` ${exercise.reps}`}
+                        {exercise.time && ` ${exercise.time}`}
+                      </span>
+                    )}
+                  </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </Card>
         )}
 
-        {/* Main Lifts */}
-        {workout.mainLifts.length > 0 && (
-          <Card className="p-5 mb-4">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <span className="text-accent">02</span> Main Lifts
-            </h2>
-            <div className="space-y-4">
-              {workout.mainLifts.map((exercise) => (
-                <div key={exercise.id} className="border-l-2 border-accent pl-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-semibold text-lg">{exercise.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {exercise.sets} sets × {exercise.reps} reps
-                        {exercise.rpe && ` @ RPE ${exercise.rpe}`}
-                      </p>
-                    </div>
-                    <Button size="sm" variant="outline" className="gap-1">
-                      <Play className="w-3 h-3" />
-                      Video
-                    </Button>
+        {/* Main Lifts - Quick Overview */}
+        <div className="space-y-3">
+          {workout.mainLifts.map((lift, liftIndex) => (
+            <Card key={lift.id} className="p-4 shadow-md">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Min 0-{liftIndex + 1}</p>
+                  <h3 className="font-bold">{lift.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {lift.sets} sets × {lift.reps} reps {lift.rpe && `@ RPE ${lift.rpe}`}
+                  </p>
+                </div>
+                <button className="text-muted-foreground hover:text-foreground">
+                  <Play className="w-5 h-5" />
+                </button>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* Coaches Notes */}
+        <Card className="p-4 shadow-md bg-muted/30">
+          <h3 className="text-sm font-bold mb-2 text-muted-foreground">Coaches Notes:</h3>
+          <p className="text-sm">This is where all the notes go that the coaches have to say</p>
+        </Card>
+
+        {/* Detailed Lift Tracking */}
+        {workout.mainLifts.map((lift, liftIndex) => (
+          <Card key={`detail-${lift.id}`} className="p-5 shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Barbell</p>
+                <h3 className="text-lg font-bold">{lift.name}</h3>
+              </div>
+              <div className="flex gap-2">
+                <button className="p-2 hover:bg-muted rounded">
+                  <TrendingUp className="w-5 h-5" />
+                </button>
+                <button className="p-2 hover:bg-muted rounded">
+                  <Calendar className="w-5 h-5" />
+                </button>
+                <button className="p-2 hover:bg-muted rounded">
+                  ⋯
+                </button>
+              </div>
+            </div>
+
+            {/* Sets Table */}
+            <div className="space-y-2">
+              {Array.from({ length: lift.sets || 3 }).map((_, setIndex) => (
+                <div key={setIndex} className="flex items-center gap-2">
+                  <span className="w-8 text-sm text-muted-foreground">{setIndex + 1}</span>
+                  <div className="flex-1 flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
+                    <Input 
+                      type="number" 
+                      placeholder="50"
+                      defaultValue="50"
+                      className="h-8 bg-transparent border-none text-center w-16 p-0"
+                    />
+                    <span className="text-xs text-muted-foreground">kg</span>
+                    <div className="w-px h-6 bg-border" />
+                    <button className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-xs">○</span>
+                    </button>
+                    <div className="w-px h-6 bg-border" />
+                    <Input 
+                      type="number" 
+                      placeholder="10"
+                      defaultValue="10"
+                      className="h-8 bg-transparent border-none text-center w-12 p-0"
+                    />
+                    <span className="text-xs text-muted-foreground">reps</span>
                   </div>
-                  
-                  <div className="grid grid-cols-3 gap-2 mt-3">
-                    {Array.from({ length: exercise.sets || 0 }).map((_, i) => (
-                      <Input
-                        key={i}
-                        placeholder={`Set ${i + 1}`}
-                        className="text-sm"
-                      />
-                    ))}
-                  </div>
+                  <button className="w-8 h-8 rounded bg-muted/50 flex items-center justify-center">
+                    ✓
+                  </button>
                 </div>
               ))}
             </div>
           </Card>
-        )}
+        ))}
 
         {/* Accessories */}
         {workout.accessories.length > 0 && (
-          <Card className="p-5 mb-4">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <span className="text-accent">03</span> Accessories
-            </h2>
+          <Card className="p-5 shadow-md">
+            <h2 className="text-base font-bold mb-4">Accessories</h2>
             <div className="space-y-3">
-              {workout.accessories.map((exercise) => (
-                <div key={exercise.id} className="border-l-2 border-muted pl-4">
-                  <p className="font-medium">{exercise.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {exercise.sets} sets × {exercise.reps} reps
-                  </p>
+              {workout.accessories.map((exercise, index) => (
+                <div key={exercise.id} className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-full bg-muted text-foreground flex items-center justify-center text-sm font-medium flex-shrink-0">
+                    {index + 1}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm mb-1">{exercise.name}</h4>
+                    <p className="text-xs text-muted-foreground">
+                      {exercise.sets} sets × {exercise.reps} reps
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -137,15 +227,13 @@ const WorkoutDetail = () => {
 
         {/* Conditioning */}
         {workout.conditioning.length > 0 && (
-          <Card className="p-5 mb-4">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <span className="text-accent">04</span> Conditioning
-            </h2>
-            <div className="space-y-3">
+          <Card className="p-5 shadow-md">
+            <h2 className="text-base font-bold mb-3">Conditioning</h2>
+            <div className="space-y-2">
               {workout.conditioning.map((exercise) => (
-                <div key={exercise.id} className="border-l-2 border-muted pl-4">
-                  <p className="font-medium">{exercise.name}</p>
-                  <p className="text-sm text-muted-foreground">
+                <div key={exercise.id}>
+                  <p className="text-sm font-medium">{exercise.name}</p>
+                  <p className="text-xs text-muted-foreground">
                     {exercise.time || exercise.distance}
                     {exercise.notes && ` • ${exercise.notes}`}
                   </p>
@@ -156,10 +244,10 @@ const WorkoutDetail = () => {
         )}
 
         {/* Notes */}
-        <Card className="p-5 mb-4">
-          <h3 className="font-semibold mb-3">Workout Notes</h3>
+        <Card className="p-5 shadow-md">
+          <h2 className="text-base font-bold mb-3">Notes</h2>
           <Textarea
-            placeholder="How did it go? Any observations?"
+            placeholder="Add your notes about this workout..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={4}
@@ -171,20 +259,9 @@ const WorkoutDetail = () => {
         <Button
           onClick={handleComplete}
           disabled={completed}
-          className={`w-full h-14 text-lg gap-2 ${
-            completed
-              ? "bg-green-600 hover:bg-green-600"
-              : "bg-accent hover:bg-accent/90"
-          } text-accent-foreground`}
+          className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground text-base font-semibold rounded-full"
         >
-          {completed ? (
-            <>
-              <Check className="w-5 h-5" />
-              Workout Completed!
-            </>
-          ) : (
-            "Mark as Complete"
-          )}
+          {completed ? "Workout Completed! ✓" : "Mark Workout as Complete"}
         </Button>
       </div>
     </div>
