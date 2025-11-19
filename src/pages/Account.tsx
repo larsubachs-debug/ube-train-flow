@@ -97,6 +97,23 @@ const Account = () => {
                 </Card>
               </Link>
 
+              <Link to="/coach/dashboard">
+                <Card className="p-4 hover:bg-muted/50 transition-colors border-accent/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-accent/10 p-2 rounded-lg">
+                        <Users className="w-5 h-5 text-accent" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Mijn Members</p>
+                        <p className="text-sm text-muted-foreground">Bekijk voortgang members</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                </Card>
+              </Link>
+
               <Link to="/admin/programs">
                 <Card className="p-4 hover:bg-muted/50 transition-colors border-accent/20">
                   <div className="flex items-center justify-between">
