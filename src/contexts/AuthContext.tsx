@@ -4,17 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 type UserRole = "admin" | "coach" | "member";
+type ApprovalStatus = "pending" | "approved" | "rejected";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   userRole: UserRole | null;
+  approvalStatus: ApprovalStatus | null;
   loading: boolean;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   hasRole: (role: UserRole) => boolean;
+  isApproved: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,20 +26,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [approvalStatus, setApprovalStatus] = useState<ApprovalStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchUserRole = async (userId: string) => {
-    const { data, error } = await supabase
+    const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .order("role", { ascending: true }) // admin < coach < member
+      .order("role", { ascending: true })
       .limit(1)
       .maybeSingle();
 
-    if (!error && data) {
-      setUserRole(data.role as UserRole);
+    if (roleData) {
+      setUserRole(roleData.role as UserRole);
+    }
+
+    // Fetch approval status from profiles
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("approval_status")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (profileData) {
+      setApprovalStatus(profileData.approval_status as ApprovalStatus);
     }
   };
 
@@ -54,6 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }, 0);
         } else {
           setUserRole(null);
+          setApprovalStatus(null);
         }
         
         setLoading(false);
@@ -124,6 +140,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setUserRole(null);
+    setApprovalStatus(null);
     toast({
       title: "Signed out",
       description: "You have been successfully signed out.",
@@ -152,18 +169,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return roleHierarchy[userRole] >= roleHierarchy[role];
   };
 
+  const isApproved = approvalStatus === "approved" || userRole === "admin" || userRole === "coach";
+
   return (
     <AuthContext.Provider
       value={{
         user,
         session,
         userRole,
+        approvalStatus,
         loading,
         signUp,
         signIn,
         signOut,
         resetPassword,
         hasRole,
+        isApproved,
       }}
     >
       {children}

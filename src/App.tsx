@@ -21,7 +21,9 @@ import Media from "./pages/Media";
 import Achievements from "./pages/Achievements";
 import Leaderboard from "./pages/Leaderboard";
 import AdminPrograms from "./pages/AdminPrograms";
+import AdminMembers from "./pages/AdminMembers";
 import Auth from "./pages/Auth";
+import PendingApproval from "./pages/PendingApproval";
 import BottomNav from "./components/BottomNav";
 import NotFound from "./pages/NotFound";
 
@@ -59,6 +61,7 @@ const App = () => {
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/pending-approval" element={<PendingApproval />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/" element={<ProtectedRoute><Home /><BottomNav /></ProtectedRoute>} />
                 <Route path="/programs" element={<ProtectedRoute><Programs /><BottomNav /></ProtectedRoute>} />
@@ -73,6 +76,7 @@ const App = () => {
                 <Route path="/achievements" element={<ProtectedRoute><Achievements /><BottomNav /></ProtectedRoute>} />
                 <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /><BottomNav /></ProtectedRoute>} />
                 <Route path="/admin/programs" element={<ProtectedRoute requiredRole="coach"><AdminPrograms /><BottomNav /></ProtectedRoute>} />
+                <Route path="/admin/members" element={<ProtectedRoute requiredRole="coach"><AdminMembers /><BottomNav /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
