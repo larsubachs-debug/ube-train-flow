@@ -22,6 +22,7 @@ import Achievements from "./pages/Achievements";
 import Leaderboard from "./pages/Leaderboard";
 import AdminPrograms from "./pages/AdminPrograms";
 import AdminMembers from "./pages/AdminMembers";
+import CoachDashboard from "./pages/CoachDashboard";
 import Auth from "./pages/Auth";
 import PendingApproval from "./pages/PendingApproval";
 import BottomNav from "./components/BottomNav";
@@ -77,6 +78,7 @@ const App = () => {
                 <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /><BottomNav /></ProtectedRoute>} />
                 <Route path="/admin/programs" element={<ProtectedRoute requiredRole="coach"><AdminPrograms /><BottomNav /></ProtectedRoute>} />
                 <Route path="/admin/members" element={<ProtectedRoute requiredRole="coach"><AdminMembers /><BottomNav /></ProtectedRoute>} />
+                <Route path="/coach/dashboard" element={<ProtectedRoute requiredRole="coach"><CoachDashboard /><BottomNav /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

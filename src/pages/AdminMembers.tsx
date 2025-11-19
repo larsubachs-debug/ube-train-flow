@@ -16,6 +16,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { z } from "zod";
 
 const createMemberSchema = z.object({
@@ -37,6 +44,14 @@ interface Profile {
 
 interface ProfileWithEmail extends Profile {
   email: string;
+  coach_id?: string | null;
+  coach_name?: string | null;
+}
+
+interface Coach {
+  id: string;
+  user_id: string;
+  display_name: string | null;
 }
 
 const AdminMembers = () => {
@@ -74,9 +89,16 @@ const AdminMembers = () => {
   const { data: approvedMembers = [], isLoading: approvedLoading } = useQuery<ProfileWithEmail[]>({
     queryKey: ["approved-members"],
     queryFn: async () => {
+      // Get member profiles with coach info
       const { data: profiles, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select(`
+          *,
+          coach:coach_id (
+            id,
+            display_name
+          )
+        `)
         .eq("approval_status", "approved")
         .order("created_at", { ascending: false });
 
@@ -88,10 +110,37 @@ const AdminMembers = () => {
 
       const userList = users || [];
 
-      return (profiles as Profile[])?.map((profile) => ({
+      return (profiles as any[])?.map((profile) => ({
         ...profile,
         email: userList.find((u) => u.id === profile.user_id)?.email || "N/A",
+        coach_name: profile.coach?.display_name || null,
       })) || [];
+    },
+  });
+
+  const { data: coaches = [] } = useQuery<Coach[]>({
+    queryKey: ["coaches"],
+    queryFn: async () => {
+      // Get all users with coach or admin role
+      const { data: coachRoles, error } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["coach", "admin"]);
+
+      if (error) throw error;
+
+      const coachUserIds = coachRoles?.map(r => r.user_id) || [];
+
+      if (coachUserIds.length === 0) return [];
+
+      const { data: coachProfiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, user_id, display_name")
+        .in("user_id", coachUserIds);
+
+      if (profilesError) throw profilesError;
+
+      return coachProfiles || [];
     },
   });
 
@@ -143,6 +192,31 @@ const AdminMembers = () => {
         description: "The member has been notified.",
       });
       queryClient.invalidateQueries({ queryKey: ["pending-members"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const assignCoachMutation = useMutation({
+    mutationFn: async ({ memberId, coachId }: { memberId: string; coachId: string | null }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ coach_id: coachId })
+        .eq("id", memberId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Coach toegewezen aan member",
+      });
+      queryClient.invalidateQueries({ queryKey: ["approved-members"] });
     },
     onError: (error: any) => {
       toast({
@@ -365,7 +439,7 @@ const AdminMembers = () => {
               <div className="grid gap-4">
                 {approvedMembers.map((member) => (
                   <Card key={member.id} className="p-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold">
                           {member.display_name || "No Name"}
@@ -377,6 +451,36 @@ const AdminMembers = () => {
                         <p className="text-xs text-muted-foreground mt-2">
                           Approved: {member.approved_at ? new Date(member.approved_at).toLocaleDateString() : "N/A"}
                         </p>
+                        
+                        <div className="mt-4">
+                          <Label className="text-sm">Toegewezen Coach</Label>
+                          <Select
+                            value={member.coach_id || "none"}
+                            onValueChange={(value) => {
+                              assignCoachMutation.mutate({
+                                memberId: member.id,
+                                coachId: value === "none" ? null : value,
+                              });
+                            }}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Selecteer een coach" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Geen coach</SelectItem>
+                              {coaches.map((coach) => (
+                                <SelectItem key={coach.id} value={coach.id}>
+                                  {coach.display_name || "Naamloos"}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {member.coach_name && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Huidige coach: {member.coach_name}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-green-600">
                         <Check className="h-4 w-4" />
