@@ -14,7 +14,280 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      checkin_photos: {
+        Row: {
+          checkin_week: number
+          created_at: string | null
+          id: string
+          media_id: string | null
+          notes: string | null
+          photo_type: string | null
+          user_id: string
+        }
+        Insert: {
+          checkin_week: number
+          created_at?: string | null
+          id?: string
+          media_id?: string | null
+          notes?: string | null
+          photo_type?: string | null
+          user_id: string
+        }
+        Update: {
+          checkin_week?: number
+          created_at?: string | null
+          id?: string
+          media_id?: string | null
+          notes?: string | null
+          photo_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_photos_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_videos: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          media_id: string | null
+          program_id: string
+          title: string
+          week_number: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          media_id?: string | null
+          program_id: string
+          title: string
+          week_number: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          media_id?: string | null
+          program_id?: string
+          title?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_videos_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          comments_count: number | null
+          content: string | null
+          created_at: string | null
+          id: string
+          likes_count: number | null
+          media_id: string | null
+          post_type: string | null
+          program_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          likes_count?: number | null
+          media_id?: string | null
+          post_type?: string | null
+          program_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          likes_count?: number | null
+          media_id?: string | null
+          post_type?: string | null
+          program_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercise_media: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          exercise_id: string
+          id: string
+          media_id: string | null
+          media_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          exercise_id: string
+          id?: string
+          media_id?: string | null
+          media_type: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          exercise_id?: string
+          id?: string
+          media_id?: string | null
+          media_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_media_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media: {
+        Row: {
+          bucket_name: string
+          created_at: string | null
+          duration: number | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          height: number | null
+          id: string
+          metadata: Json | null
+          mime_type: string | null
+          thumbnail_url: string | null
+          updated_at: string | null
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          bucket_name: string
+          created_at?: string | null
+          duration?: number | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          bucket_name?: string
+          created_at?: string | null
+          duration?: number | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          role: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      program_media: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          media_id: string | null
+          media_type: string
+          program_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          media_id?: string | null
+          media_type: string
+          program_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          media_id?: string | null
+          media_type?: string
+          program_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_media_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
