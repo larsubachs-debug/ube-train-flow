@@ -23,6 +23,7 @@ import Leaderboard from "./pages/Leaderboard";
 import AdminPrograms from "./pages/AdminPrograms";
 import AdminMembers from "./pages/AdminMembers";
 import AdminCheckins from "./pages/AdminCheckins";
+import AdminTasks from "./pages/AdminTasks";
 import CoachDashboard from "./pages/CoachDashboard";
 import Chat from "./pages/Chat";
 import CoachChat from "./pages/CoachChat";
@@ -82,6 +83,7 @@ const App = () => {
                 <Route path="/admin/programs" element={<ProtectedRoute requiredRole="coach"><AdminPrograms /><BottomNav /></ProtectedRoute>} />
                 <Route path="/admin/members" element={<ProtectedRoute requiredRole="coach"><AdminMembers /><BottomNav /></ProtectedRoute>} />
                 <Route path="/admin/checkins" element={<ProtectedRoute requiredRole="coach"><AdminCheckins /><BottomNav /></ProtectedRoute>} />
+                <Route path="/admin/tasks" element={<ProtectedRoute requiredRole="coach"><AdminTasks /><BottomNav /></ProtectedRoute>} />
                 <Route path="/coach/dashboard" element={<ProtectedRoute requiredRole="coach"><CoachDashboard /><BottomNav /></ProtectedRoute>} />
                 <Route path="/coach/chat/:memberId" element={<ProtectedRoute requiredRole="coach"><CoachChat /></ProtectedRoute>} />
                 <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
