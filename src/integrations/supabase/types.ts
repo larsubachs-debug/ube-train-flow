@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          badge_color: string
+          badge_icon: string
+          category: string
+          created_at: string | null
+          description: string
+          id: string
+          name: string
+          points: number | null
+          rarity: string | null
+          requirement_type: string | null
+          requirement_value: number | null
+        }
+        Insert: {
+          badge_color: string
+          badge_icon: string
+          category: string
+          created_at?: string | null
+          description: string
+          id?: string
+          name: string
+          points?: number | null
+          rarity?: string | null
+          requirement_type?: string | null
+          requirement_value?: number | null
+        }
+        Update: {
+          badge_color?: string
+          badge_icon?: string
+          category?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          name?: string
+          points?: number | null
+          rarity?: string | null
+          requirement_type?: string | null
+          requirement_value?: number | null
+        }
+        Relationships: []
+      }
       checkin_photos: {
         Row: {
           checkin_week: number
@@ -287,6 +329,83 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          created_at: string | null
+          id: string
+          is_unlocked: boolean | null
+          progress: number | null
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          created_at?: string | null
+          id?: string
+          is_unlocked?: boolean | null
+          progress?: number | null
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          created_at?: string | null
+          id?: string
+          is_unlocked?: boolean | null
+          progress?: number | null
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_stats: {
+        Row: {
+          created_at: string | null
+          current_streak: number | null
+          id: string
+          last_workout_date: string | null
+          longest_streak: number | null
+          total_prs: number | null
+          total_volume_kg: number | null
+          total_workouts: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_workout_date?: string | null
+          longest_streak?: number | null
+          total_prs?: number | null
+          total_volume_kg?: number | null
+          total_workouts?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_workout_date?: string | null
+          longest_streak?: number | null
+          total_prs?: number | null
+          total_volume_kg?: number | null
+          total_workouts?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
