@@ -2,10 +2,19 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronRight, Crown, Settings, BookOpen, LogOut, Image } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import ubeLogo from "@/assets/ube-logo.png";
 
 const Account = () => {
+  const { user, signOut, userRole } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-6">
@@ -19,12 +28,19 @@ const Account = () => {
           <div className="flex items-center gap-4 mb-4">
             <Avatar className="w-16 h-16">
               <AvatarFallback className="bg-accent/10 text-accent text-xl font-bold">
-                JD
+                {user?.email?.slice(0, 2).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-xl font-bold">John Doe</h2>
-              <p className="text-sm text-muted-foreground">john.doe@email.com</p>
+              <h2 className="text-xl font-bold">
+                {user?.user_metadata?.display_name || "User"}
+              </h2>
+              <p className="text-sm text-muted-foreground">{user?.email}</p>
+              {userRole && (
+                <span className="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
+                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                </span>
+              )}
             </div>
           </div>
           <Button variant="outline" className="w-full">
@@ -118,9 +134,13 @@ const Account = () => {
         </div>
 
         {/* Logout */}
-        <Button variant="outline" className="w-full gap-2 text-destructive hover:text-destructive">
+        <Button 
+          variant="outline" 
+          className="w-full gap-2 text-destructive hover:text-destructive"
+          onClick={handleSignOut}
+        >
           <LogOut className="w-4 h-4" />
-          Log Out
+          Sign Out
         </Button>
       </div>
     </div>
