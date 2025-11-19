@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { user, loading, hasRole } = useAuth();
+  const { user, loading, hasRole, isApproved } = useAuth();
 
   if (loading) {
     return (
@@ -20,6 +20,11 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Check approval status (admins and coaches bypass this)
+  if (!isApproved && !requiredRole) {
+    return <Navigate to="/pending-approval" replace />;
   }
 
   if (requiredRole && !hasRole(requiredRole)) {

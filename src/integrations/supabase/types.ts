@@ -326,28 +326,44 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approval_status: Database["public"]["Enums"]["approval_status"] | null
+          approved_at: string | null
+          approved_by: string | null
           avatar_url: string | null
           created_at: string | null
           display_name: string | null
           id: string
+          rejection_reason: string | null
           role: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          approval_status?:
+            | Database["public"]["Enums"]["approval_status"]
+            | null
+          approved_at?: string | null
+          approved_by?: string | null
           avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
           id?: string
+          rejection_reason?: string | null
           role?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          approval_status?:
+            | Database["public"]["Enums"]["approval_status"]
+            | null
+          approved_at?: string | null
+          approved_by?: string | null
           avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
           id?: string
+          rejection_reason?: string | null
           role?: string | null
           updated_at?: string | null
           user_id?: string
@@ -606,9 +622,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_user_approved: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "coach" | "member"
+      approval_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -737,6 +755,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "coach", "member"],
+      approval_status: ["pending", "approved", "rejected"],
     },
   },
 } as const
