@@ -58,9 +58,12 @@ const Home = () => {
   const progressPercentage = (completedWorkouts / totalWorkouts) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 pb-20">
-      {/* Hero Header with Gradient */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-accent/20 text-primary-foreground">
+    <div className="min-h-screen pb-20 relative">
+      {/* Gradient Background Overlay - spans entire page */}
+      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-primary via-accent/10 to-background" />
+      
+      {/* Hero Header with Enhanced Gradient */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-primary/95 via-primary to-accent/30 text-primary-foreground">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCAzNmMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjAyIi8+PC9nPjwvc3ZnPg==')] opacity-40" />
         
         <div className="relative px-6 py-8 animate-fade-in">
@@ -132,9 +135,9 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="px-6 mt-6 space-y-6">
+      <div className="px-6 mt-6 space-y-6 relative z-10">
         {/* Program Block Card - Dynamic Phase Info */}
-        <Card className="p-0 shadow-xl bg-primary text-primary-foreground overflow-hidden">
+        <Card className="p-0 shadow-xl bg-primary/95 backdrop-blur-md text-primary-foreground overflow-hidden border-2 border-primary-foreground/20">
           <div className="p-6">
             {loading ? (
               <div className="flex items-start gap-4 mb-3">
@@ -183,7 +186,7 @@ const Home = () => {
                 className="group"
                 style={{ animationDelay: `${200 + index * 100}ms` }}
               >
-                <Card className="p-4 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-l-4 border-l-accent/50 hover:border-l-accent animate-fade-in">
+                <Card className="p-4 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 border-l-4 border-l-accent/50 hover:border-l-accent animate-fade-in bg-background/80 backdrop-blur-sm">
                   <div className="flex items-center gap-4">
                     <div className="bg-gradient-to-br from-muted to-muted/50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0 group-hover:from-accent/20 group-hover:to-accent/10 transition-all duration-300">
                       <Play className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
@@ -209,7 +212,7 @@ const Home = () => {
         {/* Stats Overview */}
         <div className="grid grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: '300ms' }}>
           <Link to="/achievements">
-            <Card className="p-5 hover:shadow-lg transition-all duration-300 group hover:scale-105 bg-gradient-to-br from-card to-muted/30">
+            <Card className="p-5 hover:shadow-lg transition-all duration-300 group hover:scale-105 bg-background/80 backdrop-blur-sm border-2">
               <div className="flex flex-col items-center text-center gap-3">
                 <div className="bg-gradient-to-br from-accent/20 to-accent/10 rounded-2xl p-3 group-hover:scale-110 transition-transform duration-300">
                   <Award className="w-6 h-6 text-accent" />
@@ -223,7 +226,7 @@ const Home = () => {
           </Link>
 
           <Link to="/leaderboard">
-            <Card className="p-5 hover:shadow-lg transition-all duration-300 group hover:scale-105 bg-gradient-to-br from-card to-muted/30">
+            <Card className="p-5 hover:shadow-lg transition-all duration-300 group hover:scale-105 bg-background/80 backdrop-blur-sm border-2">
               <div className="flex flex-col items-center text-center gap-3">
                 <div className="bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl p-3 group-hover:scale-110 transition-transform duration-300">
                   <TrendingUp className="w-6 h-6 text-primary" />
@@ -238,8 +241,9 @@ const Home = () => {
         </div>
 
         {/* Motivational Quote Card */}
-        <Card className="p-6 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent border-2 border-dashed border-muted-foreground/20 animate-fade-in" style={{ animationDelay: '400ms' }}>
-          <div className="flex items-start gap-4">
+        <Card className="p-6 bg-background/60 backdrop-blur-md border-2 border-dashed border-accent/20 animate-fade-in relative overflow-hidden" style={{ animationDelay: '400ms' }}>
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-primary/5" />
+          <div className="flex items-start gap-4 relative z-10">
             <div className="text-4xl">💪</div>
             <div className="flex-1">
               <p className="font-semibold text-foreground mb-1">Keep Going!</p>
