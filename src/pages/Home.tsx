@@ -12,9 +12,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { DailyCheckinCard } from "@/components/checkin/DailyCheckinCard";
 import { DailyTasksCard } from "@/components/tasks/DailyTasksCard";
 import { WeeklyTaskProgress } from "@/components/tasks/WeeklyTaskProgress";
+import { useBranding } from "@/hooks/useBranding";
 
 const Home = () => {
   const { user } = useAuth();
+  const { data: branding } = useBranding();
   const [userProgramId, setUserProgramId] = useState<string | null>(null);
   const { data: programs = [] } = usePrograms();
   
@@ -74,13 +76,20 @@ const Home = () => {
           <div className="flex flex-col items-center mb-6">
             <div className="relative">
               <div className="absolute inset-0 bg-primary-foreground/20 blur-xl rounded-full" />
-              <img src={ubeLogo} alt="U.be" className="h-12 mb-3 relative z-10 drop-shadow-lg" />
+              <img 
+                src={branding?.logo_url || ubeLogo} 
+                alt={branding?.app_name || "U.be"} 
+                className="h-12 mb-3 relative z-10 drop-shadow-lg" 
+              />
             </div>
-            <p className="text-sm font-semibold tracking-wide text-primary">ALL ABOUT U</p>
+            <p className="text-sm font-semibold tracking-wide text-primary">
+              {branding?.tagline || "ALL ABOUT U"}
+            </p>
           </div>
 
           {/* Weekly Progress Card */}
-          <div className="bg-primary-foreground/10 backdrop-blur-md rounded-3xl p-5 border border-primary-foreground/20 shadow-xl">
+          {branding?.show_weekly_progress !== false && (
+            <div className="bg-primary-foreground/10 backdrop-blur-md rounded-3xl p-5 border border-primary-foreground/20 shadow-xl">
             <div className="flex justify-between items-center mb-3">
               <div>
                 <p className="text-xs font-medium opacity-80 uppercase tracking-wider">Weekly Progress</p>
@@ -113,6 +122,7 @@ const Home = () => {
               ))}
             </div>
           </div>
+          )}
 
           {/* Quick Actions */}
           <div className="grid grid-cols-3 gap-3 mt-6">
