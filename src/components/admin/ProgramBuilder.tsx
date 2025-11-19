@@ -4,14 +4,32 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Upload, X, Copy, Save } from "lucide-react";
+import { Plus, Trash2, Upload, X, Copy, Save, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Exercise {
+  id: string;
   name: string;
   category: "warmup" | "mainlift" | "accessory" | "conditioning";
   sets?: number;
@@ -24,6 +42,7 @@ interface Exercise {
 }
 
 interface Workout {
+  id: string;
   name: string;
   dayNumber: number;
   duration: number;
@@ -41,6 +60,124 @@ interface ProgramBuilderProps {
   onCancel: () => void;
 }
 
+interface SortableWorkoutProps {
+  workout: Workout;
+  weekIndex: number;
+  workoutIndex: number;
+  onDuplicate: () => void;
+  onRemove: () => void;
+}
+
+const SortableWorkout = ({ workout, weekIndex, workoutIndex, onDuplicate, onRemove }: SortableWorkoutProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: workout.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <Card ref={setNodeRef} style={style} className="p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3 flex-1">
+          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div>
+            <h4 className="font-medium">{workout.name}</h4>
+            <p className="text-sm text-muted-foreground">
+              {workout.exercises.length} oefeningen • {workout.duration} min
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="icon" onClick={onDuplicate}>
+            <Copy className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={onRemove}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+interface SortableExerciseProps {
+  exercise: Exercise;
+  weekIndex: number;
+  workoutIndex: number;
+  exerciseIndex: number;
+  onUpdate: (field: keyof Exercise, value: any) => void;
+  onDuplicate: () => void;
+  onRemove: () => void;
+}
+
+const SortableExercise = ({ exercise, weekIndex, workoutIndex, exerciseIndex, onUpdate, onDuplicate, onRemove }: SortableExerciseProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: exercise.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <Card ref={setNodeRef} style={style} className="p-4">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+              <GripVertical className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <Select value={exercise.category} onValueChange={(value) => onUpdate("category", value)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="warmup">Warming-up</SelectItem>
+                <SelectItem value="mainlift">Hoofdoefening</SelectItem>
+                <SelectItem value="accessory">Accessoire</SelectItem>
+                <SelectItem value="conditioning">Conditioning</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="icon" onClick={onDuplicate}>
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onRemove}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
+        </div>
+        <Input placeholder="Oefening naam" value={exercise.name} onChange={(e) => onUpdate("name", e.target.value)} />
+        <div className="grid grid-cols-3 gap-2">
+          <Input type="number" placeholder="Sets" value={exercise.sets || ""} onChange={(e) => onUpdate("sets", parseInt(e.target.value) || undefined)} />
+          <Input placeholder="Reps" value={exercise.reps || ""} onChange={(e) => onUpdate("reps", e.target.value)} />
+          <Input type="number" placeholder="RPE" value={exercise.rpe || ""} onChange={(e) => onUpdate("rpe", parseInt(e.target.value) || undefined)} />
+        </div>
+        <Textarea placeholder="Notities (optioneel)" value={exercise.notes || ""} onChange={(e) => onUpdate("notes", e.target.value)} rows={2} />
+      </div>
+    </Card>
+  );
+};
+
 export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -57,19 +194,28 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
 
   const [weeks, setWeeks] = useState<Week[]>([]);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const createFromTemplate = (weekCount: number, workoutsPerWeek: number) => {
     const newWeeks: Week[] = [];
     for (let w = 0; w < weekCount; w++) {
       const workouts: Workout[] = [];
       for (let d = 0; d < workoutsPerWeek; d++) {
+        const workoutId = `temp-workout-${w}-${d}`;
         workouts.push({
+          id: workoutId,
           name: `Workout ${d + 1}`,
           dayNumber: d + 1,
           duration: 60,
           exercises: [
-            { name: "Warming-up", category: "warmup", sets: 1, time: "5 min" },
-            { name: "Squat", category: "mainlift", sets: 4, reps: "8", rpe: 8 },
-            { name: "Bench Press", category: "mainlift", sets: 4, reps: "8", rpe: 8 },
+            { id: `${workoutId}-ex-1`, name: "Warming-up", category: "warmup", sets: 1, time: "5 min" },
+            { id: `${workoutId}-ex-2`, name: "Squat", category: "mainlift", sets: 4, reps: "8", rpe: 8 },
+            { id: `${workoutId}-ex-3`, name: "Bench Press", category: "mainlift", sets: 4, reps: "8", rpe: 8 },
           ],
         });
       }
@@ -104,7 +250,11 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
       ...weekToDuplicate,
       name: `${weekToDuplicate.name} (copy)`,
       weekNumber: weeks.length + 1,
-      workouts: weekToDuplicate.workouts.map(w => ({ ...w, exercises: [...w.exercises] })),
+      workouts: weekToDuplicate.workouts.map(w => ({
+        ...w,
+        id: `temp-workout-${Date.now()}-${Math.random()}`,
+        exercises: w.exercises.map(e => ({ ...e, id: `temp-ex-${Date.now()}-${Math.random()}` }))
+      })),
     };
     setWeeks([...weeks, newWeek]);
   };
@@ -113,7 +263,9 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
 
   const addWorkout = (weekIndex: number) => {
     const newWeeks = [...weeks];
+    const workoutId = `temp-workout-${Date.now()}`;
     newWeeks[weekIndex].workouts.push({
+      id: workoutId,
       name: `Workout ${newWeeks[weekIndex].workouts.length + 1}`,
       dayNumber: newWeeks[weekIndex].workouts.length + 1,
       duration: 60,
@@ -125,10 +277,12 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
   const duplicateWorkout = (weekIndex: number, workoutIndex: number) => {
     const newWeeks = [...weeks];
     const workoutToDuplicate = newWeeks[weekIndex].workouts[workoutIndex];
+    const newWorkoutId = `temp-workout-${Date.now()}`;
     newWeeks[weekIndex].workouts.push({
       ...workoutToDuplicate,
+      id: newWorkoutId,
       name: `${workoutToDuplicate.name} (copy)`,
-      exercises: [...workoutToDuplicate.exercises],
+      exercises: workoutToDuplicate.exercises.map(e => ({ ...e, id: `${newWorkoutId}-ex-${Date.now()}-${Math.random()}` })),
     });
     setWeeks(newWeeks);
   };
@@ -141,7 +295,9 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
 
   const addExercise = (weekIndex: number, workoutIndex: number) => {
     const newWeeks = [...weeks];
+    const exerciseId = `temp-ex-${Date.now()}`;
     newWeeks[weekIndex].workouts[workoutIndex].exercises.push({
+      id: exerciseId,
       name: "",
       category: "mainlift",
       sets: 3,
@@ -153,7 +309,7 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
   const duplicateExercise = (weekIndex: number, workoutIndex: number, exerciseIndex: number) => {
     const newWeeks = [...weeks];
     const exercise = newWeeks[weekIndex].workouts[workoutIndex].exercises[exerciseIndex];
-    newWeeks[weekIndex].workouts[workoutIndex].exercises.push({ ...exercise });
+    newWeeks[weekIndex].workouts[workoutIndex].exercises.push({ ...exercise, id: `temp-ex-${Date.now()}` });
     setWeeks(newWeeks);
   };
 
@@ -177,6 +333,34 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
       [field]: value,
     };
     setWeeks(newWeeks);
+  };
+
+  const handleWorkoutDragEnd = (event: DragEndEvent, weekIndex: number) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const newWeeks = [...weeks];
+    const workouts = newWeeks[weekIndex].workouts;
+    const oldIndex = workouts.findIndex(w => w.id === active.id);
+    const newIndex = workouts.findIndex(w => w.id === over.id);
+
+    newWeeks[weekIndex].workouts = arrayMove(workouts, oldIndex, newIndex);
+    setWeeks(newWeeks);
+    toast({ description: "Workout volgorde aangepast" });
+  };
+
+  const handleExerciseDragEnd = (event: DragEndEvent, weekIndex: number, workoutIndex: number) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const newWeeks = [...weeks];
+    const exercises = newWeeks[weekIndex].workouts[workoutIndex].exercises;
+    const oldIndex = exercises.findIndex(e => e.id === active.id);
+    const newIndex = exercises.findIndex(e => e.id === over.id);
+
+    newWeeks[weekIndex].workouts[workoutIndex].exercises = arrayMove(exercises, oldIndex, newIndex);
+    setWeeks(newWeeks);
+    toast({ description: "Oefening volgorde aangepast" });
   };
 
   const handleSubmit = async () => {
@@ -222,9 +406,17 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
         const weekId = `${programId}-week-${week.weekNumber}`;
         await supabase.from("weeks").insert([{ id: weekId, program_id: programId, week_number: week.weekNumber, name: week.name }]);
 
-        for (const workout of week.workouts) {
-          const workoutId = `${weekId}-workout-${workout.dayNumber}`;
-          await supabase.from("workouts").insert([{ id: workoutId, week_id: weekId, day_number: workout.dayNumber, name: workout.name, duration: workout.duration }]);
+        for (let w = 0; w < week.workouts.length; w++) {
+          const workout = week.workouts[w];
+          const workoutId = `${weekId}-workout-${w + 1}`;
+          await supabase.from("workouts").insert([{ 
+            id: workoutId, 
+            week_id: weekId, 
+            day_number: w + 1, 
+            name: workout.name, 
+            duration: workout.duration,
+            display_order: w 
+          }]);
 
           for (let i = 0; i < workout.exercises.length; i++) {
             const exercise = workout.exercises[i];
@@ -261,15 +453,16 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
         <Card className="p-6">
           <h2 className="text-2xl font-bold mb-4">Kies een sjabloon</h2>
           <div className="grid gap-4 md:grid-cols-3">
-            <Card className="p-6 cursor-pointer hover:bg-accent" onClick={() => createFromTemplate(4, 3)}>
+            <Card className="p-6 cursor-pointer hover:bg-accent transition-colors" onClick={() => createFromTemplate(4, 3)}>
               <h3 className="font-bold text-lg">4 Weken - 3x/week</h3>
               <p className="text-sm text-muted-foreground">Voor beginners</p>
             </Card>
-            <Card className="p-6 cursor-pointer hover:bg-accent border-2 border-primary" onClick={() => createFromTemplate(8, 4)}>
+            <Card className="p-6 cursor-pointer hover:bg-accent transition-colors border-2 border-primary" onClick={() => createFromTemplate(8, 4)}>
+              <div className="inline-block px-2 py-1 bg-primary text-primary-foreground text-xs rounded mb-2">Populair</div>
               <h3 className="font-bold text-lg">8 Weken - 4x/week</h3>
               <p className="text-sm text-muted-foreground">Standaard</p>
             </Card>
-            <Card className="p-6 cursor-pointer hover:bg-accent" onClick={() => createFromTemplate(12, 5)}>
+            <Card className="p-6 cursor-pointer hover:bg-accent transition-colors" onClick={() => createFromTemplate(12, 5)}>
               <h3 className="font-bold text-lg">12 Weken - 5x/week</h3>
               <p className="text-sm text-muted-foreground">Gevorderd</p>
             </Card>
@@ -310,10 +503,105 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
             <h2 className="text-2xl font-bold">{program.name}</h2>
             <Button variant="ghost" onClick={() => setStep("details")}>Terug</Button>
           </div>
-          <div className="flex justify-between mb-4">
-            <h3 className="text-lg font-semibold">Weken ({weeks.length})</h3>
-            <Button onClick={addWeek} size="sm"><Plus className="mr-2 h-4 w-4" />Week</Button>
-          </div>
+
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="basic">Overzicht</TabsTrigger>
+              <TabsTrigger value="exercises">Oefeningen Bewerken</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="basic" className="space-y-4 mt-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Weken ({weeks.length})</h3>
+                <Button onClick={addWeek} size="sm"><Plus className="mr-2 h-4 w-4" />Week</Button>
+              </div>
+
+              <Accordion type="multiple" className="space-y-2">
+                {weeks.map((week, weekIndex) => (
+                  <AccordionItem key={weekIndex} value={`week-${weekIndex}`} className="border rounded-lg px-4">
+                    <div className="flex items-center gap-2">
+                      <AccordionTrigger className="flex-1 hover:no-underline">
+                        <span className="font-semibold">{week.name} - {week.workouts.length} workouts</span>
+                      </AccordionTrigger>
+                      <Button variant="ghost" size="icon" onClick={() => duplicateWeek(weekIndex)}><Copy className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => removeWeek(weekIndex)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </div>
+                    <AccordionContent className="pt-4">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Workouts (sleep om te herschikken)</span>
+                          <Button onClick={() => addWorkout(weekIndex)} size="sm" variant="outline"><Plus className="mr-2 h-4 w-4" />Workout</Button>
+                        </div>
+                        
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleWorkoutDragEnd(event, weekIndex)}>
+                          <SortableContext items={week.workouts.map(w => w.id)} strategy={verticalListSortingStrategy}>
+                            <div className="space-y-2">
+                              {week.workouts.map((workout, workoutIndex) => (
+                                <SortableWorkout
+                                  key={workout.id}
+                                  workout={workout}
+                                  weekIndex={weekIndex}
+                                  workoutIndex={workoutIndex}
+                                  onDuplicate={() => duplicateWorkout(weekIndex, workoutIndex)}
+                                  onRemove={() => removeWorkout(weekIndex, workoutIndex)}
+                                />
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </TabsContent>
+
+            <TabsContent value="exercises" className="space-y-4 mt-4">
+              <Accordion type="multiple" className="space-y-2">
+                {weeks.map((week, weekIndex) => (
+                  <AccordionItem key={weekIndex} value={`week-${weekIndex}`} className="border rounded-lg px-4">
+                    <AccordionTrigger><span className="font-semibold">{week.name}</span></AccordionTrigger>
+                    <AccordionContent className="pt-4">
+                      <Accordion type="multiple" className="space-y-2">
+                        {week.workouts.map((workout, workoutIndex) => (
+                          <AccordionItem key={workout.id} value={workout.id} className="border rounded-lg px-4">
+                            <AccordionTrigger><span>{workout.name}</span></AccordionTrigger>
+                            <AccordionContent className="pt-4 space-y-4">
+                              <Button onClick={() => addExercise(weekIndex, workoutIndex)} size="sm" variant="outline" className="w-full">
+                                <Plus className="mr-2 h-4 w-4" />Oefening toevoegen
+                              </Button>
+
+                              <div className="text-sm text-muted-foreground mb-2">Sleep om volgorde te wijzigen</div>
+
+                              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleExerciseDragEnd(event, weekIndex, workoutIndex)}>
+                                <SortableContext items={workout.exercises.map(e => e.id)} strategy={verticalListSortingStrategy}>
+                                  <div className="space-y-2">
+                                    {workout.exercises.map((exercise, exerciseIndex) => (
+                                      <SortableExercise
+                                        key={exercise.id}
+                                        exercise={exercise}
+                                        weekIndex={weekIndex}
+                                        workoutIndex={workoutIndex}
+                                        exerciseIndex={exerciseIndex}
+                                        onUpdate={(field, value) => updateExercise(weekIndex, workoutIndex, exerciseIndex, field, value)}
+                                        onDuplicate={() => duplicateExercise(weekIndex, workoutIndex, exerciseIndex)}
+                                        onRemove={() => removeExercise(weekIndex, workoutIndex, exerciseIndex)}
+                                      />
+                                    ))}
+                                  </div>
+                                </SortableContext>
+                              </DndContext>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </TabsContent>
+          </Tabs>
+
           <div className="flex gap-3 pt-4">
             <Button onClick={handleSubmit} disabled={saving} className="flex-1"><Save className="mr-2 h-4 w-4" />{saving ? "Opslaan..." : "Programma Aanmaken"}</Button>
           </div>
