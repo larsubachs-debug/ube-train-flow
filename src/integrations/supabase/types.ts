@@ -491,25 +491,31 @@ export type Database = {
       programs: {
         Row: {
           created_at: string | null
+          created_by: string | null
           description: string
           icon: string
           id: string
+          is_public: boolean | null
           name: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
           description: string
           icon?: string
           id: string
+          is_public?: boolean | null
           name: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
           description?: string
           icon?: string
           id?: string
+          is_public?: boolean | null
           name?: string
           updated_at?: string | null
         }

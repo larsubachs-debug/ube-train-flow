@@ -2,20 +2,56 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar, TrendingUp, Award, Play } from "lucide-react";
-import { programs } from "@/data/programs";
 import ubeLogo from "@/assets/ube-logo.png";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePrograms } from "@/hooks/usePrograms";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Home = () => {
-  // Mock data - in real app this would come from user state
-  const currentProgram = programs[0];
-  const { progress, currentWeek, loading } = useUserProgress(currentProgram.id);
+  const { user } = useAuth();
+  const [userProgramId, setUserProgramId] = useState<string | null>(null);
+  const { data: programs = [] } = usePrograms();
+  
+  // Get user's assigned program
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchUserProgram = async () => {
+      const { data } = await supabase
+        .from("user_program_progress")
+        .select("program_id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      setUserProgramId(data?.program_id || null);
+    };
+    
+    fetchUserProgram();
+  }, [user]);
+  
+  // Use assigned program or fallback to first available
+  const currentProgram = programs.find(p => p.id === userProgramId) || programs[0];
+  const { progress, currentWeek, loading } = useUserProgress(currentProgram?.id);
   
   // Find the actual week from the program data based on progress
-  const thisWeek = currentProgram.weeks.find(
+  const thisWeek = currentProgram?.weeks.find(
     w => w.weekNumber === (progress?.current_week_number || 1)
-  ) || currentProgram.weeks[0];
+  ) || currentProgram?.weeks[0];
+  
+  if (!currentProgram) {
+    return (
+      <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Geen programma toegewezen</p>
+        </div>
+      </div>
+    );
+  }
   return <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="bg-background border-b border-border px-6 py-4">
