@@ -60,7 +60,7 @@ const Home = () => {
   return (
     <div className="min-h-screen pb-20 relative">
       {/* Gradient Background Overlay - spans entire page */}
-      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-primary via-primary/60 to-accent/20" />
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-primary via-primary/40 to-background" />
       
       {/* Hero Header with Enhanced Gradient */}
       <div className="relative overflow-hidden text-primary-foreground">
