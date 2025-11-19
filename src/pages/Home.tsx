@@ -60,10 +60,10 @@ const Home = () => {
   return (
     <div className="min-h-screen pb-20 relative">
       {/* Gradient Background Overlay - spans entire page */}
-      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-primary via-accent/10 to-background" />
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-primary via-primary/60 to-accent/20" />
       
       {/* Hero Header with Enhanced Gradient */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary/95 via-primary to-accent/30 text-primary-foreground">
+      <div className="relative overflow-hidden text-primary-foreground">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCAzNmMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjAyIi8+PC9nPjwvc3ZnPg==')] opacity-40" />
         
         <div className="relative px-6 py-8 animate-fade-in">
