@@ -40,10 +40,10 @@ const Home = () => {
 
         {/* Quick Actions */}
         <div className="flex gap-3">
-          <button className="flex-1 bg-muted/50 rounded-2xl p-3 flex flex-col items-center gap-1">
+          <Link to="/community" className="flex-1 bg-muted/50 rounded-2xl p-3 flex flex-col items-center gap-1">
             <Calendar className="w-5 h-5" />
             <span className="text-xs">Locker room</span>
-          </button>
+          </Link>
           <button className="flex-1 bg-muted/50 rounded-2xl p-3 flex flex-col items-center gap-1">
             <Calendar className="w-5 h-5" />
             <span className="text-xs">Guides</span>
