@@ -64,25 +64,28 @@ const Home = () => {
 
   return (
     <div className="min-h-screen pb-20 relative">
-      {/* Gradient Background Overlay - spans entire page */}
-      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-primary via-primary/40 to-background" />
+      {/* Enhanced Gradient Background with subtle pattern */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/30 to-background" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCAzNmMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjAzIi8+PC9nPjwvc3ZnPg==')] opacity-30" />
+      </div>
       
-      {/* Hero Header with Enhanced Gradient */}
-      <div className="relative overflow-hidden text-primary-foreground">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCAzNmMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iLjAyIi8+PC9nPjwvc3ZnPg==')] opacity-40" />
+      {/* Hero Header with Glass Effect */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/95 via-primary/80 to-transparent backdrop-blur-sm" />
         
-        <div className="relative px-6 py-8 animate-fade-in">
-          {/* Logo Section */}
-          <div className="flex flex-col items-center mb-6">
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary-foreground/20 blur-xl rounded-full" />
+        <div className="relative px-6 py-10 animate-fade-in">
+          {/* Logo Section with Glow */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="relative mb-4 animate-scale-in">
+              <div className="absolute inset-0 bg-primary-foreground/30 blur-2xl rounded-full animate-pulse" />
               <img 
                 src={branding?.logo_url || ubeLogo} 
                 alt={branding?.app_name || "U.be"} 
-                className="h-12 mb-3 relative z-10 drop-shadow-lg" 
+                className="h-16 relative z-10 drop-shadow-2xl" 
               />
             </div>
-            <p className="text-sm font-semibold tracking-wide text-primary">
+            <p className="text-sm font-bold tracking-widest text-primary-foreground/90 uppercase">
               {branding?.tagline || "ALL ABOUT U"}
             </p>
           </div>
