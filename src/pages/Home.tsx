@@ -4,11 +4,18 @@ import { Card } from "@/components/ui/card";
 import { Calendar, TrendingUp, Award, Play } from "lucide-react";
 import { programs } from "@/data/programs";
 import ubeLogo from "@/assets/ube-logo.png";
+import { useUserProgress } from "@/hooks/useUserProgress";
+import { Skeleton } from "@/components/ui/skeleton";
+
 const Home = () => {
   // Mock data - in real app this would come from user state
   const currentProgram = programs[0];
-  const nextWorkout = currentProgram.weeks[0].workouts[0];
-  const thisWeek = currentProgram.weeks[0];
+  const { progress, currentWeek, loading } = useUserProgress(currentProgram.id);
+  
+  // Find the actual week from the program data based on progress
+  const thisWeek = currentProgram.weeks.find(
+    w => w.weekNumber === (progress?.current_week_number || 1)
+  ) || currentProgram.weeks[0];
   return <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="bg-background border-b border-border px-6 py-4">
@@ -56,16 +63,32 @@ const Home = () => {
       </div>
 
       <div className="px-6 mt-6 space-y-6">
-        {/* Program Block Card */}
+        {/* Program Block Card - Dynamic Phase Info */}
         <Card className="p-0 shadow-xl bg-primary text-primary-foreground overflow-hidden">
           <div className="p-6">
-            <div className="flex items-start gap-4 mb-3">
-              <div className="w-12 h-12 rounded-full bg-primary-foreground/20" />
-              <div className="flex-1">
-                <h3 className="text-lg font-bold mb-1">Weeks 1-4, Accumulation</h3>
-                <p className="text-sm opacity-90">You'll gradually increase the volume of work, like adding sets or reps. This...</p>
+            {loading ? (
+              <div className="flex items-start gap-4 mb-3">
+                <Skeleton className="w-12 h-12 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-start gap-4 mb-3">
+                <div className="w-12 h-12 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+                  <span className="text-xl font-bold">{progress?.current_week_number || 1}</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold mb-1">
+                    {currentWeek?.phase_name || `Week ${progress?.current_week_number || 1}`}
+                  </h3>
+                  <p className="text-sm opacity-90">
+                    {currentWeek?.description || "Volg je training programma en bereik je doelen stap voor stap."}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
 

@@ -470,6 +470,39 @@ export type Database = {
           },
         ]
       }
+      user_program_progress: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          current_week_number: number
+          id: string
+          program_id: string
+          start_date: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          current_week_number?: number
+          id?: string
+          program_id: string
+          start_date?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          current_week_number?: number
+          id?: string
+          program_id?: string
+          start_date?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -536,25 +569,31 @@ export type Database = {
       weeks: {
         Row: {
           created_at: string | null
+          description: string | null
           display_order: number | null
           id: string
           name: string
+          phase_name: string | null
           program_id: string
           week_number: number
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           display_order?: number | null
           id: string
           name: string
+          phase_name?: string | null
           program_id: string
           week_number: number
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           display_order?: number | null
           id?: string
           name?: string
+          phase_name?: string | null
           program_id?: string
           week_number?: number
         }
