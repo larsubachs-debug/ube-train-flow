@@ -47,7 +47,8 @@ const Programs = () => {
                     
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">
-                        {program.weeks.length} weeks • {program.weeks[0].workouts.length} days/week
+                        {program.weeks.length} weeks
+                        {program.weeks[0]?.workouts && ` • ${program.weeks[0].workouts.length} days/week`}
                       </span>
                       
                       <Link to={`/program/${program.id}`}>
