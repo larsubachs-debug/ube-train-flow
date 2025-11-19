@@ -3,7 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Target, TrendingUp, Calendar } from "lucide-react";
+import { Target, TrendingUp, Calendar, Dumbbell } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const WeeklyTaskProgress = () => {
@@ -14,13 +14,59 @@ export const WeeklyTaskProgress = () => {
     percentage: 0,
     streak: 0
   });
+  const [programStats, setProgramStats] = useState({
+    currentWeek: 0,
+    totalWeeks: 0,
+    percentage: 0,
+    programName: ""
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       loadWeeklyProgress();
+      loadProgramProgress();
     }
   }, [user]);
+
+  const loadProgramProgress = async () => {
+    if (!user) return;
+
+    // Get user's current program
+    const { data: progress } = await supabase
+      .from('user_program_progress')
+      .select('program_id, current_week_number')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!progress) return;
+
+    // Get program details
+    const { data: program } = await supabase
+      .from('programs')
+      .select('name')
+      .eq('id', progress.program_id)
+      .single();
+
+    // Get total weeks
+    const { data: weeks } = await supabase
+      .from('weeks')
+      .select('id')
+      .eq('program_id', progress.program_id);
+
+    const totalWeeks = weeks?.length || 0;
+    const currentWeek = progress.current_week_number || 1;
+    const percentage = totalWeeks > 0 ? Math.round((currentWeek / totalWeeks) * 100) : 0;
+
+    setProgramStats({
+      currentWeek,
+      totalWeeks,
+      percentage,
+      programName: program?.name || ""
+    });
+  };
 
   const loadWeeklyProgress = async () => {
     if (!user) return;
@@ -185,12 +231,32 @@ export const WeeklyTaskProgress = () => {
           )}
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Voltooiingspercentage</span>
-            <span className="font-bold text-primary">{stats.percentage}%</span>
+        <div className="space-y-3">
+          {/* Task Progress */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Target className="h-3 w-3" />
+                Taken
+              </span>
+              <span className="font-bold text-primary">{stats.percentage}%</span>
+            </div>
+            <Progress value={stats.percentage} className="h-2" />
           </div>
-          <Progress value={stats.percentage} className="h-3" />
+
+          {/* Program Progress */}
+          {programStats.totalWeeks > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Dumbbell className="h-3 w-3" />
+                  Programma (Week {programStats.currentWeek}/{programStats.totalWeeks})
+                </span>
+                <span className="font-bold text-accent">{programStats.percentage}%</span>
+              </div>
+              <Progress value={programStats.percentage} className="h-2" />
+            </div>
+          )}
         </div>
 
         {stats.percentage === 100 && (
