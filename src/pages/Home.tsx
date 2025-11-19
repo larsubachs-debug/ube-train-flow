@@ -73,7 +73,7 @@ const Home = () => {
               <div className="absolute inset-0 bg-primary-foreground/20 blur-xl rounded-full" />
               <img src={ubeLogo} alt="U.be" className="h-12 mb-3 relative z-10 drop-shadow-lg" />
             </div>
-            <p className="text-sm font-semibold tracking-wide opacity-90">ALL ABOUT U</p>
+            <p className="text-sm font-semibold tracking-wide text-primary">ALL ABOUT U</p>
           </div>
 
           {/* Weekly Progress Card */}
