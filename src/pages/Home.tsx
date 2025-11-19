@@ -194,9 +194,9 @@ const Home = () => {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="relative">
-                          <div className="absolute inset-0 bg-accent/20 blur-md rounded-full group-hover:blur-lg transition-all" />
-                          <div className="relative bg-gradient-to-br from-accent to-accent-foreground rounded-2xl w-14 h-14 flex items-center justify-center shadow-md">
-                            <Play className="w-6 h-6 text-white fill-white" />
+                          <div className="absolute inset-0 bg-accent/20 blur-sm rounded-full group-hover:blur-md transition-all" />
+                          <div className="relative bg-gradient-to-br from-accent to-accent-foreground rounded-xl w-10 h-10 flex items-center justify-center shadow-sm">
+                            <Play className="w-4 h-4 text-white fill-white" />
                           </div>
                         </div>
                         
