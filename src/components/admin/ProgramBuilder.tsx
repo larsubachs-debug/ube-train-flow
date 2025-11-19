@@ -278,7 +278,7 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
           .insert([{
             program_id: program.id,
             media_id: mediaData.id,
-            media_type: 'image',
+            media_type: 'tile',
             display_order: 0,
           }]);
 
