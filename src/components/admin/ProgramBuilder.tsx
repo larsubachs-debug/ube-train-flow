@@ -4,10 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, ChevronLeft, ChevronRight, Upload, X } from "lucide-react";
+import { Plus, Trash2, Upload, X, Copy, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Exercise {
   name: string;
@@ -39,9 +41,32 @@ interface ProgramBuilderProps {
   onCancel: () => void;
 }
 
+// Standaard oefening templates
+const EXERCISE_TEMPLATES = {
+  warmup: [
+    { name: "Dynamische stretch", category: "warmup" as const, sets: 2, time: "5 min" },
+    { name: "Foam rolling", category: "warmup" as const, sets: 1, time: "5 min" },
+  ],
+  mainlift: [
+    { name: "Squat", category: "mainlift" as const, sets: 4, reps: "8", rpe: 8 },
+    { name: "Bench Press", category: "mainlift" as const, sets: 4, reps: "8", rpe: 8 },
+    { name: "Deadlift", category: "mainlift" as const, sets: 3, reps: "5", rpe: 9 },
+    { name: "Overhead Press", category: "mainlift" as const, sets: 4, reps: "8", rpe: 8 },
+  ],
+  accessory: [
+    { name: "Pull-ups", category: "accessory" as const, sets: 3, reps: "8-12" },
+    { name: "Dumbbell Rows", category: "accessory" as const, sets: 3, reps: "10-12" },
+    { name: "Leg Press", category: "accessory" as const, sets: 3, reps: "12-15" },
+  ],
+  conditioning: [
+    { name: "Sprint intervals", category: "conditioning" as const, time: "15 min" },
+    { name: "Assault bike", category: "conditioning" as const, time: "10 min" },
+  ],
+};
+
 export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) => {
   const { toast } = useToast();
-  const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   
@@ -55,9 +80,6 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
   const [weeks, setWeeks] = useState<Week[]>([
     { name: "Week 1", weekNumber: 1, workouts: [] }
   ]);
-
-  const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
-  const [currentWorkoutIndex, setCurrentWorkoutIndex] = useState<number | null>(null);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -82,6 +104,18 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
     ]);
   };
 
+  const duplicateWeek = (weekIndex: number) => {
+    const weekToDuplicate = weeks[weekIndex];
+    const newWeek = {
+      ...weekToDuplicate,
+      name: `${weekToDuplicate.name} (copy)`,
+      weekNumber: weeks.length + 1,
+      workouts: weekToDuplicate.workouts.map(w => ({ ...w, exercises: [...w.exercises] })),
+    };
+    setWeeks([...weeks, newWeek]);
+    toast({ description: "Week gedupliceerd" });
+  };
+
   const removeWeek = (index: number) => {
     setWeeks(weeks.filter((_, i) => i !== index));
   };
@@ -95,19 +129,35 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
       exercises: [],
     });
     setWeeks(newWeeks);
-    setCurrentWorkoutIndex(newWeeks[weekIndex].workouts.length - 1);
+  };
+
+  const duplicateWorkout = (weekIndex: number, workoutIndex: number) => {
+    const newWeeks = [...weeks];
+    const workoutToDuplicate = newWeeks[weekIndex].workouts[workoutIndex];
+    const newWorkout = {
+      ...workoutToDuplicate,
+      name: `${workoutToDuplicate.name} (copy)`,
+      dayNumber: newWeeks[weekIndex].workouts.length + 1,
+      exercises: [...workoutToDuplicate.exercises],
+    };
+    newWeeks[weekIndex].workouts.push(newWorkout);
+    setWeeks(newWeeks);
+    toast({ description: "Workout gedupliceerd" });
   };
 
   const removeWorkout = (weekIndex: number, workoutIndex: number) => {
     const newWeeks = [...weeks];
     newWeeks[weekIndex].workouts = newWeeks[weekIndex].workouts.filter((_, i) => i !== workoutIndex);
     setWeeks(newWeeks);
-    if (currentWorkoutIndex === workoutIndex) {
-      setCurrentWorkoutIndex(null);
-    }
   };
 
-  const addExercise = (weekIndex: number, workoutIndex: number) => {
+  const addExerciseFromTemplate = (weekIndex: number, workoutIndex: number, exercise: Exercise) => {
+    const newWeeks = [...weeks];
+    newWeeks[weekIndex].workouts[workoutIndex].exercises.push({ ...exercise });
+    setWeeks(newWeeks);
+  };
+
+  const addEmptyExercise = (weekIndex: number, workoutIndex: number) => {
     const newWeeks = [...weeks];
     newWeeks[weekIndex].workouts[workoutIndex].exercises.push({
       name: "",
@@ -116,6 +166,14 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
       reps: "10",
     });
     setWeeks(newWeeks);
+  };
+
+  const duplicateExercise = (weekIndex: number, workoutIndex: number, exerciseIndex: number) => {
+    const newWeeks = [...weeks];
+    const exercise = newWeeks[weekIndex].workouts[workoutIndex].exercises[exerciseIndex];
+    newWeeks[weekIndex].workouts[workoutIndex].exercises.push({ ...exercise });
+    setWeeks(newWeeks);
+    toast({ description: "Oefening gedupliceerd" });
   };
 
   const removeExercise = (weekIndex: number, workoutIndex: number, exerciseIndex: number) => {
@@ -141,10 +199,19 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
   };
 
   const handleSubmit = async () => {
+    if (!program.id || !program.name) {
+      toast({
+        title: "Vul alle velden in",
+        description: "Program ID en naam zijn verplicht",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
     try {
       let imageUrl = null;
 
-      // Upload image if provided
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `${program.id}-${Date.now()}.${fileExt}`;
@@ -162,7 +229,6 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
         imageUrl = publicUrl;
       }
 
-      // Create program
       const { error: programError } = await supabase.from("programs").insert([
         {
           id: program.id,
@@ -174,11 +240,9 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
 
       if (programError) throw programError;
 
-      // Store image URL in program_media if image was uploaded
       if (imageUrl) {
         const { data: userData } = await supabase.auth.getUser();
         
-        // First create media record
         const { data: mediaData, error: mediaError } = await supabase
           .from('media')
           .insert([{
@@ -193,7 +257,6 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
 
         if (mediaError) throw mediaError;
 
-        // Link media to program
         const { error: programMediaError } = await supabase
           .from('program_media')
           .insert([{
@@ -206,7 +269,6 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
         if (programMediaError) throw programMediaError;
       }
 
-      // Create weeks, workouts, and exercises
       for (const week of weeks) {
         const weekId = `${program.id}-week-${week.weekNumber}`;
         
@@ -263,8 +325,8 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
       }
 
       toast({
-        title: "Success",
-        description: "Program created successfully with all details",
+        title: "Succes!",
+        description: "Programma aangemaakt",
       });
 
       onComplete();
@@ -274,398 +336,395 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const renderStep1 = () => (
-    <div className="space-y-4">
-      <div>
-        <Label>Program ID (URL-friendly)</Label>
-        <Input
-          placeholder="e.g., strength-muscle"
-          value={program.id}
-          onChange={(e) => setProgram({ ...program, id: e.target.value })}
-        />
-      </div>
-      <div>
-        <Label>Program Name</Label>
-        <Input
-          placeholder="e.g., Strength & Muscle"
-          value={program.name}
-          onChange={(e) => setProgram({ ...program, name: e.target.value })}
-        />
-      </div>
-      <div>
-        <Label>Description</Label>
-        <Textarea
-          placeholder="Describe the program..."
-          value={program.description}
-          onChange={(e) => setProgram({ ...program, description: e.target.value })}
-        />
-      </div>
-      <div>
-        <Label>Program Image</Label>
-        <div className="mt-2">
-          {imagePreview ? (
-            <div className="relative inline-block">
-              <img src={imagePreview} alt="Preview" className="w-full max-w-sm rounded-lg" />
-              <Button
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2"
-                onClick={() => {
-                  setImageFile(null);
-                  setImagePreview("");
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/10">
-              <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-              <span className="text-sm text-muted-foreground">Click to upload image</span>
-              <input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageSelect}
-              />
-            </label>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  return (
+    <div className="space-y-6 max-w-4xl">
+      <Tabs defaultValue="basic" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="basic">Basis</TabsTrigger>
+          <TabsTrigger value="structure">Structuur</TabsTrigger>
+          <TabsTrigger value="exercises">Oefeningen</TabsTrigger>
+        </TabsList>
 
-  const renderStep2 = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Program Weeks</h3>
-        <Button onClick={addWeek} size="sm">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Week
-        </Button>
-      </div>
-
-      {weeks.map((week, weekIndex) => (
-        <Card key={weekIndex} className="p-4">
-          <div className="flex justify-between items-start mb-2">
-            <div className="flex-1">
-              <Input
-                value={week.name}
-                onChange={(e) => {
-                  const newWeeks = [...weeks];
-                  newWeeks[weekIndex].name = e.target.value;
-                  setWeeks(newWeeks);
-                }}
-                placeholder="Week name"
-              />
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => removeWeek(weekIndex)}
-              className="ml-2"
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {week.workouts.length} workout(s)
-          </p>
-        </Card>
-      ))}
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="space-y-4">
-      <div>
-        <Label>Select Week</Label>
-        <Select
-          value={currentWeekIndex.toString()}
-          onValueChange={(value) => setCurrentWeekIndex(parseInt(value))}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {weeks.map((week, index) => (
-              <SelectItem key={index} value={index.toString()}>
-                {week.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Workouts</h3>
-        <Button onClick={() => addWorkout(currentWeekIndex)} size="sm">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Workout
-        </Button>
-      </div>
-
-      {weeks[currentWeekIndex].workouts.map((workout, workoutIndex) => (
-        <Card key={workoutIndex} className="p-4">
-          <div className="space-y-3">
-            <div className="flex justify-between items-start">
-              <div className="flex-1 space-y-2">
-                <Input
-                  value={workout.name}
-                  onChange={(e) => {
-                    const newWeeks = [...weeks];
-                    newWeeks[currentWeekIndex].workouts[workoutIndex].name = e.target.value;
-                    setWeeks(newWeeks);
-                  }}
-                  placeholder="Workout name"
-                />
-                <Input
-                  type="number"
-                  value={workout.duration}
-                  onChange={(e) => {
-                    const newWeeks = [...weeks];
-                    newWeeks[currentWeekIndex].workouts[workoutIndex].duration = parseInt(e.target.value);
-                    setWeeks(newWeeks);
-                  }}
-                  placeholder="Duration (minutes)"
-                />
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => removeWorkout(currentWeekIndex, workoutIndex)}
-                className="ml-2"
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentWorkoutIndex(workoutIndex)}
-            >
-              {workout.exercises.length} exercise(s) - Click to edit
-            </Button>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-
-  const renderStep4 = () => {
-    if (currentWorkoutIndex === null) {
-      return (
-        <div className="text-center py-8 text-muted-foreground">
-          Please select a workout from Step 3 to add exercises
-        </div>
-      );
-    }
-
-    const workout = weeks[currentWeekIndex].workouts[currentWorkoutIndex];
-
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">
-            Exercises for {workout.name}
-          </h3>
-          <Button onClick={() => addExercise(currentWeekIndex, currentWorkoutIndex)} size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Exercise
-          </Button>
-        </div>
-
-        {workout.exercises.map((exercise, exerciseIndex) => (
-          <Card key={exerciseIndex} className="p-4">
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <h4 className="font-medium">Exercise {exerciseIndex + 1}</h4>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeExercise(currentWeekIndex, currentWorkoutIndex, exerciseIndex)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+        <TabsContent value="basic" className="space-y-4 mt-4">
+          <Card className="p-6">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Program ID *</Label>
+                  <Input
+                    placeholder="bijv: strength-muscle"
+                    value={program.id}
+                    onChange={(e) => setProgram({ ...program, id: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Icon</Label>
+                  <Input
+                    placeholder="Dumbbell"
+                    value={program.icon}
+                    onChange={(e) => setProgram({ ...program, icon: e.target.value })}
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <Label>Exercise Name</Label>
-                  <Input
-                    value={exercise.name}
-                    onChange={(e) =>
-                      updateExercise(currentWeekIndex, currentWorkoutIndex, exerciseIndex, "name", e.target.value)
-                    }
-                    placeholder="e.g., Barbell Squat"
-                  />
-                </div>
+              <div>
+                <Label>Program Naam *</Label>
+                <Input
+                  placeholder="bijv: Strength & Muscle"
+                  value={program.name}
+                  onChange={(e) => setProgram({ ...program, name: e.target.value })}
+                />
+              </div>
 
-                <div className="col-span-2">
-                  <Label>Category</Label>
-                  <Select
-                    value={exercise.category}
-                    onValueChange={(value) =>
-                      updateExercise(currentWeekIndex, currentWorkoutIndex, exerciseIndex, "category", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="warmup">Warm-up</SelectItem>
-                      <SelectItem value="mainlift">Main Lift</SelectItem>
-                      <SelectItem value="accessory">Accessory</SelectItem>
-                      <SelectItem value="conditioning">Conditioning</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label>Beschrijving</Label>
+                <Textarea
+                  placeholder="Beschrijf het programma..."
+                  value={program.description}
+                  onChange={(e) => setProgram({ ...program, description: e.target.value })}
+                  rows={4}
+                />
+              </div>
 
-                <div>
-                  <Label>Sets</Label>
-                  <Input
-                    type="number"
-                    value={exercise.sets || ""}
-                    onChange={(e) =>
-                      updateExercise(currentWeekIndex, currentWorkoutIndex, exerciseIndex, "sets", parseInt(e.target.value) || undefined)
-                    }
-                    placeholder="3"
-                  />
-                </div>
-
-                <div>
-                  <Label>Reps</Label>
-                  <Input
-                    value={exercise.reps || ""}
-                    onChange={(e) =>
-                      updateExercise(currentWeekIndex, currentWorkoutIndex, exerciseIndex, "reps", e.target.value)
-                    }
-                    placeholder="10 or 8-12"
-                  />
-                </div>
-
-                <div>
-                  <Label>Weight (kg)</Label>
-                  <Input
-                    type="number"
-                    value={exercise.weight || ""}
-                    onChange={(e) =>
-                      updateExercise(currentWeekIndex, currentWorkoutIndex, exerciseIndex, "weight", parseFloat(e.target.value) || undefined)
-                    }
-                    placeholder="100"
-                  />
-                </div>
-
-                <div>
-                  <Label>RPE (1-10)</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={exercise.rpe || ""}
-                    onChange={(e) =>
-                      updateExercise(currentWeekIndex, currentWorkoutIndex, exerciseIndex, "rpe", parseInt(e.target.value) || undefined)
-                    }
-                    placeholder="8"
-                  />
-                </div>
-
-                <div>
-                  <Label>Time</Label>
-                  <Input
-                    value={exercise.time || ""}
-                    onChange={(e) =>
-                      updateExercise(currentWeekIndex, currentWorkoutIndex, exerciseIndex, "time", e.target.value)
-                    }
-                    placeholder="30 seconds"
-                  />
-                </div>
-
-                <div>
-                  <Label>Distance</Label>
-                  <Input
-                    value={exercise.distance || ""}
-                    onChange={(e) =>
-                      updateExercise(currentWeekIndex, currentWorkoutIndex, exerciseIndex, "distance", e.target.value)
-                    }
-                    placeholder="5 km"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Label>Notes</Label>
-                  <Textarea
-                    value={exercise.notes || ""}
-                    onChange={(e) =>
-                      updateExercise(currentWeekIndex, currentWorkoutIndex, exerciseIndex, "notes", e.target.value)
-                    }
-                    placeholder="Additional instructions..."
-                  />
+              <div>
+                <Label>Programma Foto</Label>
+                <div className="mt-2">
+                  {imagePreview ? (
+                    <div className="relative inline-block">
+                      <img src={imagePreview} alt="Preview" className="w-full max-w-sm rounded-lg" />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setImageFile(null);
+                          setImagePreview("");
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/10">
+                      <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                      <span className="text-sm text-muted-foreground">Klik om foto te uploaden</span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                      />
+                    </label>
+                  )}
                 </div>
               </div>
             </div>
           </Card>
-        ))}
-      </div>
-    );
-  };
+        </TabsContent>
 
-  return (
-    <div className="space-y-6">
-      {/* Progress indicator */}
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2">
-          {[1, 2, 3, 4].map((s) => (
-            <div
-              key={s}
-              className={`h-2 w-16 rounded-full ${
-                s <= step ? "bg-primary" : "bg-muted"
-              }`}
-            />
-          ))}
-        </div>
-        <span className="text-sm text-muted-foreground">
-          Step {step} of 4
-        </span>
-      </div>
+        <TabsContent value="structure" className="space-y-4 mt-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Weken & Workouts</h3>
+            <Button onClick={addWeek} size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Week toevoegen
+            </Button>
+          </div>
 
-      {/* Step content */}
-      <Card className="p-6">
-        {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
-        {step === 4 && renderStep4()}
-      </Card>
+          <Accordion type="multiple" className="space-y-2">
+            {weeks.map((week, weekIndex) => (
+              <AccordionItem key={weekIndex} value={`week-${weekIndex}`} className="border rounded-lg px-4">
+                <div className="flex items-center gap-2">
+                  <AccordionTrigger className="flex-1 hover:no-underline">
+                    <div className="flex items-center justify-between w-full pr-4">
+                      <Input
+                        value={week.name}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          const newWeeks = [...weeks];
+                          newWeeks[weekIndex].name = e.target.value;
+                          setWeeks(newWeeks);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="max-w-xs"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {week.workouts.length} workout(s)
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => duplicateWeek(weekIndex)}
+                    title="Dupliceer week"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeWeek(weekIndex)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
 
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={() => {
-            if (step === 1) {
-              onCancel();
-            } else {
-              setStep(step - 1);
-            }
-          }}
-        >
-          <ChevronLeft className="mr-2 h-4 w-4" />
-          {step === 1 ? "Cancel" : "Previous"}
+                <AccordionContent className="space-y-2 pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addWorkout(weekIndex)}
+                    className="w-full"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Workout toevoegen
+                  </Button>
+
+                  {week.workouts.map((workout, workoutIndex) => (
+                    <Card key={workoutIndex} className="p-4">
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1 space-y-2">
+                          <Input
+                            value={workout.name}
+                            onChange={(e) => {
+                              const newWeeks = [...weeks];
+                              newWeeks[weekIndex].workouts[workoutIndex].name = e.target.value;
+                              setWeeks(newWeeks);
+                            }}
+                            placeholder="Workout naam"
+                          />
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              value={workout.duration}
+                              onChange={(e) => {
+                                const newWeeks = [...weeks];
+                                newWeeks[weekIndex].workouts[workoutIndex].duration = parseInt(e.target.value);
+                                setWeeks(newWeeks);
+                              }}
+                              placeholder="Duur (min)"
+                              className="w-32"
+                            />
+                            <span className="text-sm text-muted-foreground self-center">
+                              {workout.exercises.length} oefeningen
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => duplicateWorkout(weekIndex, workoutIndex)}
+                          title="Dupliceer workout"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeWorkout(weekIndex, workoutIndex)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </TabsContent>
+
+        <TabsContent value="exercises" className="space-y-4 mt-4">
+          <Accordion type="multiple" className="space-y-2">
+            {weeks.map((week, weekIndex) => (
+              <AccordionItem key={weekIndex} value={`week-ex-${weekIndex}`} className="border rounded-lg px-4">
+                <AccordionTrigger>
+                  {week.name} - {week.workouts.length} workout(s)
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4 pt-4">
+                  {week.workouts.map((workout, workoutIndex) => (
+                    <Card key={workoutIndex} className="p-4">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-medium">{workout.name}</h4>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addEmptyExercise(weekIndex, workoutIndex)}
+                            >
+                              <Plus className="mr-2 h-4 w-4" />
+                              Lege oefening
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <span className="text-xs text-muted-foreground self-center">Snel toevoegen:</span>
+                          {Object.entries(EXERCISE_TEMPLATES).map(([category, exercises]) => (
+                            <Select
+                              key={category}
+                              onValueChange={(value) => {
+                                const exercise = exercises[parseInt(value)];
+                                addExerciseFromTemplate(weekIndex, workoutIndex, exercise);
+                              }}
+                            >
+                              <SelectTrigger className="w-32 h-8">
+                                <SelectValue placeholder={category} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {exercises.map((ex, i) => (
+                                  <SelectItem key={i} value={i.toString()}>
+                                    {ex.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ))}
+                        </div>
+
+                        {workout.exercises.map((exercise, exerciseIndex) => (
+                          <Card key={exerciseIndex} className="p-3 bg-accent/5">
+                            <div className="space-y-3">
+                              <div className="flex justify-between items-start">
+                                <h5 className="text-sm font-medium">Oefening {exerciseIndex + 1}</h5>
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => duplicateExercise(weekIndex, workoutIndex, exerciseIndex)}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => removeExercise(weekIndex, workoutIndex, exerciseIndex)}
+                                  >
+                                    <Trash2 className="h-3 w-3 text-destructive" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <Input
+                                  value={exercise.name}
+                                  onChange={(e) =>
+                                    updateExercise(weekIndex, workoutIndex, exerciseIndex, "name", e.target.value)
+                                  }
+                                  placeholder="Naam"
+                                  className="col-span-2"
+                                />
+
+                                <Select
+                                  value={exercise.category}
+                                  onValueChange={(value) =>
+                                    updateExercise(weekIndex, workoutIndex, exerciseIndex, "category", value)
+                                  }
+                                >
+                                  <SelectTrigger className="col-span-2">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="warmup">Warm-up</SelectItem>
+                                    <SelectItem value="mainlift">Main Lift</SelectItem>
+                                    <SelectItem value="accessory">Accessory</SelectItem>
+                                    <SelectItem value="conditioning">Conditioning</SelectItem>
+                                  </SelectContent>
+                                </Select>
+
+                                <Input
+                                  type="number"
+                                  value={exercise.sets || ""}
+                                  onChange={(e) =>
+                                    updateExercise(weekIndex, workoutIndex, exerciseIndex, "sets", parseInt(e.target.value) || undefined)
+                                  }
+                                  placeholder="Sets"
+                                />
+
+                                <Input
+                                  value={exercise.reps || ""}
+                                  onChange={(e) =>
+                                    updateExercise(weekIndex, workoutIndex, exerciseIndex, "reps", e.target.value)
+                                  }
+                                  placeholder="Reps"
+                                />
+
+                                <Input
+                                  type="number"
+                                  value={exercise.weight || ""}
+                                  onChange={(e) =>
+                                    updateExercise(weekIndex, workoutIndex, exerciseIndex, "weight", parseFloat(e.target.value) || undefined)
+                                  }
+                                  placeholder="Gewicht (kg)"
+                                />
+
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max="10"
+                                  value={exercise.rpe || ""}
+                                  onChange={(e) =>
+                                    updateExercise(weekIndex, workoutIndex, exerciseIndex, "rpe", parseInt(e.target.value) || undefined)
+                                  }
+                                  placeholder="RPE (1-10)"
+                                />
+
+                                <Input
+                                  value={exercise.time || ""}
+                                  onChange={(e) =>
+                                    updateExercise(weekIndex, workoutIndex, exerciseIndex, "time", e.target.value)
+                                  }
+                                  placeholder="Tijd"
+                                />
+
+                                <Input
+                                  value={exercise.distance || ""}
+                                  onChange={(e) =>
+                                    updateExercise(weekIndex, workoutIndex, exerciseIndex, "distance", e.target.value)
+                                  }
+                                  placeholder="Afstand"
+                                />
+
+                                <Textarea
+                                  value={exercise.notes || ""}
+                                  onChange={(e) =>
+                                    updateExercise(weekIndex, workoutIndex, exerciseIndex, "notes", e.target.value)
+                                  }
+                                  placeholder="Notities..."
+                                  className="col-span-2"
+                                  rows={2}
+                                />
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </Card>
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </TabsContent>
+      </Tabs>
+
+      <div className="flex justify-between sticky bottom-0 bg-background pt-4 border-t">
+        <Button variant="outline" onClick={onCancel} disabled={saving}>
+          Annuleren
         </Button>
-
-        {step < 4 ? (
-          <Button onClick={() => setStep(step + 1)}>
-            Next
-            <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        ) : (
-          <Button onClick={handleSubmit}>
-            Create Program
-          </Button>
-        )}
+        <Button onClick={handleSubmit} disabled={saving}>
+          <Save className="mr-2 h-4 w-4" />
+          {saving ? "Opslaan..." : "Programma Aanmaken"}
+        </Button>
       </div>
     </div>
   );
