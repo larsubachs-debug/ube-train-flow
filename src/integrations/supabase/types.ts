@@ -56,6 +56,65 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          coach_id: string
+          created_at: string | null
+          id: string
+          member_id: string
+          message: string
+          read_at: string | null
+          sender_id: string
+        }
+        Insert: {
+          coach_id: string
+          created_at?: string | null
+          id?: string
+          member_id: string
+          message: string
+          read_at?: string | null
+          sender_id: string
+        }
+        Update: {
+          coach_id?: string
+          created_at?: string | null
+          id?: string
+          member_id?: string
+          message?: string
+          read_at?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "chat_messages_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "chat_messages_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkin_photos: {
         Row: {
           checkin_week: number
