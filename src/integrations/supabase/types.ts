@@ -504,6 +504,67 @@ export type Database = {
           },
         ]
       }
+      member_tasks: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          created_at: string | null
+          end_date: string
+          id: string
+          is_active: boolean | null
+          member_id: string
+          notes: string | null
+          start_date: string
+          task_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          member_id: string
+          notes?: string | null
+          start_date?: string
+          task_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          member_id?: string
+          notes?: string | null
+          start_date?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_tasks_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "member_tasks_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_tasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           approval_status: Database["public"]["Enums"]["approval_status"] | null
@@ -632,6 +693,80 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      task_completions: {
+        Row: {
+          completed_at: string | null
+          completion_date: string
+          id: string
+          member_task_id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completion_date?: string
+          id?: string
+          member_task_id: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completion_date?: string
+          id?: string
+          member_task_id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_completions_member_task_id_fkey"
+            columns: ["member_task_id"]
+            isOneToOne: false
+            referencedRelation: "member_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks_library: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          default_duration_days: number | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_daily: boolean | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          default_duration_days?: number | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_daily?: boolean | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          default_duration_days?: number | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_daily?: boolean | null
+          title?: string
           updated_at?: string | null
         }
         Relationships: []
