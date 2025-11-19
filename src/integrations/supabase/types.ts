@@ -358,6 +358,57 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_library: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty: string | null
+          equipment: string[] | null
+          id: string
+          instructions: string | null
+          is_public: boolean | null
+          muscle_groups: string[] | null
+          name: string
+          tips: string | null
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string | null
+          equipment?: string[] | null
+          id?: string
+          instructions?: string | null
+          is_public?: boolean | null
+          muscle_groups?: string[] | null
+          name: string
+          tips?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string | null
+          equipment?: string[] | null
+          id?: string
+          instructions?: string | null
+          is_public?: boolean | null
+          muscle_groups?: string[] | null
+          name?: string
+          tips?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       exercise_media: {
         Row: {
           created_at: string | null
