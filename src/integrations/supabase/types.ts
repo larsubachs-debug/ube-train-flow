@@ -330,6 +330,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           avatar_url: string | null
+          coach_id: string | null
           created_at: string | null
           display_name: string | null
           id: string
@@ -345,6 +346,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           avatar_url?: string | null
+          coach_id?: string | null
           created_at?: string | null
           display_name?: string | null
           id?: string
@@ -360,6 +362,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           avatar_url?: string | null
+          coach_id?: string | null
           created_at?: string | null
           display_name?: string | null
           id?: string
@@ -368,7 +371,22 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "profiles_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       program_media: {
         Row: {
@@ -647,7 +665,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      coach_members: {
+        Row: {
+          coach_id: string | null
+          coach_name: string | null
+          member_avatar: string | null
+          member_id: string | null
+          member_name: string | null
+          member_role: Database["public"]["Enums"]["app_role"] | null
+          member_user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "profiles_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_user_role: {
@@ -659,6 +703,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_coach_of_member: {
+        Args: { _coach_id: string; _member_id: string }
         Returns: boolean
       }
       is_user_approved: { Args: { _user_id: string }; Returns: boolean }
