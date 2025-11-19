@@ -5,6 +5,7 @@ import { MediaUploadZone } from '@/components/media/MediaUploadZone';
 import { MediaGallery } from '@/components/media/MediaGallery';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import ubeLogo from '@/assets/ube-logo.png';
 
 interface MediaItem {
   id: string;
@@ -92,6 +93,9 @@ export default function Media() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-center mb-6">
+          <img src={ubeLogo} alt="U.be" className="h-10" />
+        </div>
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Media Management</h1>
           <p className="text-muted-foreground">

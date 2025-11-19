@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar, TrendingUp, Award, Play } from "lucide-react";
 import { programs } from "@/data/programs";
+import ubeLogo from "@/assets/ube-logo.png";
 
 const Home = () => {
   // Mock data - in real app this would come from user state
@@ -15,7 +16,7 @@ const Home = () => {
       {/* Header */}
       <div className="bg-background border-b border-border px-6 py-4">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">This week</h1>
+          <img src={ubeLogo} alt="U.be" className="h-8" />
           <div className="w-10 h-10 rounded-full bg-muted" />
         </div>
         
