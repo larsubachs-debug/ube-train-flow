@@ -56,6 +56,57 @@ export type Database = {
         }
         Relationships: []
       }
+      app_branding: {
+        Row: {
+          accent_color: string | null
+          app_name: string | null
+          created_at: string | null
+          font_family: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string
+          logo_url: string | null
+          primary_color: string | null
+          show_stats_cards: boolean | null
+          show_weekly_progress: boolean | null
+          tagline: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          accent_color?: string | null
+          app_name?: string | null
+          created_at?: string | null
+          font_family?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          show_stats_cards?: boolean | null
+          show_weekly_progress?: boolean | null
+          tagline?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          accent_color?: string | null
+          app_name?: string | null
+          created_at?: string | null
+          font_family?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          show_stats_cards?: boolean | null
+          show_weekly_progress?: boolean | null
+          tagline?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           coach_id: string
