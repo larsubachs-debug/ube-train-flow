@@ -140,12 +140,12 @@ const Auth = () => {
 
   if (showForgotPassword) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/5 p-4">
         <Card className="w-full max-w-md border-2 shadow-xl">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl">Reset Password</CardTitle>
             <CardDescription className="text-base">
-              Enter your email address and we'll send you a reset link
+              Enter your email address and we&apos;ll send you a reset link
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -189,9 +189,9 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/5 p-4">
       <div className="w-full max-w-md">
-        <Card className="border-2 shadow-xl">
+        <Card className="border-2 shadow-xl backdrop-blur-sm bg-card/95">
           <CardHeader className="text-center space-y-4 pb-6">
             <div className="flex justify-center">
               <img src={ubeLogo} alt="U.be" className="h-20" />
