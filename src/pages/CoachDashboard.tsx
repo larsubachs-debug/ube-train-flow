@@ -7,9 +7,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, TrendingUp, Calendar, Award, MessageCircle } from "lucide-react";
+import { Users, TrendingUp, Calendar, Award, MessageCircle, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { ProgramAssigner } from "@/components/admin/ProgramAssigner";
 
 interface Member {
   member_id: string;
@@ -41,6 +42,7 @@ const CoachDashboard = () => {
   const [memberCheckIns, setMemberCheckIns] = useState<CheckIn[]>([]);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [assigningMember, setAssigningMember] = useState<Member | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -208,6 +210,16 @@ const CoachDashboard = () => {
                             <MessageCircle className="h-4 w-4" />
                           </Button>
                         </Link>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAssigningMember(member);
+                          }}
+                        >
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </Card>
@@ -316,6 +328,16 @@ const CoachDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {assigningMember && (
+        <ProgramAssigner
+          open={!!assigningMember}
+          onOpenChange={(open) => !open && setAssigningMember(null)}
+          memberId={assigningMember.member_id}
+          memberName={assigningMember.member_name}
+          memberUserId={assigningMember.member_user_id}
+        />
+      )}
     </div>
   );
 };

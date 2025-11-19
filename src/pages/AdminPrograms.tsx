@@ -89,7 +89,12 @@ const AdminPrograms = () => {
             <Card key={program.id} className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold">{program.name}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-xl font-semibold">{program.name}</h3>
+                    {!(program as any).is_public && (
+                      <span className="text-xs px-2 py-1 bg-muted rounded">Privé</span>
+                    )}
+                  </div>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {program.description}
                   </p>

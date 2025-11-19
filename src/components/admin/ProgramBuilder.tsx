@@ -192,6 +192,7 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
     name: "",
     description: "",
     icon: "Dumbbell",
+    is_public: true,
   });
 
   const [weeks, setWeeks] = useState<Week[]>([]);
@@ -390,7 +391,15 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
         imageUrl = publicUrl;
       }
 
-      await supabase.from("programs").insert([{ id: programId, name: program.name, description: program.description, icon: program.icon }]);
+      const { data: userData } = await supabase.auth.getUser();
+      await supabase.from("programs").insert([{ 
+        id: programId, 
+        name: program.name, 
+        description: program.description, 
+        icon: program.icon,
+        is_public: program.is_public,
+        created_by: userData.user?.id,
+      }]);
 
       if (imageUrl) {
         const { data: userData } = await supabase.auth.getUser();
@@ -497,6 +506,18 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/10 mt-2">
                 <Upload className="w-8 h-8 text-muted-foreground" /><input type="file" className="hidden" accept="image/*" onChange={handleImageSelect} />
               </label>
+            </div>
+            <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg">
+              <input
+                type="checkbox"
+                id="isPublic"
+                checked={program.is_public}
+                onChange={(e) => setProgram({ ...program, is_public: e.target.checked })}
+                className="w-4 h-4 rounded border-input"
+              />
+              <Label htmlFor="isPublic" className="cursor-pointer">
+                Publiek programma (zichtbaar voor iedereen)
+              </Label>
             </div>
           </div>
           <div className="flex gap-3 pt-4">
