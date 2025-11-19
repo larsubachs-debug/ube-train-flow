@@ -5,9 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, TrendingUp, Calendar, Award } from "lucide-react";
+import { Users, TrendingUp, Calendar, Award, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 interface Member {
   member_id: string;
@@ -173,33 +175,43 @@ const CoachDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            {members.map((member) => (
-              <Card
-                key={member.member_id}
-                className={`p-4 cursor-pointer transition-colors ${
-                  selectedMember?.member_id === member.member_id
-                    ? "border-primary"
-                    : "hover:bg-accent"
-                }`}
-                onClick={() => handleMemberSelect(member)}
-              >
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarImage src={member.member_avatar || undefined} />
-                    <AvatarFallback>
-                      {member.member_name?.[0]?.toUpperCase() || "M"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h3 className="font-semibold">
-                      {member.member_name || "Naamloos"}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">Member</p>
-                  </div>
-                  <Badge variant="outline">Actief</Badge>
-                </div>
-              </Card>
-            ))}
+                {members.map((member) => (
+                  <Card
+                    key={member.member_id}
+                    className={`p-4 cursor-pointer transition-colors ${
+                      selectedMember?.member_id === member.member_id
+                        ? "border-primary"
+                        : "hover:bg-accent"
+                    }`}
+                    onClick={() => handleMemberSelect(member)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <Avatar>
+                        <AvatarImage src={member.member_avatar || undefined} />
+                        <AvatarFallback>
+                          {member.member_name?.[0]?.toUpperCase() || "M"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <h3 className="font-semibold">
+                          {member.member_name || "Naamloos"}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">Member</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">Actief</Badge>
+                        <Link 
+                          to={`/coach/chat/${member.member_id}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button size="sm" variant="ghost">
+                            <MessageCircle className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
           </TabsContent>
 
           <TabsContent value="details" className="space-y-6">
