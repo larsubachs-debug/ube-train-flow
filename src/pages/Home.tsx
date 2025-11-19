@@ -9,6 +9,7 @@ import { usePrograms } from "@/hooks/usePrograms";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { DailyCheckinCard } from "@/components/checkin/DailyCheckinCard";
 
 const Home = () => {
   const { user } = useAuth();
@@ -164,6 +165,11 @@ const Home = () => {
             )}
           </div>
         </Card>
+
+        {/* Daily Check-in Card */}
+        <div className="px-6 -mt-2 animate-fade-in" style={{ animationDelay: '100ms' }}>
+          <DailyCheckinCard />
+        </div>
 
         {/* This Week's Workouts */}
         <div className="space-y-4 animate-fade-in" style={{ animationDelay: '150ms' }}>

@@ -159,6 +159,42 @@ export type Database = {
           },
         ]
       }
+      checkin_questions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          display_order: number | null
+          id: string
+          is_default: boolean | null
+          options: Json | null
+          question_text: string
+          question_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          display_order?: number | null
+          id?: string
+          is_default?: boolean | null
+          options?: Json | null
+          question_text: string
+          question_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          display_order?: number | null
+          id?: string
+          is_default?: boolean | null
+          options?: Json | null
+          question_text?: string
+          question_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       coach_videos: {
         Row: {
           created_at: string | null
@@ -243,6 +279,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      daily_checkins: {
+        Row: {
+          checkin_date: string
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          responses: Json
+          user_id: string
+        }
+        Insert: {
+          checkin_date?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          responses: Json
+          user_id: string
+        }
+        Update: {
+          checkin_date?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          responses?: Json
+          user_id?: string
+        }
+        Relationships: []
       }
       exercise_media: {
         Row: {
@@ -388,6 +451,58 @@ export type Database = {
           width?: number | null
         }
         Relationships: []
+      }
+      member_checkin_questions: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          member_id: string
+          question_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          member_id: string
+          question_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          member_id?: string
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_checkin_questions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "member_checkin_questions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_checkin_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "checkin_questions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

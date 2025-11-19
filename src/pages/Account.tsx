@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronRight, Crown, Settings, BookOpen, LogOut, Image, Users, Dumbbell, MessageCircle } from "lucide-react";
+import { ChevronRight, Crown, Settings, BookOpen, LogOut, Image, Users, Dumbbell, MessageCircle, ClipboardList } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ubeLogo from "@/assets/ube-logo.png";
@@ -124,6 +124,23 @@ const Account = () => {
                       <div>
                         <p className="font-medium">Program Management</p>
                         <p className="text-sm text-muted-foreground">Create & edit programs</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                </Card>
+              </Link>
+
+              <Link to="/admin/checkins">
+                <Card className="p-4 hover:bg-muted/50 transition-colors border-accent/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-accent/10 p-2 rounded-lg">
+                        <ClipboardList className="w-5 h-5 text-accent" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Check-in Beheer</p>
+                        <p className="text-sm text-muted-foreground">Beheer vragen & toewijzingen</p>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
