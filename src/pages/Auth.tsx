@@ -141,17 +141,17 @@ const Auth = () => {
   if (showForgotPassword) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Reset Password</CardTitle>
-            <CardDescription>
+        <Card className="w-full max-w-md border-2 shadow-xl">
+          <CardHeader className="space-y-2">
+            <CardTitle className="text-2xl">Reset Password</CardTitle>
+            <CardDescription className="text-base">
               Enter your email address and we'll send you a reset link
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleForgotPassword} className="space-y-4">
+            <form onSubmit={handleForgotPassword} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="reset-email">Email</Label>
+                <Label htmlFor="reset-email" className="text-sm font-medium">Email</Label>
                 <Input
                   id="reset-email"
                   name="email"
@@ -159,10 +159,15 @@ const Auth = () => {
                   placeholder="you@example.com"
                   required
                   disabled={isLoading}
+                  className="h-11"
                 />
               </div>
-              <div className="flex gap-2">
-                <Button type="submit" className="flex-1" disabled={isLoading}>
+              <div className="flex gap-3">
+                <Button 
+                  type="submit" 
+                  className="flex-1 h-11 bg-accent hover:bg-accent/90 text-accent-foreground" 
+                  disabled={isLoading}
+                >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Send Reset Link
                 </Button>
@@ -171,6 +176,7 @@ const Auth = () => {
                   variant="outline"
                   onClick={() => setShowForgotPassword(false)}
                   disabled={isLoading}
+                  className="flex-1 h-11"
                 >
                   Cancel
                 </Button>
@@ -184,27 +190,32 @@ const Auth = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-3">
-            <img src={ubeLogo} alt="U.be" className="h-16" />
-          </div>
-          <CardTitle className="text-2xl font-medium text-foreground mb-2">
-            All About <span className="font-bold">U</span>
-          </CardTitle>
-          <CardDescription>Sign in to your account or create a new one</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
+      <div className="w-full max-w-md">
+        <Card className="border-2 shadow-xl">
+          <CardHeader className="text-center space-y-4 pb-6">
+            <div className="flex justify-center">
+              <img src={ubeLogo} alt="U.be" className="h-20" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl font-medium text-foreground">
+                All About <span className="font-bold text-accent">U</span>
+              </CardTitle>
+              <CardDescription className="text-base mt-2">
+                Sign in to your account or create a new one
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="pb-8">
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6 h-12">
+                <TabsTrigger value="login" className="text-base">Sign In</TabsTrigger>
+                <TabsTrigger value="signup" className="text-base">Sign Up</TabsTrigger>
+              </TabsList>
             
-            <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
+            <TabsContent value="login" className="mt-6">
+              <form onSubmit={handleLogin} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
                   <Input
                     id="login-email"
                     name="email"
@@ -212,38 +223,44 @@ const Auth = () => {
                     placeholder="you@example.com"
                     required
                     disabled={isLoading}
+                    className="h-11"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
                   <Input
                     id="login-password"
                     name="password"
                     type="password"
                     required
                     disabled={isLoading}
+                    className="h-11"
                   />
                 </div>
                 <Button
                   type="button"
                   variant="link"
-                  className="px-0 text-sm"
+                  className="px-0 text-sm h-auto font-normal text-accent hover:text-accent/80"
                   onClick={() => setShowForgotPassword(true)}
                   disabled={isLoading}
                 >
                   Forgot password?
                 </Button>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-medium" 
+                  disabled={isLoading}
+                >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Sign In
                 </Button>
               </form>
             </TabsContent>
             
-            <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="space-y-4">
+            <TabsContent value="signup" className="mt-6">
+              <form onSubmit={handleSignup} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Label htmlFor="signup-name" className="text-sm font-medium">Full Name</Label>
                   <Input
                     id="signup-name"
                     name="displayName"
@@ -251,10 +268,11 @@ const Auth = () => {
                     placeholder="John Doe"
                     required
                     disabled={isLoading}
+                    className="h-11"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
                   <Input
                     id="signup-email"
                     name="email"
@@ -262,29 +280,38 @@ const Auth = () => {
                     placeholder="you@example.com"
                     required
                     disabled={isLoading}
+                    className="h-11"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password" className="text-sm font-medium">Password</Label>
                   <Input
                     id="signup-password"
                     name="password"
                     type="password"
+                    placeholder="Min. 6 characters"
                     required
                     disabled={isLoading}
+                    className="h-11"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-confirm">Confirm Password</Label>
+                  <Label htmlFor="signup-confirm" className="text-sm font-medium">Confirm Password</Label>
                   <Input
                     id="signup-confirm"
                     name="confirmPassword"
                     type="password"
+                    placeholder="Repeat password"
                     required
                     disabled={isLoading}
+                    className="h-11"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button 
+                  type="submit" 
+                  className="w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-medium" 
+                  disabled={isLoading}
+                >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Create Account
                 </Button>
@@ -293,6 +320,7 @@ const Auth = () => {
           </Tabs>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };
