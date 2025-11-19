@@ -12,8 +12,9 @@ const Home = () => {
   return <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="bg-background border-b border-border px-6 py-4">
-        <div className="flex items-center justify-center mb-4">
-          <img src={ubeLogo} alt="U.be" className="h-8" />
+        <div className="flex flex-col items-center mb-4">
+          <img src={ubeLogo} alt="U.be" className="h-8 mb-2" />
+          <p className="text-sm font-medium text-muted-foreground">All About U</p>
         </div>
         
         {/* Program Tabs */}
