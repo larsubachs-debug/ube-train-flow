@@ -18,6 +18,8 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverlay,
+  useDroppable,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -27,6 +29,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ExerciseLibrary } from "./ExerciseLibrary";
 
 interface Exercise {
   id: string;
@@ -69,6 +72,29 @@ interface SortableWorkoutProps {
   onDuplicate: () => void;
   onRemove: () => void;
 }
+
+interface DroppableWorkoutZoneProps {
+  workout: Workout;
+  weekIndex: number;
+  workoutIndex: number;
+  children: React.ReactNode;
+}
+
+const DroppableWorkoutZone = ({ workout, weekIndex, workoutIndex, children }: DroppableWorkoutZoneProps) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `workout-${weekIndex}-${workoutIndex}`,
+    data: { weekIndex, workoutIndex, workout }
+  });
+
+  return (
+    <div 
+      ref={setNodeRef}
+      className={`transition-all ${isOver ? 'ring-2 ring-primary rounded-lg p-2 bg-primary/5' : ''}`}
+    >
+      {children}
+    </div>
+  );
+};
 
 const SortableWorkout = ({ workout, weekIndex, workoutIndex, onDuplicate, onRemove }: SortableWorkoutProps) => {
   const {
@@ -186,6 +212,7 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [step, setStep] = useState<"template" | "details" | "structure">("template");
+  const [activeId, setActiveId] = useState<string | null>(null);
   
   const [program, setProgram] = useState({
     id: "",
@@ -203,6 +230,44 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const handleLibraryDrop = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || !active.id.toString().startsWith('library-')) return;
+    
+    // Parse the drop target (format: "workout-{weekIndex}-{workoutIndex}")
+    const overIdStr = over.id.toString();
+    if (!overIdStr.startsWith('workout-')) return;
+    
+    const [_, weekIndexStr, workoutIndexStr] = overIdStr.split('-');
+    const weekIndex = parseInt(weekIndexStr);
+    const workoutIndex = parseInt(workoutIndexStr);
+    
+    // Get the exercise data from active
+    const exerciseData = active.data.current as any;
+    
+    if (!exerciseData || weekIndex === undefined || workoutIndex === undefined) return;
+    
+    // Create new exercise from library item
+    const newExercise: Exercise = {
+      id: `ex-${Date.now()}-${Math.random()}`,
+      name: exerciseData.name,
+      category: exerciseData.category === 'cardio' ? 'conditioning' : 
+               exerciseData.category === 'core' ? 'accessory' : 
+               exerciseData.category === 'strength' ? 'mainlift' : 'accessory',
+      sets: 3,
+      reps: '10',
+    };
+    
+    // Add exercise to the target workout
+    const newWeeks = [...weeks];
+    if (newWeeks[weekIndex] && newWeeks[weekIndex].workouts[workoutIndex]) {
+      newWeeks[weekIndex].workouts[workoutIndex].exercises.push(newExercise);
+      setWeeks(newWeeks);
+      toast({ description: `${exerciseData.name} toegevoegd!` });
+    }
+  };
 
   const createFromTemplate = (weekCount: number, workoutsPerWeek: number) => {
     const newWeeks: Week[] = [];
@@ -466,7 +531,19 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
   };
 
   return (
-    <div className="space-y-6">
+    <DndContext sensors={sensors} onDragEnd={handleLibraryDrop}>
+      <div className="flex gap-6 min-h-screen">
+        {/* Exercise Library Sidebar */}
+        {step === "structure" && (
+          <div className="w-80 flex-shrink-0 border-r bg-muted/30">
+            <div className="sticky top-0">
+              <ExerciseLibrary />
+            </div>
+          </div>
+        )}
+        
+        {/* Main Content */}
+        <div className="flex-1 space-y-6">
       {step === "template" && (
         <Card className="p-6">
           <h2 className="text-2xl font-bold mb-4">Kies een sjabloon</h2>
@@ -632,7 +709,13 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
                     <AccordionContent className="pt-4">
                       <Accordion type="multiple" className="space-y-2">
                         {week.workouts.map((workout, workoutIndex) => (
-                          <AccordionItem key={workout.id} value={workout.id} className="border rounded-lg px-4">
+                          <DroppableWorkoutZone
+                            key={workout.id}
+                            workout={workout}
+                            weekIndex={weekIndex}
+                            workoutIndex={workoutIndex}
+                          >
+                            <AccordionItem value={workout.id} className="border rounded-lg px-4">
                             <AccordionTrigger><span>{workout.name}</span></AccordionTrigger>
                             <AccordionContent className="pt-4 space-y-4">
                               <Button onClick={() => addExercise(weekIndex, workoutIndex)} size="sm" variant="outline" className="w-full">
@@ -661,6 +744,7 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
                               </DndContext>
                             </AccordionContent>
                           </AccordionItem>
+                          </DroppableWorkoutZone>
                         ))}
                       </Accordion>
                     </AccordionContent>
@@ -677,6 +761,8 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
       )}
 
       {step !== "structure" && <Button variant="outline" onClick={onCancel} className="w-full">Annuleren</Button>}
-    </div>
+        </div>
+      </div>
+    </DndContext>
   );
 };
