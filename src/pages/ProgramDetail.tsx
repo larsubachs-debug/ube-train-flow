@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { programs } from "@/data/programs";
 import { ChevronLeft, Calendar, Clock, Award } from "lucide-react";
+import heroImage from "@/assets/gym-hero.jpg";
 
 const ProgramDetail = () => {
   const { programId } = useParams();
@@ -17,19 +18,27 @@ const ProgramDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="p-6">
-        <Link to="/programs">
-          <Button variant="ghost" size="sm" className="mb-4 gap-2">
+      {/* Hero Image */}
+      <div className="relative h-64 bg-gradient-to-br from-primary to-primary/70 overflow-hidden">
+        <img 
+          src={heroImage} 
+          alt={program.name}
+          className="w-full h-full object-cover opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
+        <Link to="/programs" className="absolute top-4 left-4">
+          <Button variant="ghost" size="sm" className="gap-2 text-white hover:bg-white/20">
             <ChevronLeft className="w-4 h-4" />
             Back
           </Button>
         </Link>
-
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">{program.name}</h1>
-          <p className="text-muted-foreground">{program.description}</p>
+        <div className="absolute bottom-6 left-6 right-6">
+          <h1 className="text-3xl font-bold text-white mb-2">{program.name}</h1>
+          <p className="text-white/90">{program.description}</p>
         </div>
+      </div>
 
+      <div className="p-6">
         {/* Program Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <Card className="p-4 text-center">

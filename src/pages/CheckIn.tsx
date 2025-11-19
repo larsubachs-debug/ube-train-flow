@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { Calendar, TrendingUp, Image as ImageIcon } from "lucide-react";
+import { Calendar, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import { MediaUploadZone } from "@/components/media/MediaUploadZone";
 
 const CheckIn = () => {
   const [energy, setEnergy] = useState([7]);
@@ -15,6 +16,7 @@ const CheckIn = () => {
   const [steps, setSteps] = useState("");
   const [weight, setWeight] = useState("");
   const [notes, setNotes] = useState("");
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +28,11 @@ const CheckIn = () => {
     setSteps("");
     setWeight("");
     setNotes("");
+    setPhotoUrls([]);
+  };
+
+  const handlePhotoUpload = (mediaId: string, publicUrl: string) => {
+    setPhotoUrls(prev => [...prev, publicUrl]);
   };
 
   return (
@@ -148,13 +155,38 @@ const CheckIn = () => {
           {/* Photo Upload */}
           <Card className="p-6">
             <Label className="text-lg font-semibold mb-4 block">Progress Photos</Label>
-            <Button type="button" variant="outline" className="w-full gap-2">
-              <ImageIcon className="w-4 h-4" />
-              Upload Photos
-            </Button>
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              Front, side, and back photos recommended
-            </p>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm mb-2">Front</p>
+                <MediaUploadZone
+                  bucket="checkin-photos"
+                  folder="front"
+                  accept="image"
+                  aspectRatio="3:4"
+                  onUploadComplete={handlePhotoUpload}
+                />
+              </div>
+              <div>
+                <p className="text-sm mb-2">Side</p>
+                <MediaUploadZone
+                  bucket="checkin-photos"
+                  folder="side"
+                  accept="image"
+                  aspectRatio="3:4"
+                  onUploadComplete={handlePhotoUpload}
+                />
+              </div>
+              <div>
+                <p className="text-sm mb-2">Back</p>
+                <MediaUploadZone
+                  bucket="checkin-photos"
+                  folder="back"
+                  accept="image"
+                  aspectRatio="3:4"
+                  onUploadComplete={handlePhotoUpload}
+                />
+              </div>
+            </div>
           </Card>
 
           <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-12 text-lg">
