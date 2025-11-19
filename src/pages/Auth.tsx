@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
+import ubeLogo from "@/assets/ube-logo.png";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Invalid email address"),
@@ -185,7 +186,12 @@ const Auth = () => {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold">U.be Training</CardTitle>
+          <div className="flex justify-center mb-3">
+            <img src={ubeLogo} alt="U.be" className="h-16" />
+          </div>
+          <CardTitle className="text-2xl font-medium text-foreground mb-2">
+            All About <span className="font-bold">U</span>
+          </CardTitle>
           <CardDescription>Sign in to your account or create a new one</CardDescription>
         </CardHeader>
         <CardContent>
