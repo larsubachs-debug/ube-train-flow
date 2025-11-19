@@ -208,6 +208,22 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
       return;
     }
 
+    // Check if program ID already exists
+    const { data: existingProgram } = await supabase
+      .from("programs")
+      .select("id")
+      .eq("id", program.id)
+      .maybeSingle();
+
+    if (existingProgram) {
+      toast({
+        title: "Program ID bestaat al",
+        description: "Kies een andere unieke ID voor dit programma",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       let imageUrl = null;
