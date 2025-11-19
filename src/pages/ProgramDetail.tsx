@@ -23,7 +23,15 @@ const ProgramDetail = () => {
     return <div className="p-6">Program not found</div>;
   }
 
+  if (!program.weeks || program.weeks.length === 0) {
+    return <div className="p-6">No weeks found for this program</div>;
+  }
+
   const currentWeek = program.weeks[0];
+  
+  if (!currentWeek.workouts || currentWeek.workouts.length === 0) {
+    return <div className="p-6">No workouts found for this program</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
