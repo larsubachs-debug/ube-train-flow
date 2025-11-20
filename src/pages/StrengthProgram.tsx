@@ -1,13 +1,11 @@
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import heroImage from "@/assets/gym-hero.jpg";
 import { useAuth } from "@/contexts/AuthContext";
+import { ProgramProgressOverview } from "@/components/programs/ProgramProgressOverview";
 
 const StrengthProgram = () => {
   const { data: programs = [], isLoading } = usePrograms();
@@ -51,79 +49,48 @@ const StrengthProgram = () => {
     }
   }, [displayPrograms.length]);
 
-  return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="p-6">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Strength Programs</h1>
-          <p className="text-muted-foreground">
-            Build muscle and increase strength
-          </p>
-        </div>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center pb-20">
+        <p className="text-muted-foreground">Loading programs...</p>
+      </div>
+    );
+  }
 
-        {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">Loading programs...</div>
-        ) : displayPrograms.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">No strength programs available</div>
-        ) : (
-          <div className="space-y-6">
-            {displayPrograms.map((program) => (
-              <div key={program.id} className="space-y-4">
-                <Card className="overflow-hidden border-0 shadow-xl">
-                  {/* Hero Image with Overlay */}
-                  <div className="relative h-[400px] overflow-hidden">
-                    <img 
-                      src={programImages[program.id] || heroImage}
-                      alt={program.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
-                    
-                    {/* Content Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                      <h2 className="text-4xl font-bold mb-3 uppercase tracking-wide">
-                        {program.name}
-                      </h2>
-                      <p className="text-white/90 mb-4 leading-relaxed">
-                        {program.description}
-                      </p>
-                      
-                      {/* Badges */}
-                      <div className="flex gap-2 flex-wrap">
-                        <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-sm px-3 py-1">
-                          <span className="mr-1">💪</span> Strength
-                        </Badge>
-                        <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-sm px-3 py-1">
-                          <span className="mr-1">🏋️</span> Muscle Building
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-                
-                {/* Action Buttons */}
-                <div className="space-y-2">
-                  <Link to={`/programs/${program.id}/workout/${program.weeks[0]?.workouts[0]?.id}`}>
-                    <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-6 text-lg">
-                      Start Training
-                    </Button>
-                  </Link>
-                  <Link to={`/program/${program.id}`}>
-                    <Button variant="outline" className="w-full py-6 text-lg">
-                      View Full Program
-                    </Button>
-                  </Link>
-                  {isCoachOrAdmin && (
-                    <Link to="/admin/programs">
-                      <Button variant="ghost" className="w-full">
-                        Edit Program
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+  if (displayPrograms.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center pb-20">
+        <p className="text-muted-foreground">No strength programs available</p>
+      </div>
+    );
+  }
+
+  // Show first strength program with progress overview
+  const program = displayPrograms[0];
+  const programImage = programImages[program.id];
+
+  return (
+    <div>
+      <ProgramProgressOverview program={program} programImage={programImage} />
+      
+      {/* Action Buttons */}
+      <div className="px-6 space-y-2 pb-6">
+        <Link to={`/programs/${program.id}/workout/${program.weeks[0]?.workouts[0]?.id}`}>
+          <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-6 text-lg">
+            Start Training
+          </Button>
+        </Link>
+        <Link to={`/program/${program.id}`}>
+          <Button variant="outline" className="w-full py-6 text-lg">
+            View Full Program
+          </Button>
+        </Link>
+        {isCoachOrAdmin && (
+          <Link to="/admin/programs">
+            <Button variant="ghost" className="w-full">
+              Edit Program
+            </Button>
+          </Link>
         )}
       </div>
     </div>
