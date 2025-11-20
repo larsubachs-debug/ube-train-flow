@@ -14,6 +14,7 @@ import { DailyTasksCard } from "@/components/tasks/DailyTasksCard";
 import { WeeklyTaskProgress } from "@/components/tasks/WeeklyTaskProgress";
 import { useBranding } from "@/hooks/useBranding";
 import { StreakIndicator } from "@/components/StreakIndicator";
+import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 
 const Home = () => {
   const { user } = useAuth();
