@@ -85,16 +85,11 @@ const CardioProgram = () => {
     <div>
       <ProgramProgressOverview program={program} programImage={programImage} />
       
-      {/* Action Buttons */}
+      {/* Additional Action Buttons */}
       <div className="px-6 space-y-2 pb-6">
-        <Link to={`/programs/${program.id}/workout/${program.weeks[0]?.workouts[0]?.id}`}>
-          <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold py-6 text-lg">
-            Start Training
-          </Button>
-        </Link>
         <Link to={`/program/${program.id}`}>
           <Button variant="outline" className="w-full py-6 text-lg">
-            View Full Program
+            Bekijk Volledig Programma
           </Button>
         </Link>
         {isCoachOrAdmin && (
