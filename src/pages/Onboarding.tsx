@@ -1,23 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dumbbell, Zap, Activity, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import gymHero from "@/assets/gym-hero.jpg";
 import ubeLogo from "@/assets/ube-logo.png";
 
-const programs = [
-  { id: "strength-muscle", name: "Strength & Muscle", icon: Dumbbell },
-  { id: "hyrox-conditioning", name: "Hyrox & Conditioning", icon: Zap },
-  { id: "run-engine", name: "Run & Engine", icon: Activity },
-];
-
 const Onboarding = () => {
   const [step, setStep] = useState(1);
-  const [selectedProgram, setSelectedProgram] = useState("");
   const [name, setName] = useState("");
   const [goals, setGoals] = useState("");
   const navigate = useNavigate();
@@ -25,9 +17,7 @@ const Onboarding = () => {
   const handleNext = () => {
     if (step === 1) {
       setStep(2);
-    } else if (step === 2 && selectedProgram) {
-      setStep(3);
-    } else if (step === 3 && name && goals) {
+    } else if (step === 2 && name && goals) {
       navigate("/");
     }
   };
@@ -62,64 +52,17 @@ const Onboarding = () => {
       {step === 2 && (
         <div className="p-6 pt-12">
           <div className="max-w-lg mx-auto">
-            <h2 className="text-3xl font-bold mb-2">Choose Your Program</h2>
+            <h2 className="text-3xl font-bold mb-2">Vertel ons over jezelf</h2>
             <p className="text-muted-foreground mb-8">
-              Select the training program that aligns with your goals
-            </p>
-
-            <div className="space-y-4">
-              {programs.map((program) => {
-                const Icon = program.icon;
-                const isSelected = selectedProgram === program.id;
-                
-                return (
-                  <Card
-                    key={program.id}
-                    onClick={() => setSelectedProgram(program.id)}
-                    className={`p-6 cursor-pointer transition-all ${
-                      isSelected
-                        ? "border-accent border-2 bg-accent/5"
-                        : "hover:border-accent/50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-lg ${isSelected ? "bg-accent/20" : "bg-muted"}`}>
-                        <Icon className={`w-6 h-6 ${isSelected ? "text-accent" : ""}`} />
-                      </div>
-                      <h3 className="text-lg font-semibold">{program.name}</h3>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-
-            <Button
-              onClick={handleNext}
-              disabled={!selectedProgram}
-              className="w-full mt-8 bg-accent hover:bg-accent/90 text-accent-foreground gap-2"
-              size="lg"
-            >
-              Continue
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div className="p-6 pt-12">
-          <div className="max-w-lg mx-auto">
-            <h2 className="text-3xl font-bold mb-2">Tell Us About Yourself</h2>
-            <p className="text-muted-foreground mb-8">
-              Help us personalize your training experience
+              Je trainer zal een passend programma voor je kiezen
             </p>
 
             <div className="space-y-6">
               <div>
-                <Label htmlFor="name">Your Name</Label>
+                <Label htmlFor="name">Je Naam</Label>
                 <Input
                   id="name"
-                  placeholder="Enter your name"
+                  placeholder="Vul je naam in"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="mt-1"
@@ -127,10 +70,10 @@ const Onboarding = () => {
               </div>
 
               <div>
-                <Label htmlFor="goals">Your Goals</Label>
+                <Label htmlFor="goals">Je Doelen</Label>
                 <Textarea
                   id="goals"
-                  placeholder="What do you want to achieve? Be specific..."
+                  placeholder="Wat wil je bereiken? Wees specifiek..."
                   value={goals}
                   onChange={(e) => setGoals(e.target.value)}
                   rows={5}
