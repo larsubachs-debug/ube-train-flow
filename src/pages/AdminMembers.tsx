@@ -71,18 +71,8 @@ const AdminMembers = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
-      // Get emails from auth
-      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
-      
-      if (usersError) throw usersError;
 
-      const userList = users || [];
-
-      return (profiles as Profile[])?.map((profile) => ({
-        ...profile,
-        email: userList.find((u) => u.id === profile.user_id)?.email || "N/A",
-      })) || [];
+      return (profiles as ProfileWithEmail[]) || [];
     },
   });
 
@@ -104,15 +94,8 @@ const AdminMembers = () => {
 
       if (error) throw error;
 
-      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
-      
-      if (usersError) throw usersError;
-
-      const userList = users || [];
-
       return (profiles as any[])?.map((profile) => ({
         ...profile,
-        email: userList.find((u) => u.id === profile.user_id)?.email || "N/A",
         coach_name: profile.coach?.display_name || null,
       })) || [];
     },
