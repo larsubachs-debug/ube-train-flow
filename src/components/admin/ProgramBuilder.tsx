@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Upload, X, Copy, Save, GripVertical } from "lucide-react";
+import { Plus, Trash2, Upload, X, Copy, Save, GripVertical, Sparkles, Link2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,6 +42,8 @@ interface Exercise {
   distance?: string;
   rpe?: number;
   notes?: string;
+  group_id?: string;
+  group_type?: "superset" | "tri-set" | "giant-set";
 }
 
 interface Workout {
@@ -165,11 +167,14 @@ const SortableExercise = ({ exercise, weekIndex, workoutIndex, exerciseIndex, on
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const isCardio = exercise.category === "conditioning";
+  const hasGrouping = exercise.group_id && exercise.group_type;
+
   return (
-    <Card ref={setNodeRef} style={style} className="p-4">
+    <Card ref={setNodeRef} style={style} className={`p-4 ${hasGrouping ? 'border-l-4 border-l-primary' : ''}`}>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1">
             <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
               <GripVertical className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -181,9 +186,14 @@ const SortableExercise = ({ exercise, weekIndex, workoutIndex, exerciseIndex, on
                 <SelectItem value="warmup">Warming-up</SelectItem>
                 <SelectItem value="mainlift">Hoofdoefening</SelectItem>
                 <SelectItem value="accessory">Accessoire</SelectItem>
-                <SelectItem value="conditioning">Conditioning</SelectItem>
+                <SelectItem value="conditioning">Cardio</SelectItem>
               </SelectContent>
             </Select>
+            {hasGrouping && (
+              <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded">
+                {exercise.group_type === 'superset' ? 'Superset' : exercise.group_type === 'tri-set' ? 'Tri-set' : 'Giant-set'}
+              </span>
+            )}
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" size="icon" onClick={onDuplicate}>
@@ -195,11 +205,20 @@ const SortableExercise = ({ exercise, weekIndex, workoutIndex, exerciseIndex, on
           </div>
         </div>
         <Input placeholder="Oefening naam" value={exercise.name} onChange={(e) => onUpdate("name", e.target.value)} />
-        <div className="grid grid-cols-3 gap-2">
-          <Input type="number" placeholder="Sets" value={exercise.sets || ""} onChange={(e) => onUpdate("sets", parseInt(e.target.value) || undefined)} />
-          <Input placeholder="Reps" value={exercise.reps || ""} onChange={(e) => onUpdate("reps", e.target.value)} />
-          <Input type="number" placeholder="RPE" value={exercise.rpe || ""} onChange={(e) => onUpdate("rpe", parseInt(e.target.value) || undefined)} />
-        </div>
+        
+        {isCardio ? (
+          <div className="grid grid-cols-2 gap-2">
+            <Input placeholder="Tijd (bijv. 20 min)" value={exercise.time || ""} onChange={(e) => onUpdate("time", e.target.value)} />
+            <Input placeholder="Afstand (optioneel)" value={exercise.distance || ""} onChange={(e) => onUpdate("distance", e.target.value)} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            <Input type="number" placeholder="Sets" value={exercise.sets || ""} onChange={(e) => onUpdate("sets", parseInt(e.target.value) || undefined)} />
+            <Input placeholder="Reps" value={exercise.reps || ""} onChange={(e) => onUpdate("reps", e.target.value)} />
+            <Input type="number" placeholder="RPE" value={exercise.rpe || ""} onChange={(e) => onUpdate("rpe", parseInt(e.target.value) || undefined)} />
+          </div>
+        )}
+        
         <Textarea placeholder="Notities (optioneel)" value={exercise.notes || ""} onChange={(e) => onUpdate("notes", e.target.value)} rows={2} />
       </div>
     </Card>
@@ -213,6 +232,7 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
   const [imagePreview, setImagePreview] = useState<string>("");
   const [step, setStep] = useState<"template" | "details" | "structure">("template");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [aiGenerating, setAiGenerating] = useState(false);
   
   const [program, setProgram] = useState({
     id: "",
@@ -388,6 +408,133 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
     setWeeks(newWeeks);
   };
 
+  const generateWeekWithAI = async (weekIndex: number) => {
+    if (aiGenerating) return;
+    
+    setAiGenerating(true);
+    try {
+      const context = {
+        programType: program.name,
+        weekNumber: weeks[weekIndex].weekNumber,
+        focus: weeks[weekIndex].phase_name || "",
+      };
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-program`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ type: "generate-week", context }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "AI generatie mislukt");
+      }
+
+      const data = await response.json();
+      const newWeeks = [...weeks];
+      
+      const workoutsWithIds = data.week.workouts.map((workout: any, wIdx: number) => ({
+        ...workout,
+        id: `temp-workout-${Date.now()}-${wIdx}`,
+        exercises: workout.exercises.map((ex: any, exIdx: number) => ({
+          ...ex,
+          id: `temp-ex-${Date.now()}-${wIdx}-${exIdx}`,
+        })),
+      }));
+
+      newWeeks[weekIndex] = {
+        ...newWeeks[weekIndex],
+        name: data.week.name,
+        description: data.week.description,
+        phase_name: data.week.phase_name,
+        workouts: workoutsWithIds,
+      };
+      
+      setWeeks(newWeeks);
+      toast({ description: "Week gegenereerd met AI! 🤖" });
+    } catch (error: any) {
+      toast({ title: "AI generatie fout", description: error.message, variant: "destructive" });
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  const generateExercisesWithAI = async (weekIndex: number, workoutIndex: number, includeSuperset = false) => {
+    if (aiGenerating) return;
+    
+    setAiGenerating(true);
+    try {
+      const workout = weeks[weekIndex].workouts[workoutIndex];
+      const context = {
+        workoutType: workout.name,
+        count: 5,
+        includeSuperset,
+      };
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-program`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ type: "generate-exercises", context }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "AI generatie mislukt");
+      }
+
+      const data = await response.json();
+      const newWeeks = [...weeks];
+      
+      const exercisesWithIds = data.exercises.map((ex: any, idx: number) => ({
+        ...ex,
+        id: `temp-ex-${Date.now()}-${idx}`,
+      }));
+
+      newWeeks[weekIndex].workouts[workoutIndex].exercises.push(...exercisesWithIds);
+      setWeeks(newWeeks);
+      toast({ description: `${exercisesWithIds.length} oefeningen gegenereerd met AI! 🤖` });
+    } catch (error: any) {
+      toast({ title: "AI generatie fout", description: error.message, variant: "destructive" });
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+  const createSuperset = (weekIndex: number, workoutIndex: number, exerciseIndex: number) => {
+    const newWeeks = [...weeks];
+    const workout = newWeeks[weekIndex].workouts[workoutIndex];
+    const exercise = workout.exercises[exerciseIndex];
+    
+    if (exerciseIndex + 1 < workout.exercises.length && !workout.exercises[exerciseIndex + 1].group_id) {
+      const groupId = `group-${Date.now()}`;
+      exercise.group_id = groupId;
+      exercise.group_type = "superset";
+      workout.exercises[exerciseIndex + 1].group_id = groupId;
+      workout.exercises[exerciseIndex + 1].group_type = "superset";
+      setWeeks(newWeeks);
+      toast({ description: "Superset aangemaakt!" });
+    } else if (!exercise.group_id) {
+      const groupId = `group-${Date.now()}`;
+      exercise.group_id = groupId;
+      exercise.group_type = "superset";
+      workout.exercises.splice(exerciseIndex + 1, 0, {
+        id: `temp-ex-${Date.now()}`,
+        name: "",
+        category: exercise.category,
+        group_id: groupId,
+        group_type: "superset",
+      });
+      setWeeks(newWeeks);
+      toast({ description: "Superset aangemaakt! Vul de tweede oefening in." });
+    }
+  };
+
   const updateExercise = (
     weekIndex: number,
     workoutIndex: number,
@@ -515,6 +662,8 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
               distance: exercise.distance,
               rpe: exercise.rpe,
               notes: exercise.notes,
+              group_id: exercise.group_id || null,
+              group_type: exercise.group_type || null,
               display_order: i,
             }]);
           }
@@ -675,7 +824,20 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium">Workouts (sleep om te herschikken)</span>
-                          <Button onClick={() => addWorkout(weekIndex)} size="sm" variant="outline"><Plus className="mr-2 h-4 w-4" />Workout</Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              onClick={() => generateWeekWithAI(weekIndex)} 
+                              size="sm" 
+                              variant="secondary"
+                              disabled={aiGenerating}
+                            >
+                              <Sparkles className="mr-2 h-4 w-4" />
+                              {aiGenerating ? "Genereren..." : "AI Week"}
+                            </Button>
+                            <Button onClick={() => addWorkout(weekIndex)} size="sm" variant="outline">
+                              <Plus className="mr-2 h-4 w-4" />Workout
+                            </Button>
+                          </div>
                         </div>
                         
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => handleWorkoutDragEnd(event, weekIndex)}>
@@ -718,9 +880,36 @@ export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) =>
                             <AccordionItem value={workout.id} className="border rounded-lg px-4">
                             <AccordionTrigger><span>{workout.name}</span></AccordionTrigger>
                             <AccordionContent className="pt-4 space-y-4">
-                              <Button onClick={() => addExercise(weekIndex, workoutIndex)} size="sm" variant="outline" className="w-full">
-                                <Plus className="mr-2 h-4 w-4" />Oefening toevoegen
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button 
+                                  onClick={() => generateExercisesWithAI(weekIndex, workoutIndex, false)} 
+                                  size="sm" 
+                                  variant="secondary"
+                                  disabled={aiGenerating}
+                                  className="flex-1"
+                                >
+                                  <Sparkles className="mr-2 h-4 w-4" />
+                                  {aiGenerating ? "Genereren..." : "AI Oefeningen"}
+                                </Button>
+                                <Button 
+                                  onClick={() => generateExercisesWithAI(weekIndex, workoutIndex, true)} 
+                                  size="sm" 
+                                  variant="secondary"
+                                  disabled={aiGenerating}
+                                  className="flex-1"
+                                >
+                                  <Link2 className="mr-2 h-4 w-4" />
+                                  {aiGenerating ? "Genereren..." : "AI Superset"}
+                                </Button>
+                                <Button 
+                                  onClick={() => addExercise(weekIndex, workoutIndex)} 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="flex-1"
+                                >
+                                  <Plus className="mr-2 h-4 w-4" />Handmatig
+                                </Button>
+                              </div>
 
                               <div className="text-sm text-muted-foreground mb-2">Sleep om volgorde te wijzigen</div>
 
