@@ -276,8 +276,8 @@ const Account = () => {
                     <BookOpen className="w-5 h-5 text-accent" />
                   </div>
                   <div>
-                    <p className="font-medium">Education & Mindset</p>
-                    <p className="text-sm text-muted-foreground">6 modules available</p>
+                    <p className="font-medium">Training Guides</p>
+                    <p className="text-sm text-muted-foreground">16 guides beschikbaar</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />

@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { educationModules } from "@/data/programs";
-import { Brain, Heart, Dumbbell, Apple, Lightbulb, Play } from "lucide-react";
+import { Brain, Heart, Dumbbell, Apple, Lightbulb, Play, Zap } from "lucide-react";
+import React from "react";
 
 const iconMap = {
   sleep: Heart,
@@ -9,6 +10,7 @@ const iconMap = {
   training: Dumbbell,
   nutrition: Apple,
   mindset: Lightbulb,
+  hyrox: Zap,
 };
 
 const colorMap = {
@@ -17,19 +19,57 @@ const colorMap = {
   training: "bg-orange-500/10 text-orange-600",
   nutrition: "bg-green-500/10 text-green-600",
   mindset: "bg-amber-500/10 text-amber-600",
+  hyrox: "bg-red-500/10 text-red-600",
 };
 
 const Education = () => {
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
+  
+  const categories = [
+    { id: null, name: "Alle", icon: Play },
+    { id: "hyrox", name: "Hyrox Training", icon: Zap },
+    { id: "training", name: "Training", icon: Dumbbell },
+    { id: "nutrition", name: "Voeding", icon: Apple },
+    { id: "sleep", name: "Slaap", icon: Heart },
+    { id: "stress", name: "Stress", icon: Brain },
+    { id: "mindset", name: "Mindset", icon: Lightbulb },
+  ];
+
+  const filteredModules = selectedCategory
+    ? educationModules.filter(module => module.category === selectedCategory)
+    : educationModules;
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-6">
-        <h1 className="text-3xl font-bold mb-2">Education & Mindset</h1>
+        <h1 className="text-3xl font-bold mb-2">Training Guides</h1>
         <p className="text-muted-foreground mb-6">
-          Knowledge is power. Learn the fundamentals.
+          Leer alles over trainen naar Hyrox en optimaliseer je prestaties.
         </p>
 
+        {/* Category Filter */}
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
+          {categories.map((category) => {
+            const Icon = category.icon;
+            return (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                  selectedCategory === category.id
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-sm font-medium">{category.name}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="space-y-4">
-          {educationModules.map((module) => {
+          {filteredModules.map((module) => {
             const Icon = iconMap[module.category];
             const colorClass = colorMap[module.category];
             
@@ -59,7 +99,7 @@ const Education = () => {
 
                     <div className="flex items-center gap-2 text-accent text-sm font-medium">
                       <Play className="w-4 h-4" />
-                      <span>Watch Now</span>
+                      <span>Lees Guide</span>
                     </div>
                   </div>
                 </div>
@@ -68,14 +108,11 @@ const Education = () => {
           })}
         </div>
 
-        {/* Coming Soon */}
-        <Card className="p-8 mt-8 text-center bg-muted/30">
-          <Lightbulb className="w-12 h-12 text-accent mx-auto mb-3" />
-          <h3 className="font-semibold text-lg mb-2">More Content Coming Soon</h3>
-          <p className="text-sm text-muted-foreground">
-            We're constantly adding new modules to help you optimize every aspect of your training.
-          </p>
-        </Card>
+        {filteredModules.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Geen guides gevonden in deze categorie.</p>
+          </div>
+        )}
       </div>
     </div>
   );
