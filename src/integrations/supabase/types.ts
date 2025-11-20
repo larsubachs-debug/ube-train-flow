@@ -450,6 +450,8 @@ export type Database = {
           created_at: string | null
           display_order: number | null
           distance: string | null
+          group_id: string | null
+          group_type: string | null
           id: string
           name: string
           notes: string | null
@@ -466,6 +468,8 @@ export type Database = {
           created_at?: string | null
           display_order?: number | null
           distance?: string | null
+          group_id?: string | null
+          group_type?: string | null
           id: string
           name: string
           notes?: string | null
@@ -482,6 +486,8 @@ export type Database = {
           created_at?: string | null
           display_order?: number | null
           distance?: string | null
+          group_id?: string | null
+          group_type?: string | null
           id?: string
           name?: string
           notes?: string | null
