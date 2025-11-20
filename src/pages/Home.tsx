@@ -175,7 +175,7 @@ const Home = () => {
                 <img 
                   src={coachAvatar || defaultCoach} 
                   alt="Coach" 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover scale-150"
                 />
               </div>
               <div className="flex-1">
