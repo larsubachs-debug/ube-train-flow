@@ -1048,6 +1048,36 @@ export type Database = {
           },
         ]
       }
+      workout_completions: {
+        Row: {
+          completed_at: string | null
+          completion_date: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          user_id: string
+          workout_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completion_date?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          user_id: string
+          workout_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completion_date?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          user_id?: string
+          workout_id?: string
+        }
+        Relationships: []
+      }
       workouts: {
         Row: {
           created_at: string | null

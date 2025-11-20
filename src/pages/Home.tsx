@@ -13,6 +13,7 @@ import { DailyCheckinCard } from "@/components/checkin/DailyCheckinCard";
 import { DailyTasksCard } from "@/components/tasks/DailyTasksCard";
 import { WeeklyTaskProgress } from "@/components/tasks/WeeklyTaskProgress";
 import { useBranding } from "@/hooks/useBranding";
+import { StreakIndicator } from "@/components/StreakIndicator";
 
 const Home = () => {
   const { user } = useAuth();
@@ -180,6 +181,11 @@ const Home = () => {
             )}
           </div>
         </Card>
+
+        {/* Streak Indicator */}
+        <div className="animate-fade-in" style={{ animationDelay: '90ms' }}>
+          <StreakIndicator />
+        </div>
 
         {/* Daily Check-in Card */}
         <div className="px-6 -mt-2 animate-fade-in" style={{ animationDelay: '100ms' }}>
