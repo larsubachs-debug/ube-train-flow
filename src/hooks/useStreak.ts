@@ -7,6 +7,10 @@ interface StreakData {
   longestStreak: number;
   lastActivityDate: string | null;
   isActiveToday: boolean;
+  todayProgress: {
+    completed: number;
+    total: number;
+  };
 }
 
 export const useStreak = () => {
@@ -16,6 +20,7 @@ export const useStreak = () => {
     longestStreak: 0,
     lastActivityDate: null,
     isActiveToday: false,
+    todayProgress: { completed: 0, total: 0 },
   });
   const [loading, setLoading] = useState(true);
 
@@ -25,106 +30,187 @@ export const useStreak = () => {
     try {
       setLoading(true);
 
-      // Fetch workout completions
-      const { data: workoutCompletions } = await supabase
-        .from("workout_completions")
-        .select("completion_date")
+      // Get user's program
+      const { data: userProgress } = await supabase
+        .from("user_program_progress")
+        .select("program_id, current_week_number, start_date")
         .eq("user_id", user.id)
-        .order("completion_date", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      // Fetch task completions
-      const { data: taskCompletions } = await supabase
-        .from("task_completions")
-        .select("completion_date")
-        .eq("user_id", user.id)
-        .order("completion_date", { ascending: false });
-
-      // Combine and deduplicate dates
-      const allDates = new Set<string>();
-      
-      workoutCompletions?.forEach((completion) => {
-        allDates.add(completion.completion_date);
-      });
-      
-      taskCompletions?.forEach((completion) => {
-        allDates.add(completion.completion_date);
-      });
-
-      // Sort dates descending
-      const sortedDates = Array.from(allDates).sort((a, b) => 
-        new Date(b).getTime() - new Date(a).getTime()
-      );
-
-      if (sortedDates.length === 0) {
+      if (!userProgress) {
         setStreak({
           currentStreak: 0,
           longestStreak: 0,
           lastActivityDate: null,
           isActiveToday: false,
+          todayProgress: { completed: 0, total: 0 },
         });
         return;
       }
 
-      // Calculate current streak
-      let currentStreak = 0;
-      let longestStreak = 0;
-      let tempStreak = 0;
-      
+      // Get user's profile to find their member_id
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!profile) return;
+
+      // Get program with weeks and workouts
+      const { data: program } = await supabase
+        .from("programs")
+        .select(`
+          id,
+          weeks:weeks(
+            id,
+            week_number,
+            workouts:workouts(id, day_number)
+          )
+        `)
+        .eq("id", userProgress.program_id)
+        .single();
+
+      // Get member's assigned tasks
+      const { data: memberTasks } = await supabase
+        .from("member_tasks")
+        .select("id, task_id, start_date, end_date, tasks_library(is_daily)")
+        .eq("member_id", profile.id)
+        .eq("is_active", true);
+
+      // Get all workout completions
+      const { data: workoutCompletions } = await supabase
+        .from("workout_completions")
+        .select("workout_id, completion_date")
+        .eq("user_id", user.id);
+
+      // Get all task completions
+      const { data: taskCompletions } = await supabase
+        .from("task_completions")
+        .select("member_task_id, completion_date")
+        .eq("user_id", user.id);
+
+      // Calculate which days were fully completed
+      const startDate = new Date(userProgress.start_date);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayStr = today.toISOString().split('T')[0];
-      
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-      // Check if active today
-      const isActiveToday = sortedDates[0] === todayStr;
+      const fullyCompletedDates: string[] = [];
       
-      // Start from today or yesterday to count current streak
-      let streakStartDate = isActiveToday ? todayStr : yesterdayStr;
-      
+      // Check each day from start date until today
+      for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        const daysSinceStart = Math.floor((d.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Determine week number (1-indexed) based on program start
+        const weekNumber = Math.floor(daysSinceStart / 7) + 1;
+        
+        // Determine day of week (1-7, where 1 is the first day of the program week)
+        const dayOfWeek = (daysSinceStart % 7) + 1;
+
+        // Find workouts scheduled for this day
+        const currentWeek = program?.weeks?.find((w: any) => w.week_number === weekNumber);
+        const scheduledWorkouts = currentWeek?.workouts?.filter((w: any) => w.day_number === dayOfWeek) || [];
+        
+        // Find tasks scheduled for this day
+        const scheduledTasks = memberTasks?.filter((mt: any) => {
+          const taskStart = new Date(mt.start_date);
+          const taskEnd = new Date(mt.end_date);
+          taskStart.setHours(0, 0, 0, 0);
+          taskEnd.setHours(0, 0, 0, 0);
+          
+          return d >= taskStart && d <= taskEnd;
+        }) || [];
+
+        const totalScheduled = scheduledWorkouts.length + scheduledTasks.length;
+        
+        // If nothing scheduled, skip this day (don't count it for or against streak)
+        if (totalScheduled === 0) continue;
+
+        // Count completions for this day
+        const completedWorkouts = scheduledWorkouts.filter((w: any) => 
+          workoutCompletions?.some(wc => 
+            wc.workout_id === w.id && wc.completion_date === dateStr
+          )
+        ).length;
+
+        const completedTasks = scheduledTasks.filter((mt: any) =>
+          taskCompletions?.some(tc =>
+            tc.member_task_id === mt.id && tc.completion_date === dateStr
+          )
+        ).length;
+
+        const totalCompleted = completedWorkouts + completedTasks;
+
+        // Day is fully completed only if ALL scheduled items are done
+        if (totalCompleted === totalScheduled) {
+          fullyCompletedDates.push(dateStr);
+        }
+
+        // Track today's progress
+        if (dateStr === today.toISOString().split('T')[0]) {
+          setStreak(prev => ({
+            ...prev,
+            todayProgress: { completed: totalCompleted, total: totalScheduled },
+            isActiveToday: totalCompleted === totalScheduled,
+          }));
+        }
+      }
+
+      // Calculate current streak
+      let currentStreak = 0;
+      const todayStr = today.toISOString().split('T')[0];
+      const sortedDates = fullyCompletedDates.sort((a, b) => 
+        new Date(b).getTime() - new Date(a).getTime()
+      );
+
+      // Count backwards from today/yesterday
       for (let i = 0; i < sortedDates.length; i++) {
-        const currentDate = new Date(sortedDates[i]);
-        currentDate.setHours(0, 0, 0, 0);
+        const checkDate = new Date(today);
+        checkDate.setDate(checkDate.getDate() - i);
+        const checkStr = checkDate.toISOString().split('T')[0];
         
-        const expectedDate = new Date(today);
-        expectedDate.setDate(expectedDate.getDate() - i);
-        expectedDate.setHours(0, 0, 0, 0);
-        
-        if (sortedDates[i] === expectedDate.toISOString().split('T')[0]) {
+        if (sortedDates.includes(checkStr)) {
           currentStreak++;
-          tempStreak++;
         } else {
           break;
         }
       }
 
       // Calculate longest streak
-      tempStreak = 1;
-      longestStreak = 1;
+      let longestStreak = 0;
+      let tempStreak = 0;
       
-      for (let i = 0; i < sortedDates.length - 1; i++) {
-        const current = new Date(sortedDates[i]);
-        const next = new Date(sortedDates[i + 1]);
-        
-        const diffTime = Math.abs(current.getTime() - next.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 1) {
-          tempStreak++;
-          longestStreak = Math.max(longestStreak, tempStreak);
-        } else {
+      const allDatesOrdered = fullyCompletedDates.sort((a, b) => 
+        new Date(a).getTime() - new Date(b).getTime()
+      );
+
+      for (let i = 0; i < allDatesOrdered.length; i++) {
+        if (i === 0) {
           tempStreak = 1;
+        } else {
+          const current = new Date(allDatesOrdered[i]);
+          const prev = new Date(allDatesOrdered[i - 1]);
+          const diffDays = Math.floor((current.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 1) {
+            tempStreak++;
+          } else {
+            longestStreak = Math.max(longestStreak, tempStreak);
+            tempStreak = 1;
+          }
         }
       }
+      longestStreak = Math.max(longestStreak, tempStreak);
 
-      setStreak({
+      setStreak(prev => ({
+        ...prev,
         currentStreak,
         longestStreak: Math.max(longestStreak, currentStreak),
         lastActivityDate: sortedDates[0] || null,
-        isActiveToday,
-      });
+      }));
     } catch (error) {
       console.error("Error calculating streak:", error);
     } finally {
