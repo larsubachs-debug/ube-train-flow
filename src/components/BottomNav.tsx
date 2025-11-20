@@ -1,12 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Dumbbell, User } from "lucide-react";
+import { Home, Dumbbell, User, Heart } from "lucide-react";
 
 const BottomNav = () => {
   const location = useLocation();
 
   const navItems = [
     { path: "/", icon: Home, label: "Home" },
-    { path: "/programs", icon: Dumbbell, label: "Programs" },
+    { path: "/strength-program", icon: Dumbbell, label: "Strength" },
+    { path: "/cardio-program", icon: Heart, label: "Cardio" },
     { path: "/account", icon: User, label: "Account" },
   ];
 
