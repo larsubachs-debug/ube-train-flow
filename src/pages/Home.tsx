@@ -20,6 +20,7 @@ const Home = () => {
   const { user } = useAuth();
   const { data: branding } = useBranding();
   const [userProgramId, setUserProgramId] = useState<string | null>(null);
+  const [coachAvatar, setCoachAvatar] = useState<string | null>(null);
   const { data: programs = [] } = usePrograms();
   
   // Get user's assigned program
@@ -39,6 +40,33 @@ const Home = () => {
     };
     
     fetchUserProgram();
+  }, [user]);
+
+  // Get coach's avatar
+  useEffect(() => {
+    if (!user) return;
+    
+    const fetchCoachAvatar = async () => {
+      // Get user's profile to find their coach
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("coach_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (profile?.coach_id) {
+        // Get coach's profile with avatar
+        const { data: coachProfile } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", profile.coach_id)
+          .maybeSingle();
+        
+        setCoachAvatar(coachProfile?.avatar_url || null);
+      }
+    };
+    
+    fetchCoachAvatar();
   }, [user]);
   
   // Use assigned program or fallback to first available
@@ -144,7 +172,7 @@ const Home = () => {
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-full bg-background/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 <img 
-                  src={branding?.logo_url || ubeLogo} 
+                  src={coachAvatar || branding?.logo_url || ubeLogo} 
                   alt="Coach" 
                   className="w-full h-full object-cover"
                 />
