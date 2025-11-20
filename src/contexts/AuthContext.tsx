@@ -31,27 +31,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   const fetchUserRole = async (userId: string) => {
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .order("role", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+    try {
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .order("role", { ascending: true })
+        .limit(1)
+        .maybeSingle();
 
-    if (roleData) {
-      setUserRole(roleData.role as UserRole);
-    }
+      if (roleData) {
+        setUserRole(roleData.role as UserRole);
+      } else {
+        // If no role found, set as member by default
+        setUserRole("member");
+      }
 
-    // Fetch approval status from profiles
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("approval_status")
-      .eq("user_id", userId)
-      .maybeSingle();
+      // Fetch approval status from profiles
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("approval_status")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-    if (profileData) {
-      setApprovalStatus(profileData.approval_status as ApprovalStatus);
+      if (profileData) {
+        setApprovalStatus(profileData.approval_status as ApprovalStatus);
+      } else {
+        // If no profile found, set as pending
+        setApprovalStatus("pending");
+      }
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+      setUserRole("member");
+      setApprovalStatus("pending");
     }
   };
 
@@ -63,7 +75,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          fetchUserRole(session.user.id);
+          // Use setTimeout to avoid deadlock
+          setTimeout(() => {
+            fetchUserRole(session.user.id);
+          }, 0);
         } else {
           setUserRole(null);
           setApprovalStatus(null);

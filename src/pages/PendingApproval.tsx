@@ -3,9 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Clock, Mail } from "lucide-react";
 import ubeLogo from "@/assets/ube-logo.png";
+import { useNavigate } from "react-router-dom";
 
 const PendingApproval = () => {
   const { signOut, user, approvalStatus } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth", { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -60,7 +67,7 @@ const PendingApproval = () => {
 
         <Button
           variant="outline"
-          onClick={() => signOut()}
+          onClick={handleSignOut}
           className="w-full"
         >
           Sign Out
