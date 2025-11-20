@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { SplashScreen } from "./components/SplashScreen";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import Programs from "./pages/Programs";
@@ -57,11 +58,12 @@ const App = () => {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
           {showSplash && !hasShownSplash && (
             <SplashScreen onComplete={handleSplashComplete} />
           )}
@@ -97,9 +99,10 @@ const App = () => {
               </Routes>
             </BrowserRouter>
           </div>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
