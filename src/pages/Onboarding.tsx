@@ -45,10 +45,7 @@ const Onboarding = () => {
           
           <div className="relative z-10 flex flex-col items-center justify-center flex-1 p-6 text-center text-primary-foreground">
             <img src={ubeLogo} alt="U.be" className="h-24 mb-6 brightness-0 invert" />
-            <p className="text-xl mb-2 opacity-90">Online Training</p>
-            <p className="text-lg opacity-80 mb-12 max-w-md">
-              Transform your body and mind with world-class training programs
-            </p>
+            <p className="text-xl mb-12 opacity-90 tracking-wider">All About U</p>
             
             <Button
               onClick={handleNext}
