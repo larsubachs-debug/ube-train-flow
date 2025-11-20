@@ -66,9 +66,14 @@ const Home = () => {
 
   return (
     <div className="min-h-screen pb-20 bg-background">
-      {/* Header */}
-      <div className="px-6 pt-6 pb-4">
+      {/* Header with centered logo */}
+      <div className="relative flex items-center px-6 pt-6 pb-4">
         <h1 className="text-2xl font-bold text-foreground">Today</h1>
+        <img 
+          src={branding?.logo_url || ubeLogo} 
+          alt={branding?.app_name || "U.be"} 
+          className="h-7 object-contain absolute left-1/2 -translate-x-1/2" 
+        />
       </div>
 
       <div className="px-6 space-y-6">

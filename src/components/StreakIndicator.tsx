@@ -9,12 +9,12 @@ export const StreakIndicator = () => {
 
   if (loading) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-ube-orange/10 to-ube-orange/5 border-ube-orange/20">
-        <div className="flex items-center gap-4">
-          <Skeleton className="w-16 h-16 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-6 w-20" />
+      <Card className="p-3 bg-muted/30 border-border/40">
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-10 h-10 rounded-full" />
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-3 w-32" />
           </div>
         </div>
       </Card>
@@ -26,94 +26,48 @@ export const StreakIndicator = () => {
     : 0;
 
   return (
-    <Card className="p-4 bg-gradient-to-br from-ube-orange/10 to-ube-orange/5 border-ube-orange/20 relative overflow-hidden">
-      {/* Background flame effect */}
-      <div className="absolute -right-6 -top-6 opacity-5">
-        <Flame className="w-32 h-32" />
-      </div>
-
-      <div className="flex items-center gap-4 relative z-10">
-        {/* Streak flame icon */}
-        <div className={`relative ${currentStreak > 0 ? 'animate-pulse' : ''}`}>
-          <div className="absolute inset-0 bg-ube-orange/20 blur-xl rounded-full" />
-          <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-ube-orange to-ube-orange/70 flex items-center justify-center">
-            <Flame className={`w-8 h-8 text-white ${currentStreak > 0 ? 'animate-pulse' : ''}`} />
+    <Card className="p-3 bg-muted/30 border-border/40">
+      <div className="flex items-center gap-3">
+        {/* Streak flame icon - smaller */}
+        <div className="relative">
+          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+            <Flame className={`w-5 h-5 text-muted-foreground ${currentStreak > 0 ? 'text-orange-500' : ''}`} />
           </div>
         </div>
 
         {/* Streak info */}
         <div className="flex-1">
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-bold text-ube-orange drop-shadow-sm">
+          <div className="flex items-baseline gap-1.5">
+            <h3 className="text-xl font-bold text-foreground">
               {currentStreak}
             </h3>
-            <span className="text-sm text-muted-foreground">
-              {currentStreak === 1 ? 'dag' : 'dagen'}
+            <span className="text-xs text-muted-foreground">
+              {currentStreak === 1 ? 'dag' : 'dagen'} streak
             </span>
           </div>
           
           {/* Today's progress */}
           {todayProgress.total > 0 && (
-            <div className="mt-2">
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Vandaag</span>
-                <span className="font-medium text-foreground">
-                  {todayProgress.completed}/{todayProgress.total}
-                </span>
-              </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              <span>Vandaag: {todayProgress.completed}/{todayProgress.total}</span>
               <Progress 
                 value={progressPercentage} 
-                className="h-1.5"
+                className="h-1 flex-1 max-w-[60px]"
               />
             </div>
           )}
-          
-          {todayProgress.total === 0 && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {currentStreak > 0 ? (
-                <span className="text-ube-orange/80">Rusdag - streak blijft staan</span>
-              ) : (
-                <span>Geen planning vandaag</span>
-              )}
-            </p>
-          )}
         </div>
 
-        {/* Longest streak badge */}
+        {/* Longest streak badge - smaller */}
         {longestStreak > 0 && (
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Beste</p>
-            <p className="text-lg font-bold text-ube-orange/60">
+            <p className="text-sm font-semibold text-foreground/60">
               {longestStreak}
             </p>
           </div>
         )}
       </div>
-
-      {/* Motivational messages */}
-      {todayProgress.total > 0 && !isActiveToday && (
-        <div className="mt-3 pt-3 border-t border-ube-orange/10">
-          <p className="text-xs text-muted-foreground">
-            💪 Voltooi alle {todayProgress.total} geplande items om je streak te behouden
-          </p>
-        </div>
-      )}
-
-      {isActiveToday && currentStreak % 7 === 0 && currentStreak > 0 && (
-        <div className="mt-3 pt-3 border-t border-ube-orange/10">
-          <p className="text-xs font-medium text-ube-orange">
-            🎉 {currentStreak} dagen perfecte streak - ongelooflijk!
-          </p>
-        </div>
-      )}
-      
-      {currentStreak === 0 && todayProgress.total > 0 && (
-        <div className="mt-3 pt-3 border-t border-ube-orange/10">
-          <p className="text-xs text-muted-foreground">
-            🔥 Voltooi alles vandaag om je streak te starten
-          </p>
-        </div>
-      )}
     </Card>
   );
 };
