@@ -8,7 +8,13 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { user, loading, hasRole, isApproved } = useAuth();
+  const { user, loading, hasRole, isApproved, approvalStatus } = useAuth();
+
+  // Debug logging
+  console.log("ProtectedRoute - loading:", loading);
+  console.log("ProtectedRoute - user:", user?.email);
+  console.log("ProtectedRoute - isApproved:", isApproved);
+  console.log("ProtectedRoute - approvalStatus:", approvalStatus);
 
   if (loading) {
     return (
