@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, ArrowLeft, Image } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowLeft, Image, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -7,11 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePrograms } from "@/hooks/usePrograms";
 import { ProgramBuilder } from "@/components/admin/ProgramBuilder";
 import { ProgramImageEditor } from "@/components/admin/ProgramImageEditor";
+import { AIProgramGenerator } from "@/components/admin/AIProgramGenerator";
 
 const AdminPrograms = () => {
   const { toast } = useToast();
   const { data: programs = [], refetch } = usePrograms();
   const [isCreating, setIsCreating] = useState(false);
+  const [isGeneratingWithAI, setIsGeneratingWithAI] = useState(false);
+  const [aiGeneratedProgram, setAiGeneratedProgram] = useState<any>(null);
   const [editingImageProgram, setEditingImageProgram] = useState<{
     id: string;
     name: string;
@@ -39,6 +42,23 @@ const AdminPrograms = () => {
     refetch();
   };
 
+  if (isGeneratingWithAI) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <div className="container mx-auto px-4 py-8">
+          <AIProgramGenerator
+            onProgramGenerated={(programData) => {
+              setAiGeneratedProgram(programData);
+              setIsGeneratingWithAI(false);
+              setIsCreating(true);
+            }}
+            onCancel={() => setIsGeneratingWithAI(false)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (isCreating) {
     return (
       <div className="min-h-screen bg-background pb-20">
@@ -46,24 +66,36 @@ const AdminPrograms = () => {
           <div className="mb-8">
             <Button
               variant="ghost"
-              onClick={() => setIsCreating(false)}
+              onClick={() => {
+                setIsCreating(false);
+                setAiGeneratedProgram(null);
+              }}
               className="mb-4"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Programs
             </Button>
-            <h1 className="text-3xl font-bold text-foreground">Create New Program</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              {aiGeneratedProgram ? "Review AI Generated Program" : "Create New Program"}
+            </h1>
             <p className="text-muted-foreground">
-              Build your program step by step with all details
+              {aiGeneratedProgram
+                ? "Review en pas het AI gegenereerde programma aan indien nodig"
+                : "Build your program step by step with all details"}
             </p>
           </div>
 
           <ProgramBuilder
+            initialData={aiGeneratedProgram}
             onComplete={() => {
               setIsCreating(false);
+              setAiGeneratedProgram(null);
               refetch();
             }}
-            onCancel={() => setIsCreating(false)}
+            onCancel={() => {
+              setIsCreating(false);
+              setAiGeneratedProgram(null);
+            }}
           />
         </div>
       </div>
@@ -78,10 +110,16 @@ const AdminPrograms = () => {
             <h1 className="text-3xl font-bold text-foreground">Manage Programs</h1>
             <p className="text-muted-foreground">Create and manage training programs</p>
           </div>
-          <Button onClick={() => setIsCreating(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Program
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setIsGeneratingWithAI(true)} variant="secondary">
+              <Sparkles className="mr-2 h-4 w-4" />
+              AI Programma
+            </Button>
+            <Button onClick={() => setIsCreating(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Handmatig
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4">
