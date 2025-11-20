@@ -97,7 +97,14 @@ const Home = () => {
     <div className="min-h-screen pb-20 bg-background">
       {/* Header with centered logo */}
       <div className="relative flex items-center px-6 pt-6 pb-4">
-        <h1 className="text-2xl font-bold text-foreground">Today</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Today</h1>
+          {user && (
+            <p className="text-sm text-muted-foreground">
+              Welcome, {user.user_metadata?.display_name || user.email?.split('@')[0]}
+            </p>
+          )}
+        </div>
         <img 
           src={branding?.logo_url || ubeLogo} 
           alt={branding?.app_name || "U.be"} 
