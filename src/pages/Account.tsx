@@ -1,14 +1,34 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronRight, Crown, Settings, BookOpen, LogOut, Image, Users, Dumbbell, MessageCircle, ClipboardList, ListTodo, Palette } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ubeLogo from "@/assets/ube-logo.png";
+import { AvatarUpload } from "@/components/admin/AvatarUpload";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Account = () => {
   const { user, signOut, userRole, hasRole } = useAuth();
   const navigate = useNavigate();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", user?.id)
+      .maybeSingle();
+    
+    setProfile(data);
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -27,27 +47,49 @@ const Account = () => {
 
         {/* Profile Header */}
         <Card className="p-6 mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            <Avatar className="w-16 h-16">
-              <AvatarFallback className="bg-accent/10 text-accent text-xl font-bold">
-                {user?.email?.slice(0, 2).toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="text-xl font-bold">
-                {user?.user_metadata?.display_name || "User"}
-              </h2>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
-              {userRole && (
-                <span className="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
-                  {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-                </span>
-              )}
+          {isCoachOrAdmin ? (
+            <div className="space-y-4">
+              <AvatarUpload 
+                currentAvatarUrl={profile?.avatar_url}
+                onUploadComplete={fetchProfile}
+              />
+              <div className="text-center">
+                <h2 className="text-xl font-bold">
+                  {profile?.display_name || user?.user_metadata?.display_name || "Coach"}
+                </h2>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                {userRole && (
+                  <span className="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
+                    {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-          <Button variant="outline" className="w-full">
-            Edit Profile
-          </Button>
+          ) : (
+            <>
+              <div className="flex items-center gap-4 mb-4">
+                <Avatar className="w-16 h-16">
+                  <AvatarFallback className="bg-accent/10 text-accent text-xl font-bold">
+                    {user?.email?.slice(0, 2).toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-xl font-bold">
+                    {user?.user_metadata?.display_name || "User"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  {userRole && (
+                    <span className="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
+                      {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <Button variant="outline" className="w-full">
+                Edit Profile
+              </Button>
+            </>
+          )}
         </Card>
 
         {/* Membership Status */}
