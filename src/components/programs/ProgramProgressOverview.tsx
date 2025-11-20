@@ -53,6 +53,28 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
     };
 
     fetchStats();
+
+    // Set up real-time subscription for user stats updates
+    const channel = supabase
+      .channel('user-stats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_stats',
+          filter: `user_id=eq.${user?.id}`,
+        },
+        (payload) => {
+          console.log('User stats updated:', payload);
+          setUserStats(payload.new as UserStats);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, program.id]);
 
   if (loading) {
