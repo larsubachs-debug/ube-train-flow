@@ -9,6 +9,10 @@ const PendingApproval = () => {
   const { signOut, user, approvalStatus } = useAuth();
   const navigate = useNavigate();
 
+  // Debug logging
+  console.log("PendingApproval - approvalStatus:", approvalStatus);
+  console.log("PendingApproval - user:", user?.email);
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth", { replace: true });
@@ -20,6 +24,22 @@ const PendingApproval = () => {
         <div className="flex justify-center mb-6">
           <img src={ubeLogo} alt="U.be" className="h-16" />
         </div>
+
+        {approvalStatus === null && (
+          <>
+            <div className="mb-6">
+              <div className="w-20 h-20 mx-auto bg-accent/10 rounded-full flex items-center justify-center mb-4">
+                <Clock className="w-10 h-10 text-accent animate-pulse" />
+              </div>
+              <h1 className="text-2xl font-bold text-foreground mb-2">
+                Loading...
+              </h1>
+              <p className="text-muted-foreground">
+                Checking your account status
+              </p>
+            </div>
+          </>
+        )}
 
         {approvalStatus === "pending" && (
           <>
