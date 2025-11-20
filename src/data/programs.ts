@@ -344,5 +344,136 @@ export const educationModules = [
       "Share your goals for accountability"
     ],
     duration: 8
+  },
+  // HYROX TRAINING GUIDES
+  {
+    id: "hyrox-1",
+    title: "Hyrox Introductie: Race Format & Structuur",
+    category: "hyrox" as const,
+    keyPoints: [
+      "8x 1km run + 8 fitness stations = totaal race",
+      "Stations: SkiErg, Sled Push, Sled Pull, Burpee Broad Jumps, Rowing, Farmers Carry, Sandbag Lunges, Wall Balls",
+      "Gemiddelde finishtijd: 1:15-1:45 uur voor beginners",
+      "Elite mannen: <1:00 uur, Elite vrouwen: <1:10 uur",
+      "Singles, Doubles of Relay formaat beschikbaar"
+    ],
+    duration: 12
+  },
+  {
+    id: "hyrox-2",
+    title: "Hyrox Running Training: Zone 2 & Intervals",
+    category: "hyrox" as const,
+    keyPoints: [
+      "70% training in Zone 2 (conversational pace)",
+      "2-3x per week tempo runs: 3-5km @ race pace",
+      "Weekly long run: 8-12km steady state",
+      "Track intervals: 8x 400m @ 85-90% effort",
+      "Running volume: 30-50km per week voor intermediate"
+    ],
+    duration: 15
+  },
+  {
+    id: "hyrox-3",
+    title: "Station Training: SkiErg, Sled & Rowing",
+    category: "hyrox" as const,
+    keyPoints: [
+      "SkiErg (1000m): Focus op explosieve arm drive, target 3:30-4:30",
+      "Sled Push (50m): Low position, drive through heels, 30-45s target",
+      "Sled Pull (50m): Aggressive hand-over-hand, 45-60s target",
+      "Rowing (1000m): 500m splits @ 1:50-2:10, maintain stroke rate 26-30",
+      "Train stations 2x per week apart van running"
+    ],
+    duration: 18
+  },
+  {
+    id: "hyrox-4",
+    title: "Station Training: Carries, Lunges & Wall Balls",
+    category: "hyrox" as const,
+    keyPoints: [
+      "Farmers Carry (200m): 2x 24kg (M) / 16kg (V), grip endurance is key",
+      "Sandbag Lunges (100m): 20kg (M) / 10kg (V), alternating legs, stay upright",
+      "Wall Balls (100 reps): Depth in squat, explode up, target 3-5 min",
+      "Burpee Broad Jumps (80m): Efficient transitions, maintain rhythm",
+      "Practice transitions tussen stations voor race tempo"
+    ],
+    duration: 16
+  },
+  {
+    id: "hyrox-5",
+    title: "Hyrox Pacing Strategy: Splits & Energy Management",
+    category: "hyrox" as const,
+    keyPoints: [
+      "Start conservatief: eerste 2 runs @ 85-90% capacity",
+      "Target consistent run splits binnen 10-15s per km",
+      "Stations zijn recovery moments - don't rush",
+      "Second half push: runs 5-8 kunnen sneller dan eerste helft",
+      "Practice negative splits in training: langzaam starten, snel finishen"
+    ],
+    duration: 14
+  },
+  {
+    id: "hyrox-6",
+    title: "Race Week Prep: Taper & Race Day Plan",
+    category: "hyrox" as const,
+    keyPoints: [
+      "Week voor race: 50% volume reductie, behoud intensiteit",
+      "2 dagen voor: alleen light movement & mobility",
+      "Race morning: 2-3 uur voor ontbijt (havermout + banaan)",
+      "Warming-up: 10 min easy jog + alle stations kort doorlopen",
+      "Nutrition: 30-60g carbs per uur via gels/sports drink"
+    ],
+    duration: 12
+  },
+  {
+    id: "hyrox-7",
+    title: "Transition Efficiency: Tijd Winnen Tussen Stations",
+    category: "hyrox" as const,
+    keyPoints: [
+      "Practice walk-in's: direct van run naar station setup",
+      "Equipment pre-check: weights, settings, positioning",
+      "Breathing recovery tijdens station setup (5-10s)",
+      "Minimal rest tussen station finish en volgende run",
+      "Train transitions in workouts: run-station-run blocks"
+    ],
+    duration: 10
+  },
+  {
+    id: "hyrox-8",
+    title: "Periodisering: 12-Week Hyrox Training Plan",
+    category: "hyrox" as const,
+    keyPoints: [
+      "Week 1-4 (Base): Volume opbouwen, techniek perfectioneren",
+      "Week 5-8 (Build): Intensiteit verhogen, race pace intervals",
+      "Week 9-11 (Peak): Simulate workouts, full race rehearsals",
+      "Week 12 (Taper): Volume -50%, stay fresh, mental prep",
+      "Balance: 60% running, 30% stations, 10% recovery/mobility"
+    ],
+    duration: 20
+  },
+  {
+    id: "hyrox-9",
+    title: "Strength Training Voor Hyrox: Hybrid Athlete",
+    category: "hyrox" as const,
+    keyPoints: [
+      "2x per week full-body strength: squats, deadlifts, overhead press",
+      "Focus op power-endurance: 3-4 sets x 10-15 reps",
+      "Core stability: planks, dead bugs, pallof press - essentieel voor stations",
+      "Grip strength training: farmer walks, dead hangs, plate pinches",
+      "Timing: strength op non-running days of 6+ uur na hardlopen"
+    ],
+    duration: 16
+  },
+  {
+    id: "hyrox-10",
+    title: "Recovery & Injury Prevention: Staying Race Ready",
+    category: "hyrox" as const,
+    keyPoints: [
+      "Mobility daily: 15-20 min foam rolling + dynamic stretching",
+      "Ice baths post-hard workouts: 10-15 min @ 10-15°C",
+      "Active recovery runs: 20-30 min @ easy conversational pace",
+      "Sleep priority: 8-9 uur voor optimal recovery",
+      "Listen to body: persistent pain = take extra rest day"
+    ],
+    duration: 12
   }
 ];
