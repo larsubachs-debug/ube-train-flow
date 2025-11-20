@@ -35,22 +35,19 @@ export const DailyCheckinCard = () => {
 
   if (loading) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-        <div className="animate-pulse h-16" />
+      <Card className="p-3 bg-muted/30 border-border/40">
+        <div className="animate-pulse h-12" />
       </Card>
     );
   }
 
   if (isCompleted) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
-        <div className="flex items-center gap-3">
-          <div className="bg-green-500/20 p-2 rounded-full">
-            <CheckCircle2 className="h-6 w-6 text-green-600" />
-          </div>
+      <Card className="p-3 bg-muted/30 border-border/40">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-5 w-5 text-green-600" />
           <div className="flex-1">
-            <h3 className="font-semibold text-foreground">Dagelijkse Check-in Voltooid</h3>
-            <p className="text-sm text-muted-foreground">Je hebt de check-in van vandaag ingevuld!</p>
+            <p className="text-sm font-medium text-foreground">Check-in voltooid</p>
           </div>
         </div>
       </Card>
@@ -59,20 +56,18 @@ export const DailyCheckinCard = () => {
 
   return (
     <>
-      <Card className="p-4 bg-gradient-to-br from-primary/10 to-accent/10 border-primary/30 shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/20 p-2 rounded-full animate-pulse">
-            <ClipboardList className="h-6 w-6 text-primary" />
-          </div>
+      <Card className="p-3 bg-muted/30 border-border/40">
+        <div className="flex items-center gap-2">
+          <ClipboardList className="h-5 w-5 text-muted-foreground" />
           <div className="flex-1">
-            <h3 className="font-semibold text-foreground">Dagelijkse Check-in</h3>
-            <p className="text-sm text-muted-foreground">Vul je dagelijkse check-in in</p>
+            <p className="text-sm font-medium text-foreground">Dagelijkse Check-in</p>
           </div>
           <Button 
             onClick={() => setIsDialogOpen(true)}
-            className="bg-primary hover:bg-primary/90"
+            size="sm"
+            variant="outline"
           >
-            Start Check-in
+            Check-in
           </Button>
         </div>
       </Card>
