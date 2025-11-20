@@ -65,7 +65,7 @@ export const subscribeToPushNotifications = async (userId: string) => {
 
     // Store push subscription in database
     const { error } = await supabase
-      .from('push_subscriptions')
+      .from('push_subscriptions' as any)
       .upsert({
         user_id: userId,
         profile_id: profile.id,
@@ -98,7 +98,7 @@ export const unsubscribeFromPushNotifications = async (userId: string) => {
 
     // Remove from database
     await supabase
-      .from('push_subscriptions')
+      .from('push_subscriptions' as any)
       .delete()
       .eq('user_id', userId);
 

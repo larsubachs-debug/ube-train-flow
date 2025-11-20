@@ -333,6 +333,9 @@ const Home = () => {
           </div>
         </Card>
       </div>
+
+      {/* Push Notification Prompt */}
+      <PushNotificationPrompt />
     </div>
   );
 };
