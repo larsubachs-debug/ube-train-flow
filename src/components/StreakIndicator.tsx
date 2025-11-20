@@ -2,9 +2,10 @@ import { Flame } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useStreak } from "@/hooks/useStreak";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 
 export const StreakIndicator = () => {
-  const { currentStreak, longestStreak, isActiveToday, loading } = useStreak();
+  const { currentStreak, longestStreak, isActiveToday, todayProgress, loading } = useStreak();
 
   if (loading) {
     return (
@@ -19,6 +20,10 @@ export const StreakIndicator = () => {
       </Card>
     );
   }
+
+  const progressPercentage = todayProgress.total > 0 
+    ? (todayProgress.completed / todayProgress.total) * 100 
+    : 0;
 
   return (
     <Card className="p-4 bg-gradient-to-br from-ube-orange/10 to-ube-orange/5 border-ube-orange/20 relative overflow-hidden">
@@ -46,15 +51,32 @@ export const StreakIndicator = () => {
               {currentStreak === 1 ? 'dag' : 'dagen'}
             </span>
           </div>
-          <p className="text-sm text-foreground/70 mt-0.5">
-            {isActiveToday ? (
-              <span className="text-ube-green font-medium">✓ Actief vandaag</span>
-            ) : currentStreak > 0 ? (
-              <span className="text-ube-orange/80">Blijf volhouden!</span>
-            ) : (
-              <span>Start je streak vandaag</span>
-            )}
-          </p>
+          
+          {/* Today's progress */}
+          {todayProgress.total > 0 && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-muted-foreground">Vandaag</span>
+                <span className="font-medium text-foreground">
+                  {todayProgress.completed}/{todayProgress.total}
+                </span>
+              </div>
+              <Progress 
+                value={progressPercentage} 
+                className="h-1.5"
+              />
+            </div>
+          )}
+          
+          {todayProgress.total === 0 && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {currentStreak > 0 ? (
+                <span className="text-ube-orange/80">Rusdag - streak blijft staan</span>
+              ) : (
+                <span>Geen planning vandaag</span>
+              )}
+            </p>
+          )}
         </div>
 
         {/* Longest streak badge */}
@@ -68,19 +90,27 @@ export const StreakIndicator = () => {
         )}
       </div>
 
-      {/* Motivational message */}
-      {currentStreak === 0 && (
+      {/* Motivational messages */}
+      {todayProgress.total > 0 && !isActiveToday && (
         <div className="mt-3 pt-3 border-t border-ube-orange/10">
           <p className="text-xs text-muted-foreground">
-            💪 Voltooi een workout of taak om je streak te starten
+            💪 Voltooi alle {todayProgress.total} geplande items om je streak te behouden
+          </p>
+        </div>
+      )}
+
+      {isActiveToday && currentStreak % 7 === 0 && currentStreak > 0 && (
+        <div className="mt-3 pt-3 border-t border-ube-orange/10">
+          <p className="text-xs font-medium text-ube-orange">
+            🎉 {currentStreak} dagen perfecte streak - ongelooflijk!
           </p>
         </div>
       )}
       
-      {currentStreak > 0 && currentStreak % 7 === 0 && (
+      {currentStreak === 0 && todayProgress.total > 0 && (
         <div className="mt-3 pt-3 border-t border-ube-orange/10">
-          <p className="text-xs font-medium text-ube-orange">
-            🎉 {currentStreak} dagen streak - geweldig gedaan!
+          <p className="text-xs text-muted-foreground">
+            🔥 Voltooi alles vandaag om je streak te starten
           </p>
         </div>
       )}
