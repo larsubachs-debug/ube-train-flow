@@ -5,16 +5,11 @@ import { Input } from "@/components/ui/input";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
 import { ArrowLeft, Calendar, TrendingUp } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { WorkoutCompleteButton } from "@/components/workouts/WorkoutCompleteButton";
 
 const WorkoutDetail = () => {
   const { workoutId } = useParams();
-  const { user } = useAuth();
   const [notes, setNotes] = useState("");
-  const [completed, setCompleted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: programs = [], isLoading } = usePrograms();
 
   // Fallback to static programs if database is empty
@@ -43,42 +38,6 @@ const WorkoutDetail = () => {
   if (!workout || !program) {
     return <div className="p-6">Workout not found</div>;
   }
-
-  const handleComplete = async () => {
-    if (!user || !workoutId || isSubmitting) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      // Save workout completion to database
-      const { error } = await supabase
-        .from("workout_completions")
-        .insert({
-          user_id: user.id,
-          workout_id: workoutId,
-          notes: notes || null,
-          completion_date: new Date().toISOString().split('T')[0],
-        });
-
-      if (error) {
-        // If the workout was already completed today, just show success
-        if (error.code === '23505') { // Unique violation
-          toast.success("Workout al voltooid vandaag! 💪");
-        } else {
-          throw error;
-        }
-      } else {
-        toast.success("Workout voltooid! Goed gedaan! 🔥");
-      }
-      
-      setCompleted(true);
-    } catch (error) {
-      console.error("Error completing workout:", error);
-      toast.error("Er ging iets mis. Probeer het opnieuw.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -279,19 +238,7 @@ const WorkoutDetail = () => {
 
         {/* Complete Button */}
         <div className="pt-6">
-          <Button
-            onClick={handleComplete}
-            disabled={completed || isSubmitting}
-            className="w-full bg-foreground hover:bg-foreground/90 text-background"
-            size="lg"
-          >
-            {isSubmitting 
-              ? "Bezig met opslaan..." 
-              : completed 
-                ? "✓ Workout Voltooid" 
-                : "Markeer Workout als Voltooid"
-            }
-          </Button>
+          <WorkoutCompleteButton workoutId={workoutId || ""} />
         </div>
       </div>
     </div>
