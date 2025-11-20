@@ -676,6 +676,7 @@ export type Database = {
           coach_id: string | null
           created_at: string | null
           display_name: string | null
+          email: string | null
           id: string
           rejection_reason: string | null
           role: string | null
@@ -692,6 +693,7 @@ export type Database = {
           coach_id?: string | null
           created_at?: string | null
           display_name?: string | null
+          email?: string | null
           id?: string
           rejection_reason?: string | null
           role?: string | null
@@ -708,6 +710,7 @@ export type Database = {
           coach_id?: string | null
           created_at?: string | null
           display_name?: string | null
+          email?: string | null
           id?: string
           rejection_reason?: string | null
           role?: string | null
