@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar, TrendingUp, Award, Play, Zap, Users, BookOpen, ArrowRight, CheckCircle2 } from "lucide-react";
 import ubeLogo from "@/assets/ube-logo.png";
+import defaultCoach from "@/assets/default-coach.jpg";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePrograms } from "@/hooks/usePrograms";
@@ -172,7 +173,7 @@ const Home = () => {
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-full bg-background/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 <img 
-                  src={coachAvatar || branding?.logo_url || ubeLogo} 
+                  src={coachAvatar || defaultCoach} 
                   alt="Coach" 
                   className="w-full h-full object-cover"
                 />
