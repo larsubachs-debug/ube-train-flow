@@ -65,6 +65,13 @@ interface Week {
 interface ProgramBuilderProps {
   onComplete: () => void;
   onCancel: () => void;
+  initialData?: {
+    name: string;
+    description: string;
+    icon?: string;
+    is_public?: boolean;
+    weeks: Week[];
+  };
 }
 
 interface SortableWorkoutProps {
@@ -225,24 +232,24 @@ const SortableExercise = ({ exercise, weekIndex, workoutIndex, exerciseIndex, on
   );
 };
 
-export const ProgramBuilder = ({ onComplete, onCancel }: ProgramBuilderProps) => {
+export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBuilderProps) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
-  const [step, setStep] = useState<"template" | "details" | "structure">("template");
+  const [step, setStep] = useState<"template" | "details" | "structure">(initialData ? "structure" : "template");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [aiGenerating, setAiGenerating] = useState(false);
   
   const [program, setProgram] = useState({
     id: "",
-    name: "",
-    description: "",
-    icon: "Dumbbell",
-    is_public: true,
+    name: initialData?.name || "",
+    description: initialData?.description || "",
+    icon: initialData?.icon || "Dumbbell",
+    is_public: initialData?.is_public ?? true,
   });
 
-  const [weeks, setWeeks] = useState<Week[]>([]);
+  const [weeks, setWeeks] = useState<Week[]>(initialData?.weeks || []);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
