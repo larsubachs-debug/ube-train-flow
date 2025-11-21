@@ -7,6 +7,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import ubeLogo from "@/assets/ube-logo.png";
 
 const TopNav = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,17 +26,11 @@ const TopNav = () => {
         <div className="flex items-center justify-end p-4 bg-background border-b border-border">
           <CollapsibleTrigger asChild>
             <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              {branding?.logo_url ? (
-                <img
-                  src={branding.logo_url}
-                  alt={branding.app_name || "U.be"}
-                  className="h-8 w-auto"
-                />
-              ) : (
-                <span className="text-xl font-bold">
-                  {branding?.app_name || "U.be"}
-                </span>
-              )}
+              <img
+                src={branding?.logo_url || ubeLogo}
+                alt={branding?.app_name || "U.be"}
+                className="h-8 w-auto"
+              />
             </button>
           </CollapsibleTrigger>
         </div>
