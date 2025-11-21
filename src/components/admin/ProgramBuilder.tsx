@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2, GripVertical, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -266,6 +266,32 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     toast({ description: "Oefening verwijderd" });
   };
 
+  const duplicateExercise = (exerciseId: string) => {
+    const exercise = selectedDay?.exercises.find(ex => ex.id === exerciseId);
+    if (!exercise) return;
+
+    const newExercise: Exercise = {
+      ...exercise,
+      id: `ex-${Date.now()}`,
+      name: `${exercise.name} (copy)`,
+      sets: exercise.sets.map(set => ({
+        ...set,
+        id: `set-${Date.now()}-${Math.random()}`,
+      })),
+      selected: false,
+    };
+
+    const updatedDays = days.map(day => 
+      day.id === selectedDayId 
+        ? { ...day, exercises: [...day.exercises, newExercise] }
+        : day
+    );
+    
+    setDays(updatedDays);
+    setSelectedExerciseId(newExercise.id);
+    toast({ description: "Oefening gedupliceerd" });
+  };
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -461,17 +487,27 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
             {selectedExercise ? (
               <Card className="p-6">
                 <div className="space-y-6">
-                  {/* Header with Delete Button */}
+                  {/* Header with Action Buttons */}
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-medium text-muted-foreground">Exercise details</h3>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteExercise(selectedExercise.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => duplicateExercise(selectedExercise.id)}
+                        className="h-8 w-8 hover:bg-muted"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteExercise(selectedExercise.id)}
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Exercise Image */}
