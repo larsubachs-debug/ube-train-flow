@@ -4,22 +4,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
-import { ArrowLeft, Calendar, TrendingUp, Check, Play } from "lucide-react";
+import { ArrowLeft, Calendar, TrendingUp, Check, Play, BarChart3 } from "lucide-react";
 import { WorkoutCompleteButton } from "@/components/workouts/WorkoutCompleteButton";
 import { ExerciseVideoDialog } from "@/components/workouts/ExerciseVideoDialog";
+import { EMOMTimer } from "@/components/workouts/EMOMTimer";
+import { RPEHistoryChart } from "@/components/workouts/RPEHistoryChart";
+import { useWorkoutSets } from "@/hooks/useWorkoutSets";
+import { toast } from "sonner";
 
 type Section = 'warmup' | 'main' | 'accessories' | 'conditioning' | 'complete';
+
+interface SetData {
+  weight: number;
+  completed: boolean;
+}
 
 const WorkoutDetail = () => {
   const { workoutId } = useParams();
   const [notes, setNotes] = useState("");
   const [currentSection, setCurrentSection] = useState<Section>('warmup');
   const [selectedExercise, setSelectedExercise] = useState<{ name: string; videoUrl?: string } | null>(null);
+  const [showRPEHistory, setShowRPEHistory] = useState<{ exerciseName: string; liftIndex: number } | null>(null);
   // RPE values: { liftIndex: { setIndex: rpeValue } }
   const [rpeValues, setRpeValues] = useState<Record<number, Record<number, number>>>({});
+  // Weight values: { liftIndex: { setIndex: weight } }
+  const [weightValues, setWeightValues] = useState<Record<number, Record<number, number>>>({});
+  // Set completion: { liftIndex: { setIndex: completed } }
+  const [setsCompleted, setSetsCompleted] = useState<Record<number, Record<number, boolean>>>({});
   const { data: programs = [], isLoading } = usePrograms();
+  const { saveSet } = useWorkoutSets(workoutId || "");
   
   // Refs for scrolling
   const warmupRef = useRef<HTMLDivElement>(null);
@@ -107,6 +123,32 @@ const WorkoutDetail = () => {
     return sectionIndex < currentIndex;
   };
 
+  // Function to handle set completion
+  const handleSetComplete = async (
+    liftIndex: number,
+    setIdx: number,
+    exerciseName: string,
+    reps: number
+  ) => {
+    const weight = weightValues[liftIndex]?.[setIdx] || 0;
+    const rpe = rpeValues[liftIndex]?.[setIdx] || null;
+
+    // Save to database
+    const success = await saveSet(exerciseName, setIdx + 1, weight, reps, rpe);
+
+    if (success) {
+      // Mark as completed
+      setSetsCompleted((prev) => ({
+        ...prev,
+        [liftIndex]: {
+          ...prev[liftIndex],
+          [setIdx]: true,
+        },
+      }));
+      toast.success(`Set ${setIdx + 1} voltooid!`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -151,6 +193,9 @@ const WorkoutDetail = () => {
       </div>
 
       <div className="px-6 py-6 space-y-8">
+        {/* EMOM Timer */}
+        <EMOMTimer totalMinutes={workout.duration} />
+
         {/* EMOM Info */}
         <div className="border-b border-border/10 pb-6">
           <p className="text-base mb-3">
@@ -207,8 +252,11 @@ const WorkoutDetail = () => {
                 <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
                   ✏️
                 </button>
-                <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
-                  📊
+                <button
+                  onClick={() => setShowRPEHistory({ exerciseName: lift.name, liftIndex })}
+                  className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors"
+                >
+                  <BarChart3 className="h-5 w-5" />
                 </button>
                 <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
                   •••
@@ -220,6 +268,8 @@ const WorkoutDetail = () => {
             <div className="space-y-2.5">
               {Array.from({ length: lift.sets || 6 }).map((_, setIdx) => {
                 const currentRPE = rpeValues[liftIndex]?.[setIdx] || 5;
+                const currentWeight = weightValues[liftIndex]?.[setIdx] || 0;
+                const isCompleted = setsCompleted[liftIndex]?.[setIdx] || false;
                 
                 return (
                   <div key={setIdx} className="flex items-center gap-3">
@@ -228,14 +278,33 @@ const WorkoutDetail = () => {
                       <Input
                         type="number"
                         placeholder="50"
-                        className="w-20 h-10 text-sm bg-muted/30 border-0 rounded-xl text-center font-medium"
+                        value={currentWeight || ""}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 0;
+                          setWeightValues((prev) => ({
+                            ...prev,
+                            [liftIndex]: {
+                              ...prev[liftIndex],
+                              [setIdx]: value,
+                            },
+                          }));
+                        }}
+                        disabled={isCompleted}
+                        className={`w-20 h-10 text-sm border-0 rounded-xl text-center font-medium ${
+                          isCompleted ? "bg-muted/50" : "bg-muted/30"
+                        }`}
                       />
                       <span className="text-xs text-muted-foreground">kg</span>
                     </div>
                     
                     <Popover>
                       <PopoverTrigger asChild>
-                        <button className="w-8 h-8 rounded-full bg-muted/30 flex items-center justify-center text-muted-foreground hover:bg-muted/40 transition-colors relative">
+                        <button
+                          disabled={isCompleted}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted/40 transition-colors relative ${
+                            isCompleted ? "bg-muted/50" : "bg-muted/30"
+                          }`}
+                        >
                           {currentRPE > 5 && (
                             <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
                               {currentRPE}
@@ -278,7 +347,15 @@ const WorkoutDetail = () => {
                       <span className="text-sm font-semibold">{lift.reps}</span>
                       <span className="text-xs text-muted-foreground">reps</span>
                     </div>
-                    <button className="w-8 h-8 rounded-full bg-muted/30 flex items-center justify-center hover:bg-[#86efac] hover:text-[#059669] transition-colors ml-auto">
+                    <button
+                      onClick={() => handleSetComplete(liftIndex, setIdx, lift.name, parseInt(lift.reps || "0"))}
+                      disabled={isCompleted}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ml-auto ${
+                        isCompleted
+                          ? "bg-[#86efac] text-[#059669]"
+                          : "bg-muted/30 hover:bg-[#86efac] hover:text-[#059669]"
+                      }`}
+                    >
                       ✓
                     </button>
                   </div>
@@ -302,6 +379,21 @@ const WorkoutDetail = () => {
         exerciseName={selectedExercise?.name || ""}
         videoUrl={selectedExercise?.videoUrl}
       />
+
+      {/* RPE History Dialog */}
+      <Dialog open={!!showRPEHistory} onOpenChange={(open) => !open && setShowRPEHistory(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>RPE Geschiedenis</DialogTitle>
+          </DialogHeader>
+          {showRPEHistory && (
+            <RPEHistoryChart
+              workoutId={workoutId || ""}
+              exerciseName={showRPEHistory.exerciseName}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

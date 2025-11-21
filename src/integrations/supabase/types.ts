@@ -1191,6 +1191,48 @@ export type Database = {
         }
         Relationships: []
       }
+      workout_sets: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          exercise_name: string
+          id: string
+          reps: number | null
+          rpe: number | null
+          set_number: number
+          user_id: string
+          weight: number | null
+          workout_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          exercise_name: string
+          id?: string
+          reps?: number | null
+          rpe?: number | null
+          set_number: number
+          user_id: string
+          weight?: number | null
+          workout_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          exercise_name?: string
+          id?: string
+          reps?: number | null
+          rpe?: number | null
+          set_number?: number
+          user_id?: string
+          weight?: number | null
+          workout_id?: string
+        }
+        Relationships: []
+      }
       workouts: {
         Row: {
           created_at: string | null
