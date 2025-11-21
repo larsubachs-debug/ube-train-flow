@@ -23,7 +23,7 @@ const TopNav = () => {
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className="fixed top-0 left-0 right-0 z-50">
-        <div className="flex items-center justify-end p-4 bg-background border-b border-border">
+        <div className="flex items-center justify-center p-4 bg-background border-b border-border">
           <CollapsibleTrigger asChild>
             <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <img
