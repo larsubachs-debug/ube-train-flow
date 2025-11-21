@@ -548,11 +548,92 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
     setSaving(true);
     try {
-      // Save program logic here
-      toast({ description: "Programma opgeslagen!" });
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Je moet ingelogd zijn");
+      }
+
+      // Generate program ID
+      const programId = `program-${Date.now()}`;
+
+      // 1. Insert program
+      const { error: programError } = await supabase
+        .from("programs")
+        .insert({
+          id: programId,
+          name: program.name,
+          description: program.goal,
+          icon: "Dumbbell",
+          is_public: true,
+          created_by: user.id,
+        });
+
+      if (programError) throw programError;
+
+      // 2. Insert weeks and their days
+      for (const week of program.weeks) {
+        const weekId = `week-${programId}-${week.weekNumber}`;
+        
+        const { error: weekError } = await supabase
+          .from("weeks")
+          .insert({
+            id: weekId,
+            program_id: programId,
+            week_number: week.weekNumber,
+            name: week.name,
+            display_order: week.weekNumber,
+          });
+
+        if (weekError) throw weekError;
+
+        // 3. Insert workouts (days) and their exercises
+        for (const day of week.days) {
+          const workoutId = `workout-${day.id}`;
+          
+          const { error: workoutError } = await supabase
+            .from("workouts")
+            .insert({
+              id: workoutId,
+              week_id: weekId,
+              day_number: week.days.indexOf(day) + 1,
+              name: day.name,
+              duration: 60,
+              display_order: week.days.indexOf(day),
+            });
+
+          if (workoutError) throw workoutError;
+
+          // 4. Insert exercises
+          for (const exercise of day.exercises) {
+            const { error: exerciseError } = await supabase
+              .from("exercises")
+              .insert({
+                id: exercise.id,
+                workout_id: workoutId,
+                name: exercise.name,
+                category: exercise.category.toLowerCase(),
+                sets: exercise.sets.length,
+                reps: exercise.sets[0]?.reps || "10",
+                weight: parseFloat(exercise.sets[0]?.weight || "0"),
+                notes: exercise.notes || null,
+                display_order: day.exercises.indexOf(exercise),
+              });
+
+            if (exerciseError) throw exerciseError;
+          }
+        }
+      }
+
+      toast({ description: "Programma succesvol opgeslagen!" });
       onComplete();
     } catch (error: any) {
-      toast({ title: "Fout bij opslaan", description: error.message, variant: "destructive" });
+      console.error("Save error:", error);
+      toast({ 
+        title: "Fout bij opslaan", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     } finally {
       setSaving(false);
     }
