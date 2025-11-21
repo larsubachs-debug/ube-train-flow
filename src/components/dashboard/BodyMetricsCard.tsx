@@ -33,6 +33,9 @@ export const BodyMetricsCard = ({ userId }: BodyMetricsCardProps) => {
       body_fat_percentage: formData.body_fat_percentage ? parseFloat(formData.body_fat_percentage) : null,
       muscle_mass: formData.muscle_mass ? parseFloat(formData.muscle_mass) : null,
       notes: formData.notes || null,
+      front_photo_url: null,
+      side_photo_url: null,
+      back_photo_url: null,
     });
 
     setFormData({

@@ -9,6 +9,7 @@ import { BodyMetricsCard } from "@/components/dashboard/BodyMetricsCard";
 import { OneRMCard } from "@/components/dashboard/OneRMCard";
 import { BodyCompositionChart } from "@/components/dashboard/BodyCompositionChart";
 import { WeightProgressChart } from "@/components/dashboard/WeightProgressChart";
+import { ProgressPhotosComparison } from "@/components/dashboard/ProgressPhotosComparison";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -102,6 +103,9 @@ const Dashboard = () => {
       {/* Body Composition Progress Charts */}
       <WeightProgressChart userId={user?.id || ''} />
       <BodyCompositionChart userId={user?.id || ''} />
+
+      {/* Progress Photos */}
+      <ProgressPhotosComparison userId={user?.id || ''} />
 
       {/* Weekly Volume Chart */}
       {stats?.weeklyVolumeData && stats.weeklyVolumeData.length > 0 && (
