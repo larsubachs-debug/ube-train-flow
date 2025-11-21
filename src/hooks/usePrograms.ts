@@ -105,8 +105,7 @@ export const usePrograms = () => {
         });
       }
 
-      // Use static programs as fallback if database is empty
-      return programs.length > 0 ? programs : staticPrograms;
+      return programs;
     },
   });
 };

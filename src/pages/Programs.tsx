@@ -14,8 +14,7 @@ const Programs = () => {
   
   const isCoachOrAdmin = hasRole("coach") || hasRole("admin");
   
-  // Fallback to static programs if database is empty
-  const displayPrograms = programs.length > 0 ? programs : staticPrograms;
+  const displayPrograms = programs;
 
   useEffect(() => {
     const loadProgramImages = async () => {
