@@ -11,7 +11,7 @@ interface MediaUploadZoneProps {
   accept?: 'image' | 'video' | 'all';
   aspectRatio?: '16:9' | '4:3' | '1:1' | '3:4';
   maxSizeMB?: number;
-  onUploadComplete?: (mediaId: string, publicUrl: string) => void;
+  onUploadComplete?: (mediaId: string, publicUrl: string, mediaType?: string) => void;
   currentMediaUrl?: string;
   className?: string;
 }
@@ -89,7 +89,7 @@ export const MediaUploadZone = ({
       });
 
       setPreviewUrl(publicUrl);
-      onUploadComplete?.(mediaId, publicUrl);
+      onUploadComplete?.(mediaId, publicUrl, file.type);
     } catch (error) {
       setPreviewUrl(currentMediaUrl);
     }
