@@ -8,12 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
-import { ArrowLeft, Calendar, TrendingUp, Check, Play, BarChart3, Timer, Trophy } from "lucide-react";
+import { ArrowLeft, Calendar, TrendingUp, Check, Play, BarChart3, Timer, Trophy, Link2 } from "lucide-react";
 import { WorkoutCompleteButton } from "@/components/workouts/WorkoutCompleteButton";
 import { ExerciseVideoDialog } from "@/components/workouts/ExerciseVideoDialog";
 import { EMOMTimer } from "@/components/workouts/EMOMTimer";
 import { RPEHistoryChart } from "@/components/workouts/RPEHistoryChart";
 import { RestTimer } from "@/components/workouts/RestTimer";
+import { OneRMCalculator } from "@/components/workouts/OneRMCalculator";
+import { WorkoutSummary } from "@/components/workouts/WorkoutSummary";
 import { useWorkoutSets } from "@/hooks/useWorkoutSets";
 import { toast } from "sonner";
 
@@ -31,7 +33,10 @@ const WorkoutDetail = () => {
   const [selectedExercise, setSelectedExercise] = useState<{ name: string; videoUrl?: string } | null>(null);
   const [showRPEHistory, setShowRPEHistory] = useState<{ exerciseName: string; liftIndex: number } | null>(null);
   const [showRestTimer, setShowRestTimer] = useState(false);
-  const [restTimerDuration, setRestTimerDuration] = useState(90); // default 90 seconds
+  const [restTimerDuration, setRestTimerDuration] = useState(90);
+  const [showSummary, setShowSummary] = useState(false);
+  const [supersetMode, setSupersetMode] = useState<Record<number, boolean>>({});
+  const [show1RMCalc, setShow1RMCalc] = useState<Record<number, Record<number, boolean>>>({});
   // RPE values: { liftIndex: { setIndex: rpeValue } }
   const [rpeValues, setRpeValues] = useState<Record<number, Record<number, number>>>({});
   // Weight values: { liftIndex: { setIndex: weight } }
@@ -186,11 +191,73 @@ const WorkoutDetail = () => {
         toast.success(`Set ${setIdx + 1} voltooid!`);
       }
 
-      // Start rest timer after set completion
-      const configuredRestTime = restTimes[liftIndex] || 90;
-      setRestTimerDuration(configuredRestTime);
-      setShowRestTimer(true);
+      // Start rest timer after set completion (unless in superset mode)
+      const isSuperset = supersetMode[liftIndex] || false;
+      if (!isSuperset) {
+        const configuredRestTime = restTimes[liftIndex] || 90;
+        setRestTimerDuration(configuredRestTime);
+        setShowRestTimer(true);
+      } else {
+        toast.info("Superset mode - Ga direct naar de volgende oefening! 💪");
+      }
     }
+  };
+
+  // Calculate workout statistics
+  const calculateWorkoutStats = () => {
+    const stats = {
+      totalSets: 0,
+      completedSets: 0,
+      totalVolume: 0,
+      prCount: 0,
+      exercises: [] as Array<{
+        name: string;
+        sets: number;
+        avgWeight: number;
+        hadPR: boolean;
+      }>,
+    };
+
+    workout?.mainLifts.forEach((lift, liftIndex) => {
+      const setsCount = lift.sets || 6;
+      stats.totalSets += setsCount;
+      
+      let completedCount = 0;
+      let totalWeight = 0;
+      let hadPR = false;
+
+      for (let i = 0; i < setsCount; i++) {
+        if (setsCompleted[liftIndex]?.[i]) {
+          completedCount++;
+          const weight = weightValues[liftIndex]?.[i] || 0;
+          const reps = parseInt(lift.reps || "0");
+          totalWeight += weight;
+          stats.totalVolume += weight * reps;
+
+          if (prStatus[liftIndex]?.[i]) {
+            stats.prCount++;
+            hadPR = true;
+          }
+        }
+      }
+
+      if (completedCount > 0) {
+        stats.exercises.push({
+          name: lift.name,
+          sets: completedCount,
+          avgWeight: Math.round(totalWeight / completedCount),
+          hadPR,
+        });
+      }
+
+      stats.completedSets += completedCount;
+    });
+
+    return stats;
+  };
+
+  const handleWorkoutComplete = () => {
+    setShowSummary(true);
   };
 
   return (
@@ -285,56 +352,77 @@ const WorkoutDetail = () => {
         </div>
 
         {/* Detailed Lift Tracking */}
-        {workout.mainLifts.map((lift, liftIndex) => (
-          <div key={`detail-${lift.id}`} className="space-y-4 border-b border-border/10 pb-8 last:border-0">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Barbell</p>
-                <h3 className="text-xl font-bold">{lift.name}</h3>
-              </div>
-              <div className="flex gap-1">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
-                      <Timer className="h-5 w-5" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48">
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-sm">Rest Tijd</h4>
-                      <div className="space-y-2">
-                        {[60, 90, 120, 180].map((seconds) => (
-                          <button
-                            key={seconds}
-                            onClick={() => setRestTimes((prev) => ({ ...prev, [liftIndex]: seconds }))}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                              restTimes[liftIndex] === seconds
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted/20"
-                            }`}
-                          >
-                            {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, "0")}
-                          </button>
-                        ))}
+        {workout.mainLifts.map((lift, liftIndex) => {
+          const isSuperset = supersetMode[liftIndex] || false;
+          const repsNum = parseInt(lift.reps || "0");
+          
+          return (
+            <div key={`detail-${lift.id}`} className={`space-y-4 border-b border-border/10 pb-8 last:border-0 ${isSuperset ? 'bg-blue-50/50 dark:bg-blue-950/10 p-4 rounded-lg border-l-4 border-blue-500' : ''}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">Barbell</p>
+                    {isSuperset && (
+                      <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-700 dark:text-blue-300">
+                        <Link2 className="h-3 w-3 mr-1" />
+                        Superset
+                      </Badge>
+                    )}
+                  </div>
+                  <h3 className="text-xl font-bold">{lift.name}</h3>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setSupersetMode((prev) => ({ ...prev, [liftIndex]: !prev[liftIndex] }))}
+                    className={`p-2.5 rounded-lg transition-colors ${
+                      isSuperset ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-muted/20'
+                    }`}
+                    title="Toggle superset mode"
+                  >
+                    <Link2 className="h-5 w-5" />
+                  </button>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
+                        <Timer className="h-5 w-5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48">
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-sm">Rest Tijd</h4>
+                        <div className="space-y-2">
+                          {[60, 90, 120, 180].map((seconds) => (
+                            <button
+                              key={seconds}
+                              onClick={() => setRestTimes((prev) => ({ ...prev, [liftIndex]: seconds }))}
+                              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                                restTimes[liftIndex] === seconds
+                                  ? "bg-primary text-primary-foreground"
+                                  : "hover:bg-muted/20"
+                              }`}
+                            >
+                              {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, "0")}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Huidige: {Math.floor((restTimes[liftIndex] || 90) / 60)}:
+                          {((restTimes[liftIndex] || 90) % 60).toString().padStart(2, "0")}
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Huidige: {Math.floor((restTimes[liftIndex] || 90) / 60)}:
-                        {((restTimes[liftIndex] || 90) % 60).toString().padStart(2, "0")}
-                      </p>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <button
-                  onClick={() => setShowRPEHistory({ exerciseName: lift.name, liftIndex })}
-                  className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors"
-                >
-                  <BarChart3 className="h-5 w-5" />
-                </button>
-                <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
-                  •••
-                </button>
+                    </PopoverContent>
+                  </Popover>
+                  <button
+                    onClick={() => setShowRPEHistory({ exerciseName: lift.name, liftIndex })}
+                    className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors"
+                  >
+                    <BarChart3 className="h-5 w-5" />
+                  </button>
+                  <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
+                    •••
+                  </button>
+                </div>
               </div>
-            </div>
 
             {/* Sets Table */}
             <div className="space-y-2.5">
@@ -370,6 +458,14 @@ const WorkoutDetail = () => {
                           const value = parseFloat(e.target.value) || 0;
                           if (value > 0) {
                             checkForPR(liftIndex, setIdx, lift.name, value);
+                            // Show 1RM calculator
+                            setShow1RMCalc((prev) => ({
+                              ...prev,
+                              [liftIndex]: {
+                                ...prev[liftIndex],
+                                [setIdx]: true,
+                              },
+                            }));
                           }
                         }}
                         disabled={isCompleted}
@@ -451,13 +547,33 @@ const WorkoutDetail = () => {
                 );
               })}
             </div>
+
+            {/* 1RM Calculator */}
+            {(() => {
+              // Find first completed set with weight to show 1RM
+              for (let i = 0; i < (lift.sets || 6); i++) {
+                const weight = weightValues[liftIndex]?.[i] || 0;
+                if (weight > 0 && (setsCompleted[liftIndex]?.[i] || show1RMCalc[liftIndex]?.[i])) {
+                  return (
+                    <div className="mt-4">
+                      <OneRMCalculator weight={weight} reps={repsNum} />
+                    </div>
+                  );
+                }
+              }
+              return null;
+            })()}
           </div>
-        ))}
+          );
+        })}
 
 
         {/* Complete Button */}
         <div ref={completeRef} className="pt-6 scroll-mt-24">
-          <WorkoutCompleteButton workoutId={workoutId || ""} />
+          <WorkoutCompleteButton 
+            workoutId={workoutId || ""} 
+            onComplete={handleWorkoutComplete}
+          />
         </div>
       </div>
 
@@ -492,6 +608,13 @@ const WorkoutDetail = () => {
         onRestComplete={() => {
           toast.info("Rust voltooid! Start je volgende set 💪");
         }}
+      />
+
+      {/* Workout Summary */}
+      <WorkoutSummary
+        isOpen={showSummary}
+        onClose={() => setShowSummary(false)}
+        {...calculateWorkoutStats()}
       />
     </div>
   );
