@@ -127,7 +127,7 @@ const Home = () => {
               <span className="text-xs font-medium text-foreground text-center">Guides</span>
             </div>
           </Link>
-          <Link to="/programs" className="group">
+          <Link to="/dashboard" className="group">
             <div className="bg-muted rounded-2xl p-4 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
               <Calendar className="w-6 h-6 text-muted-foreground" />
               <span className="text-xs font-medium text-foreground text-center">KPI</span>
