@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Heart, Image as ImageIcon } from "lucide-react";
+import { Send, Heart, Image as ImageIcon, Video } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -46,16 +46,19 @@ const Community = () => {
   const [message, setMessage] = useState("");
   const [showMediaDialog, setShowMediaDialog] = useState(false);
   const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string>("");
+  const [uploadedMediaType, setUploadedMediaType] = useState<string>("");
 
   const handleSend = () => {
     if (!message.trim()) return;
     toast.success("Message posted!");
     setMessage("");
     setUploadedMediaUrl("");
+    setUploadedMediaType("");
   };
 
-  const handleMediaUpload = (mediaId: string, publicUrl: string) => {
+  const handleMediaUpload = (mediaId: string, publicUrl: string, mediaType?: string) => {
     setUploadedMediaUrl(publicUrl);
+    setUploadedMediaType(mediaType || "");
     setShowMediaDialog(false);
     toast.success("Media attached!");
   };
@@ -85,16 +88,27 @@ const Community = () => {
               />
               {uploadedMediaUrl && (
                 <div className="mb-3 relative">
-                  <img
-                    src={uploadedMediaUrl}
-                    alt="Uploaded media"
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
+                  {uploadedMediaType?.startsWith("video") ? (
+                    <video
+                      src={uploadedMediaUrl}
+                      controls
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <img
+                      src={uploadedMediaUrl}
+                      alt="Uploaded media"
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                  )}
                   <Button
                     variant="destructive"
                     size="sm"
                     className="absolute top-2 right-2"
-                    onClick={() => setUploadedMediaUrl("")}
+                    onClick={() => {
+                      setUploadedMediaUrl("");
+                      setUploadedMediaType("");
+                    }}
                   >
                     Remove
                   </Button>
@@ -104,13 +118,13 @@ const Community = () => {
                 <Dialog open={showMediaDialog} onOpenChange={setShowMediaDialog}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2">
-                      <ImageIcon className="w-4 h-4" />
-                      Photo
+                      <Video className="w-4 h-4" />
+                      Photo/Video
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Upload Media</DialogTitle>
+                      <DialogTitle>Upload Photo or Video</DialogTitle>
                     </DialogHeader>
                     <MediaUploadZone
                       bucket="community-uploads"
