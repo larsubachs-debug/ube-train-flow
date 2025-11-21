@@ -372,6 +372,13 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     toast({ description: "Week verwijderd" });
   };
 
+  const updateWeekName = (weekId: string, name: string) => {
+    const updatedWeeks = program.weeks.map(week =>
+      week.id === weekId ? { ...week, name } : week
+    );
+    setProgram({ ...program, weeks: updatedWeeks });
+  };
+
   const addDay = () => {
     if (!selectedWeek) return;
     const newDay: Day = {
@@ -423,6 +430,20 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     );
     setProgram({ ...program, weeks: updatedWeeks });
     toast({ description: "Dag verwijderd" });
+  };
+
+  const updateDayName = (dayId: string, name: string) => {
+    const updatedWeeks = program.weeks.map(week =>
+      week.id === selectedWeekId
+        ? {
+            ...week,
+            days: week.days.map(day =>
+              day.id === dayId ? { ...day, name } : day
+            ),
+          }
+        : week
+    );
+    setProgram({ ...program, weeks: updatedWeeks });
   };
 
   const addExercise = () => {
@@ -639,14 +660,16 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                 {program.weeks.map((week) => (
                   <div key={week.id} className="space-y-1">
                     <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 group">
-                      <button
-                        onClick={() => setSelectedWeekId(week.id)}
-                        className={`flex-1 text-left text-sm font-medium ${
-                          selectedWeekId === week.id ? 'text-ube-blue' : 'text-foreground'
+                      <Input
+                        value={week.name}
+                        onChange={(e) => updateWeekName(week.id, e.target.value)}
+                        onFocus={() => setSelectedWeekId(week.id)}
+                        className={`flex-1 text-sm font-medium border-0 px-2 h-7 focus-visible:ring-1 ${
+                          selectedWeekId === week.id 
+                            ? 'text-ube-blue focus-visible:ring-ube-blue' 
+                            : 'text-foreground'
                         }`}
-                      >
-                        {week.name}
-                      </button>
+                      />
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -676,16 +699,16 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                       <div className="ml-4 space-y-1">
                         {week.days.map((day) => (
                           <div key={day.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 group">
-                            <button
-                              onClick={() => setSelectedDayId(day.id)}
-                              className={`flex-1 text-left text-sm ${
+                            <Input
+                              value={day.name}
+                              onChange={(e) => updateDayName(day.id, e.target.value)}
+                              onFocus={() => setSelectedDayId(day.id)}
+                              className={`flex-1 text-sm border-0 px-2 h-7 focus-visible:ring-1 ${
                                 selectedDayId === day.id
-                                  ? 'text-ube-blue font-medium'
+                                  ? 'text-ube-blue font-medium focus-visible:ring-ube-blue'
                                   : 'text-muted-foreground'
                               }`}
-                            >
-                              {day.name}
-                            </button>
+                            />
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
