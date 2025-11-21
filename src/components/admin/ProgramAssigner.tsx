@@ -87,6 +87,28 @@ export const ProgramAssigner = ({
 
       if (error) throw error;
 
+      // Get program name for notification
+      const programName = programs.find(p => p.id === selectedProgram)?.name || "een nieuw programma";
+
+      // Send notification to member
+      try {
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            userId: memberUserId,
+            title: "Nieuw programma toegewezen! 🎯",
+            body: `Je coach heeft ${programName} aan je toegewezen. Bekijk het in je programma's.`,
+            data: {
+              type: 'program_assigned',
+              programId: selectedProgram,
+            }
+          }
+        });
+        console.log('Notification sent to member');
+      } catch (notifError) {
+        console.error('Failed to send notification:', notifError);
+        // Don't fail the assignment if notification fails
+      }
+
       toast({
         title: "Success",
         description: `Programma toegewezen aan ${memberName}`,
