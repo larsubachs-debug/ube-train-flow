@@ -1,7 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useAuth } from "@/contexts/AuthContext";
 import { Program } from "@/types/training";
@@ -9,15 +8,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
-import { 
-  TrendingUp, 
-  Target, 
-  Calendar, 
-  CheckCircle2, 
-  Flame,
-  Dumbbell,
-  ArrowRight
-} from "lucide-react";
+import coachMaxime from "@/assets/coach-maxime.jpg";
 
 interface ProgramProgressOverviewProps {
   program: Program;
@@ -37,7 +28,6 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [memberCount, setMemberCount] = useState(0);
   const [nextWorkout, setNextWorkout] = useState<any>(null);
-  const [completedWorkoutsThisWeek, setCompletedWorkoutsThisWeek] = useState(0);
 
   const totalWeeks = program.weeks.length;
   const currentWeekNumber = progress?.current_week_number || 1;
@@ -69,8 +59,6 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
       // Find next uncompleted workout
       const currentWeekData = program.weeks.find(w => w.weekNumber === currentWeekNumber);
       if (currentWeekData) {
-        const today = new Date().toISOString().split('T')[0];
-        
         // Get completed workouts this week
         const { data: completions } = await supabase
           .from("workout_completions")
@@ -79,7 +67,6 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
           .gte("completion_date", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
 
         const completedIds = new Set(completions?.map(c => c.workout_id) || []);
-        setCompletedWorkoutsThisWeek(completedIds.size);
 
         // Find first uncompleted workout in current week
         const uncompletedWorkout = currentWeekData.workouts.find(w => !completedIds.has(w.id));
@@ -101,7 +88,6 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
           filter: `user_id=eq.${user?.id}`,
         },
         (payload) => {
-          console.log('User stats updated:', payload);
           setUserStats(payload.new as UserStats);
         }
       )
@@ -120,228 +106,120 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
     );
   }
 
-  // Calculate improvement suggestions
-  const getImprovementSuggestions = () => {
-    const suggestions = [];
-    
-    if (!userStats) return [];
-    
-    // Streak suggestions
-    if (userStats.current_streak === 0) {
-      suggestions.push({
-        icon: Flame,
-        title: "Start je streak vandaag",
-        description: "Complete een workout om je streak te starten",
-        priority: "high"
-      });
-    } else if (userStats.current_streak < 7) {
-      suggestions.push({
-        icon: Flame,
-        title: `Bouw je streak op naar 7 dagen`,
-        description: `Je zit nu op ${userStats.current_streak} dagen - blijf consistent!`,
-        priority: "medium"
-      });
-    }
-
-    // Workout frequency
-    if (completedWorkoutsThisWeek < 3) {
-      suggestions.push({
-        icon: Dumbbell,
-        title: "Train minimaal 3x deze week",
-        description: `${completedWorkoutsThisWeek}/3 workouts voltooid`,
-        priority: "high"
-      });
-    }
-
-    // Total workouts milestone
-    if (userStats.total_workouts < 10) {
-      suggestions.push({
-        icon: Target,
-        title: "Bereik je eerste 10 workouts",
-        description: `${userStats.total_workouts}/10 workouts voltooid`,
-        priority: "medium"
-      });
-    }
-
-    return suggestions.slice(0, 3); // Max 3 suggestions
-  };
-
-  const improvements = getImprovementSuggestions();
-
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Hero Section */}
-      <div className="relative h-[250px] overflow-hidden">
-        {programImage ? (
-          <img 
-            src={programImage} 
-            alt={program.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-b from-muted to-background" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-background" />
+      {/* Hero Section with Coach Image */}
+      <div className="relative h-[70vh] min-h-[500px] overflow-hidden">
+        <img 
+          src={coachMaxime}
+          alt="Coach Maxime"
+          className="w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-background" />
         
-        {/* Floating stats */}
-        <div className="absolute top-6 right-6 flex gap-2">
-          <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm">
-            <Flame className="w-3 h-3 mr-1" />
-            {userStats?.current_streak || 0} dag streak
-          </Badge>
+        {/* Program Title Overlay */}
+        <div className="absolute bottom-0 left-0 right-0 px-6 pb-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+            {currentWeek?.name || program.name}
+          </h1>
+          <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
+            {currentWeek?.description || program.description}
+          </p>
         </div>
       </div>
 
-      <div className="px-6 -mt-16 relative z-10">
-        {/* Next Workout Card - Most Important */}
-        <Card className="bg-card border-border mb-4 p-6 shadow-lg">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Volgende Workout</p>
-              <h2 className="text-2xl font-bold text-foreground">
-                {nextWorkout?.name || "Geen workout gevonden"}
-              </h2>
-            </div>
-            <Badge variant="outline" className="bg-accent/10">
-              Week {currentWeekNumber}
-            </Badge>
-          </div>
-
-          <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              <span>{nextWorkout?.duration || 0} min</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{completedWorkoutsThisWeek} workouts deze week</span>
-            </div>
-          </div>
-
-          {nextWorkout && (
-            <Link to={`/programs/${program.id}/workout/${nextWorkout.id}`}>
-              <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
-                Start Workout Nu
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          )}
-        </Card>
-
-        {/* To Improve Section */}
-        {improvements.length > 0 && (
-          <Card className="bg-card border-border mb-4 p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-accent" />
-              <h3 className="text-lg font-semibold text-foreground">Om Te Verbeteren</h3>
-            </div>
-            
-            <div className="space-y-3">
-              {improvements.map((improvement, index) => {
-                const Icon = improvement.icon;
-                return (
-                  <div 
-                    key={index}
-                    className={`flex gap-3 p-3 rounded-lg ${
-                      improvement.priority === 'high' 
-                        ? 'bg-accent/5 border border-accent/20' 
-                        : 'bg-muted/30'
-                    }`}
-                  >
-                    <div className={`p-2 rounded-lg ${
-                      improvement.priority === 'high'
-                        ? 'bg-accent/10 text-accent'
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm text-foreground mb-0.5">
-                        {improvement.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {improvement.description}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
-        )}
-
-        {/* Current Stats Card */}
-        <Card className="bg-card border-border mb-4 p-6">
-          <h3 className="text-lg font-semibold mb-4 text-foreground">Jouw Progress</h3>
+      <div className="px-6 -mt-8 relative z-10 space-y-6">
+        {/* Training Block Progress Card */}
+        <Card className="bg-card/95 backdrop-blur-sm border-border p-6">
+          <h2 className="text-xl font-semibold text-foreground mb-4">
+            Training block progress
+          </h2>
           
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-foreground">
-                {userStats?.total_workouts || 0}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Workouts</p>
-            </div>
+          {/* Current Phase/Week Name */}
+          <div className="mb-4">
+            <p className="text-lg font-medium text-foreground mb-3">
+              {currentWeek?.phase_name || currentWeek?.name || `Week ${currentWeekNumber}`}
+            </p>
             
-            <div className="text-center">
-              <p className="text-3xl font-bold text-foreground">
-                {userStats?.current_streak || 0}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Dag Streak</p>
-            </div>
-            
-            <div className="text-center">
-              <p className="text-3xl font-bold text-foreground">
-                {Math.round((userStats?.total_volume_kg || 0) / 1000)}k
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Volume (kg)</p>
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <Progress value={progressPercentage} className="h-2 bg-muted" />
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">
+                  <span className="font-semibold text-foreground">Total:</span> {totalWeeks} weeks
+                </span>
+                <span className="text-foreground font-medium">
+                  Week {currentWeekNumber}/{totalWeeks}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Week Progress */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <p className="text-sm text-muted-foreground">Week {currentWeekNumber} van {totalWeeks}</p>
-              <p className="text-sm font-semibold text-foreground">{Math.round(progressPercentage)}%</p>
-            </div>
-            <Progress value={progressPercentage} className="h-2" />
-          </div>
-        </Card>
-
-        {/* Training Block Overview */}
-        <Card className="bg-card border-border p-6">
-          <h3 className="text-lg font-semibold mb-3 text-foreground">
-            {program.name}
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-            {program.description}
+          <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+            Blocks are run in real-time. After completing your first week you'll be ready to join your coach and community on the current block.
           </p>
 
-          <div className="flex gap-2 mb-4">
-            {Array.from({ length: Math.min(totalWeeks, 10) }).map((_, index) => (
-              <div
-                key={index}
-                className={`h-1.5 flex-1 rounded-full transition-all ${
-                  index < currentWeekNumber
-                    ? "bg-accent"
-                    : "bg-muted"
-                }`}
-              />
-            ))}
-          </div>
-
+          {/* Member Count */}
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
               {[1, 2, 3].map((i) => (
-                <Avatar key={i} className="w-7 h-7 border-2 border-background">
-                  <AvatarFallback className="bg-muted text-xs">M</AvatarFallback>
+                <Avatar key={i} className="w-8 h-8 border-2 border-background">
+                  <AvatarFallback className="bg-muted text-xs">
+                    {i === 1 ? 'M' : i === 2 ? 'J' : 'S'}
+                  </AvatarFallback>
                 </Avatar>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {memberCount.toLocaleString()} members trainen mee
+            <p className="text-sm text-muted-foreground">
+              {memberCount.toLocaleString()} members on {program.name.split(' ')[0]}
             </p>
           </div>
         </Card>
+
+        {/* Block KPIs */}
+        <Card className="bg-card border-border p-6">
+          <h2 className="text-xl font-semibold text-foreground mb-4">
+            {program.name.split(' ')[0]} Block KPIs
+          </h2>
+          
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-4 rounded-lg bg-muted/30">
+              <p className="text-3xl font-bold text-foreground mb-1">
+                {userStats?.total_workouts || 0}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Workouts<br/>Completed
+              </p>
+            </div>
+            
+            <div className="text-center p-4 rounded-lg bg-muted/30">
+              <p className="text-3xl font-bold text-foreground mb-1">
+                {userStats?.current_streak || 0}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Day<br/>Streak
+              </p>
+            </div>
+            
+            <div className="text-center p-4 rounded-lg bg-muted/30">
+              <p className="text-3xl font-bold text-foreground mb-1">
+                {Math.round((userStats?.total_volume_kg || 0) / 1000)}k
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Total Volume<br/>(kg)
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Next Workout CTA */}
+        {nextWorkout && (
+          <Link to={`/workout/${nextWorkout.id}`}>
+            <Button className="w-full py-6 text-lg bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
+              Start {nextWorkout.name}
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   );
