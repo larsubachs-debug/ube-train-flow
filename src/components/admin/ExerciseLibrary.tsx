@@ -1,13 +1,19 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Dumbbell, Heart, Zap, Target } from "lucide-react";
-import { useDraggable } from '@dnd-kit/core';
+import { Search, Dumbbell, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface ExerciseLibraryItem {
   id: string;
@@ -19,90 +25,93 @@ interface ExerciseLibraryItem {
   equipment: string[] | null;
 }
 
-interface DraggableExerciseProps {
-  exercise: ExerciseLibraryItem;
-}
-
-const DraggableExercise = ({ exercise }: DraggableExerciseProps) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `library-${exercise.id}`,
-    data: exercise
-  });
-
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    opacity: isDragging ? 0.5 : 1,
-    cursor: 'grab'
-  } : { cursor: 'grab' };
-
-  const getCategoryIcon = () => {
-    switch (exercise.category) {
-      case 'strength': return <Dumbbell className="h-4 w-4" />;
-      case 'cardio': return <Heart className="h-4 w-4" />;
-      case 'mobility': return <Target className="h-4 w-4" />;
-      case 'core': return <Zap className="h-4 w-4" />;
-      default: return <Dumbbell className="h-4 w-4" />;
-    }
-  };
-
+const ExerciseCard = ({ exercise }: { exercise: ExerciseLibraryItem }) => {
   const getCategoryColor = () => {
     switch (exercise.category) {
-      case 'strength': return 'bg-blue-500/10 text-blue-700 border-blue-500/20';
-      case 'cardio': return 'bg-red-500/10 text-red-700 border-red-500/20';
-      case 'mobility': return 'bg-green-500/10 text-green-700 border-green-500/20';
-      case 'core': return 'bg-purple-500/10 text-purple-700 border-purple-500/20';
-      default: return 'bg-gray-500/10 text-gray-700 border-gray-500/20';
-    }
-  };
-
-  const getDifficultyColor = () => {
-    switch (exercise.difficulty) {
-      case 'beginner': return 'bg-green-500/10 text-green-700';
-      case 'intermediate': return 'bg-yellow-500/10 text-yellow-700';
-      case 'advanced': return 'bg-red-500/10 text-red-700';
-      default: return 'bg-gray-500/10 text-gray-700';
+      case 'strength': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'cardio': return 'bg-red-50 text-red-700 border-red-200';
+      case 'mobility': return 'bg-green-50 text-green-700 border-green-200';
+      case 'core': return 'bg-purple-50 text-purple-700 border-purple-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
   return (
-    <Card 
-      ref={setNodeRef} 
-      style={style}
-      {...listeners}
-      {...attributes}
-      className="p-3 hover:shadow-md transition-shadow border-l-4 border-l-primary"
-    >
-      <div className="flex items-start gap-3">
-        <div className="bg-primary/10 p-2 rounded-lg flex-shrink-0">
-          {getCategoryIcon()}
-        </div>
+    <div className="p-3 rounded-xl bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer border border-border/50 group">
+      <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
           <h4 className="font-medium text-sm truncate">{exercise.name}</h4>
-          {exercise.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{exercise.description}</p>
-          )}
-          <div className="flex flex-wrap gap-1 mt-2">
-            <Badge className={`text-xs ${getCategoryColor()}`}>
-              {exercise.category}
-            </Badge>
-            <Badge variant="outline" className={`text-xs ${getDifficultyColor()}`}>
-              {exercise.difficulty}
-            </Badge>
-          </div>
-          {exercise.muscle_groups && exercise.muscle_groups.length > 0 && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {exercise.muscle_groups.slice(0, 2).join(', ')}
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {exercise.muscle_groups?.[0] || exercise.category}
+          </p>
         </div>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity bg-ube-blue text-white hover:bg-ube-blue/90"
+        >
+          <Plus className="h-3 w-3" />
+        </Button>
       </div>
-    </Card>
+      <Badge className={`text-xs ${getCategoryColor()}`}>
+        {exercise.category}
+      </Badge>
+    </div>
+  );
+};
+
+const CustomExerciseDialog = () => {
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("strength");
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full">
+          <Plus className="h-3 w-3 mr-2" />
+          Custom exercise
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create Custom Exercise</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Exercise Name</label>
+            <Input
+              placeholder="Bench Press"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">Category</label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="strength">Strength</SelectItem>
+                <SelectItem value="cardio">Cardio</SelectItem>
+                <SelectItem value="mobility">Mobility</SelectItem>
+                <SelectItem value="core">Core</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button className="w-full bg-ube-blue hover:bg-ube-blue/90 text-white">
+            Create Exercise
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
 export const ExerciseLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
+  const [muscleFilter, setMuscleFilter] = useState<string>("all");
 
   const { data: exercises = [], isLoading } = useQuery({
     queryKey: ['exercise-library'],
@@ -120,54 +129,81 @@ export const ExerciseLibrary = () => {
   const filteredExercises = exercises.filter((ex: ExerciseLibraryItem) => {
     const matchesSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          ex.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || ex.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+    const matchesEquipment = equipmentFilter === "all" || 
+                            ex.equipment?.includes(equipmentFilter);
+    const matchesMuscle = muscleFilter === "all" || 
+                         ex.muscle_groups?.includes(muscleFilter);
+    return matchesSearch && matchesEquipment && matchesMuscle;
   });
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b space-y-3">
+      {/* Header */}
+      <div className="p-5 border-b space-y-4">
         <div className="flex items-center gap-2">
-          <Dumbbell className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Oefeningen Bibliotheek</h3>
+          <Dumbbell className="h-5 w-5 text-ube-blue" />
+          <h3 className="font-semibold">Exercise Library</h3>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Sleep oefeningen naar je workouts
-        </p>
         
+        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Zoek oefeningen..."
+            placeholder="Search exercises..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
         </div>
 
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger>
-            <SelectValue placeholder="Alle categorieën" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle categorieën</SelectItem>
-            <SelectItem value="strength">Kracht</SelectItem>
-            <SelectItem value="cardio">Cardio</SelectItem>
-            <SelectItem value="mobility">Mobiliteit</SelectItem>
-            <SelectItem value="core">Core</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Filters */}
+        <div className="space-y-2">
+          <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Equipment" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Equipment</SelectItem>
+              <SelectItem value="Bodyweight">Bodyweight</SelectItem>
+              <SelectItem value="Barbell">Barbell</SelectItem>
+              <SelectItem value="Dumbbell">Dumbbell</SelectItem>
+              <SelectItem value="Machine">Machine</SelectItem>
+              <SelectItem value="Cable">Cable</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={muscleFilter} onValueChange={setMuscleFilter}>
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Muscle Group" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Muscles</SelectItem>
+              <SelectItem value="Chest">Chest</SelectItem>
+              <SelectItem value="Back">Back</SelectItem>
+              <SelectItem value="Legs">Legs</SelectItem>
+              <SelectItem value="Shoulders">Shoulders</SelectItem>
+              <SelectItem value="Arms">Arms</SelectItem>
+              <SelectItem value="Core">Core</SelectItem>
+              <SelectItem value="Full body">Full Body</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <CustomExerciseDialog />
       </div>
 
+      {/* Exercise List */}
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-2">
           {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Laden...</p>
+            <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
           ) : filteredExercises.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Geen oefeningen gevonden</p>
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No exercises found
+            </p>
           ) : (
             filteredExercises.map((exercise: ExerciseLibraryItem) => (
-              <DraggableExercise key={exercise.id} exercise={exercise} />
+              <ExerciseCard key={exercise.id} exercise={exercise} />
             ))
           )}
         </div>

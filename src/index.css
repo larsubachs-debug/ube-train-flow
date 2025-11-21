@@ -44,6 +44,8 @@ All colors MUST be HSL.
     --ube-light-gray: 0 0% 96%;
     --ube-green: 142 71% 45%;
     --ube-green-light: 142 71% 85%;
+    --ube-blue: 199 89% 48%;
+    --ube-blue-light: 199 89% 95%;
     
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(0 0% 13%) 0%, hsl(0 0% 20%) 100%);
