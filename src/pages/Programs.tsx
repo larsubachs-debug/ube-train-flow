@@ -1,12 +1,10 @@
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
-import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import heroImage from "@/assets/gym-hero.jpg";
+import { ProgramProgressOverview } from "@/components/programs/ProgramProgressOverview";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Programs = () => {
@@ -30,7 +28,7 @@ const Programs = () => {
             .select('media_id, media(file_path)')
             .eq('program_id', program.id)
             .eq('media_type', 'tile')
-            .single();
+            .maybeSingle();
 
           if (programMedia?.media) {
             const mediaData = programMedia.media as any;
@@ -49,80 +47,49 @@ const Programs = () => {
     }
   }, [displayPrograms.length]);
 
-  return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="p-6">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Choose a Program</h1>
-          <p className="text-muted-foreground">
-            You can change at anytime
-          </p>
-        </div>
-
-        {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">Loading programs...</div>
-        ) : (
-          <div className="space-y-6">
-            {displayPrograms.map((program) => (
-              <div key={program.id} className="space-y-4">
-                <Card className="overflow-hidden border-0 shadow-xl">
-                  {/* Hero Image with Overlay */}
-                  <div className="relative h-[400px] overflow-hidden">
-                    <img 
-                      src={programImages[program.id] || heroImage}
-                      alt={program.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
-                    
-                    {/* Content Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                      <h2 className="text-4xl font-bold mb-3 uppercase tracking-wide">
-                        {program.name}
-                      </h2>
-                      <p className="text-white/90 mb-4 leading-relaxed">
-                        {program.description}
-                      </p>
-                      
-                      {/* Badges */}
-                      <div className="flex gap-2 flex-wrap">
-                        <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-sm px-3 py-1">
-                          <span className="mr-1">⚡</span> Hybrid
-                        </Badge>
-                        <Badge variant="secondary" className="bg-white/20 text-white border-0 backdrop-blur-sm px-3 py-1">
-                          <span className="mr-1">🏃</span> Functional Fitness
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-                
-                {/* Action Button - Only for coaches/admins */}
-                {isCoachOrAdmin ? (
-                  <Link to={`/program/${program.id}`} className="block">
-                    <Button 
-                      size="lg" 
-                      className="w-full bg-black hover:bg-black/90 text-white h-14 text-lg font-semibold rounded-full"
-                    >
-                      Programma beheren
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link to={`/program/${program.id}`} className="block">
-                    <Button 
-                      size="lg" 
-                      variant="outline"
-                      className="w-full h-14 text-lg font-semibold rounded-full"
-                    >
-                      Bekijk programma details
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center pb-20">
+        <p className="text-muted-foreground">Loading programs...</p>
       </div>
+    );
+  }
+
+  if (displayPrograms.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center pb-20">
+        <p className="text-muted-foreground">No programs available</p>
+      </div>
+    );
+  }
+
+  // Show each program with the new layout
+  return (
+    <div className="space-y-8">
+      {displayPrograms.map((program) => (
+        <div key={program.id} className="relative">
+          <ProgramProgressOverview 
+            program={program} 
+            programImage={programImages[program.id]} 
+          />
+          
+          {/* Additional Action Buttons */}
+          <div className="px-6 space-y-2 pb-6">
+            <Link to={`/program/${program.id}`}>
+              <Button variant="outline" className="w-full py-6 text-lg">
+                Bekijk Volledig Programma
+              </Button>
+            </Link>
+            {isCoachOrAdmin && (
+              <Link to="/admin/programs">
+                <Button variant="ghost" className="w-full">
+                  Edit Program
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
