@@ -73,48 +73,64 @@ const Community = () => {
   }, [activeTab]);
 
   const fetchPosts = async () => {
-    const { data, error } = await supabase
+    // First fetch posts
+    const { data: postsData, error: postsError } = await supabase
       .from('community_posts')
-      .select(`
-        id,
-        content,
-        media_id,
-        created_at,
-        likes_count,
-        program_id,
-        user_id,
-        media:media_id (
-          file_path,
-          bucket_name,
-          mime_type
-        ),
-        profiles!inner (
-          display_name,
-          avatar_url
-        )
-      `)
+      .select('*')
       .eq('program_id', programMapping[activeTab])
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching posts:', error);
+    if (postsError) {
+      console.error('Error fetching posts:', postsError);
       return;
     }
 
-    const formattedPosts: Post[] = (data || []).map((post: any) => ({
-      id: post.id,
-      content: post.content || '',
-      media_id: post.media_id,
-      media_url: post.media?.file_path 
-        ? supabase.storage.from(post.media.bucket_name).getPublicUrl(post.media.file_path).data.publicUrl
-        : null,
-      media_type: post.media?.mime_type || null,
-      created_at: post.created_at,
-      user_name: post.profiles?.display_name || 'Unknown',
-      user_avatar: post.profiles?.avatar_url || null,
-      likes_count: post.likes_count || 0,
-      program_id: post.program_id,
-    }));
+    if (!postsData || postsData.length === 0) {
+      setPosts([]);
+      return;
+    }
+
+    // Fetch user profiles
+    const userIds = [...new Set(postsData.map(p => p.user_id))];
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url')
+      .in('user_id', userIds);
+
+    const profilesMap = new Map(profilesData?.map(p => [p.user_id, p]) || []);
+
+    // Fetch media for posts that have media_id
+    const mediaIds = postsData.filter(p => p.media_id).map(p => p.media_id);
+    let mediaMap = new Map();
+    
+    if (mediaIds.length > 0) {
+      const { data: mediaData } = await supabase
+        .from('media')
+        .select('*')
+        .in('id', mediaIds);
+      
+      mediaMap = new Map(mediaData?.map(m => [m.id, m]) || []);
+    }
+
+    const formattedPosts: Post[] = postsData.map((post) => {
+      const profile = profilesMap.get(post.user_id);
+      const media = post.media_id ? mediaMap.get(post.media_id) : null;
+      
+      return {
+        id: post.id,
+        content: post.content || '',
+        media_id: post.media_id,
+        media_url: media?.file_path 
+          ? supabase.storage.from(media.bucket_name).getPublicUrl(media.file_path).data.publicUrl
+          : null,
+        media_type: media?.mime_type || null,
+        created_at: post.created_at,
+        user_name: profile?.display_name || 'Unknown',
+        user_avatar: profile?.avatar_url || null,
+        likes_count: post.likes_count || 0,
+        program_id: post.program_id,
+      };
+    });
 
     setPosts(formattedPosts);
   };
