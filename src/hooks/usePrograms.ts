@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Program, Week, Workout, Exercise } from "@/types/training";
+import { programs as staticPrograms } from "@/data/programs";
 
 export const usePrograms = () => {
   return useQuery({
@@ -104,7 +105,8 @@ export const usePrograms = () => {
         });
       }
 
-      return programs;
+      // Use static programs as fallback if database is empty
+      return programs.length > 0 ? programs : staticPrograms;
     },
   });
 };
