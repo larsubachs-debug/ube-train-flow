@@ -29,6 +29,11 @@ interface Post {
   user_avatar: string | null;
   likes_count: number;
   program_id: string | null;
+  reactions: {
+    '💪': { count: number; userReacted: boolean };
+    '🔥': { count: number; userReacted: boolean };
+    '👏': { count: number; userReacted: boolean };
+  };
 }
 
 const Community = () => {
@@ -112,9 +117,42 @@ const Community = () => {
       mediaMap = new Map(mediaData?.map(m => [m.id, m]) || []);
     }
 
+    // Fetch reactions for all posts
+    const postIds = postsData.map(p => p.id);
+    const { data: reactionsData } = await supabase
+      .from('post_reactions')
+      .select('*')
+      .in('post_id', postIds);
+
+    // Group reactions by post
+    const reactionsMap = new Map<string, any[]>();
+    reactionsData?.forEach(reaction => {
+      if (!reactionsMap.has(reaction.post_id)) {
+        reactionsMap.set(reaction.post_id, []);
+      }
+      reactionsMap.get(reaction.post_id)?.push(reaction);
+    });
+
     const formattedPosts: Post[] = postsData.map((post) => {
       const profile = profilesMap.get(post.user_id);
       const media = post.media_id ? mediaMap.get(post.media_id) : null;
+      const postReactions = reactionsMap.get(post.id) || [];
+      
+      // Count reactions by emoji type
+      const reactions = {
+        '💪': { 
+          count: postReactions.filter(r => r.emoji_type === '💪').length,
+          userReacted: postReactions.some(r => r.emoji_type === '💪' && r.user_id === user?.id)
+        },
+        '🔥': { 
+          count: postReactions.filter(r => r.emoji_type === '🔥').length,
+          userReacted: postReactions.some(r => r.emoji_type === '🔥' && r.user_id === user?.id)
+        },
+        '👏': { 
+          count: postReactions.filter(r => r.emoji_type === '👏').length,
+          userReacted: postReactions.some(r => r.emoji_type === '👏' && r.user_id === user?.id)
+        },
+      };
       
       return {
         id: post.id,
@@ -129,6 +167,7 @@ const Community = () => {
         user_avatar: profile?.avatar_url || null,
         likes_count: post.likes_count || 0,
         program_id: post.program_id,
+        reactions,
       };
     });
 
@@ -181,6 +220,46 @@ const Community = () => {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const handleReaction = async (postId: string, emoji: '💪' | '🔥' | '👏') => {
+    if (!user) return;
+
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+
+    const userReacted = post.reactions[emoji].userReacted;
+
+    try {
+      if (userReacted) {
+        // Remove reaction
+        const { error } = await supabase
+          .from('post_reactions')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', user.id)
+          .eq('emoji_type', emoji);
+
+        if (error) throw error;
+      } else {
+        // Add reaction
+        const { error } = await supabase
+          .from('post_reactions')
+          .insert({
+            post_id: postId,
+            user_id: user.id,
+            emoji_type: emoji,
+          });
+
+        if (error) throw error;
+      }
+
+      // Refresh posts to get updated reactions
+      fetchPosts();
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+      toast.error("Fout bij verwerken van reactie");
+    }
   };
 
   return (
@@ -305,19 +384,35 @@ const Community = () => {
                                 alt="Post media"
                                 className="w-full max-h-96 object-cover rounded-lg"
                               />
-                            )}
-                          </div>
                         )}
-                        
-                        <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-accent">
-                          <Heart className="w-4 h-4" />
-                          {post.likes_count}
-                        </Button>
                       </div>
+                    )}
+                    
+                    <div className="flex items-center gap-2 mt-2">
+                      {(['💪', '🔥', '👏'] as const).map((emoji) => (
+                        <Button
+                          key={emoji}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleReaction(post.id, emoji)}
+                          className={`gap-1 transition-colors ${
+                            post.reactions[emoji].userReacted 
+                              ? 'bg-accent/20 text-accent hover:bg-accent/30' 
+                              : 'text-muted-foreground hover:text-accent hover:bg-accent/10'
+                          }`}
+                        >
+                          <span className="text-lg">{emoji}</span>
+                          {post.reactions[emoji].count > 0 && (
+                            <span className="text-xs font-semibold">{post.reactions[emoji].count}</span>
+                          )}
+                        </Button>
+                      ))}
                     </div>
-                  </Card>
-                ))
-              )}
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
             </div>
           </TabsContent>
         </Tabs>
