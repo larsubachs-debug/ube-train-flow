@@ -3,11 +3,28 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Set {
   id: string;
@@ -24,6 +41,12 @@ interface Exercise {
   selected?: boolean;
 }
 
+interface SortableExerciseItemProps {
+  exercise: Exercise;
+  isSelected: boolean;
+  onClick: () => void;
+}
+
 interface Day {
   id: string;
   name: string;
@@ -35,6 +58,60 @@ interface ProgramBuilderProps {
   onCancel: () => void;
   initialData?: any;
 }
+
+const SortableExerciseItem = ({ exercise, isSelected, onClick }: SortableExerciseItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: exercise.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all ${
+        isSelected 
+          ? 'bg-[hsl(199,89%,48%)]/10 border-2 border-[hsl(199,89%,48%)]' 
+          : 'bg-muted/50 hover:bg-muted'
+      } ${isDragging ? 'shadow-lg ring-2 ring-[hsl(199,89%,48%)]/50' : ''}`}
+      onClick={onClick}
+    >
+      <div 
+        {...attributes} 
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing touch-none"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+      </div>
+      <div className="w-16 h-16 rounded-lg bg-muted flex-shrink-0 flex items-center justify-center">
+        <span className="text-2xl">💪</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-medium text-foreground truncate">
+          {exercise.name || "New exercise"}
+        </h4>
+        <p className="text-sm text-muted-foreground">
+          {exercise.sets.length} sets
+        </p>
+      </div>
+      <Checkbox 
+        checked={isSelected} 
+        className="pointer-events-none"
+      />
+    </div>
+  );
+};
 
 export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBuilderProps) => {
   const { toast } = useToast();
@@ -58,6 +135,32 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
   const selectedDay = days.find(d => d.id === selectedDayId);
   const selectedExercise = selectedDay?.exercises.find(e => e.id === selectedExerciseId);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id || !selectedDay) return;
+
+    const oldIndex = selectedDay.exercises.findIndex(ex => ex.id === active.id);
+    const newIndex = selectedDay.exercises.findIndex(ex => ex.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const updatedDays = days.map(day => 
+      day.id === selectedDayId
+        ? { ...day, exercises: arrayMove(day.exercises, oldIndex, newIndex) }
+        : day
+    );
+
+    setDays(updatedDays);
+  };
 
   const addDay = () => {
     const newDay: Day = {
@@ -314,38 +417,32 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="space-y-3">
-                {selectedDay?.exercises.map((exercise) => (
-                  <div
-                    key={exercise.id}
-                    className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-colors ${
-                      exercise.selected ? 'bg-[hsl(199,89%,48%)]/10 border-2 border-[hsl(199,89%,48%)]' : 'bg-muted/50 hover:bg-muted'
-                    }`}
-                    onClick={() => toggleExerciseSelection(exercise.id)}
-                  >
-                    <div className="w-16 h-16 rounded-lg bg-muted flex-shrink-0 flex items-center justify-center">
-                      <span className="text-2xl">💪</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-foreground truncate">
-                        {exercise.name || "New exercise"}
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {exercise.sets.length} sets
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={selectedDay?.exercises.map(ex => ex.id) || []}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {selectedDay?.exercises.map((exercise) => (
+                      <SortableExerciseItem
+                        key={exercise.id}
+                        exercise={exercise}
+                        isSelected={exercise.selected || false}
+                        onClick={() => toggleExerciseSelection(exercise.id)}
+                      />
+                    ))}
+                    {selectedDay && selectedDay.exercises.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">
+                        No activities yet. Click + to add one.
                       </p>
-                    </div>
-                    <Checkbox 
-                      checked={exercise.selected} 
-                      className="pointer-events-none"
-                    />
+                    )}
                   </div>
-                ))}
-                {selectedDay && selectedDay.exercises.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">
-                    No activities yet. Click + to add one.
-                  </p>
-                )}
-              </div>
+                </SortableContext>
+              </DndContext>
             </Card>
           </div>
 
