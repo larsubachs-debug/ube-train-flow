@@ -7,10 +7,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Label } from "@/components/ui/label";
 import { Users, TrendingUp, Calendar, Award, MessageCircle, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { ProgramAssigner } from "@/components/admin/ProgramAssigner";
+import { BulkActionToolbar } from "@/components/admin/BulkActionToolbar";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Member {
   member_id: string;
@@ -43,6 +46,7 @@ const CoachDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(false);
   const [assigningMember, setAssigningMember] = useState<Member | null>(null);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -137,6 +141,18 @@ const CoachDashboard = () => {
     fetchMemberData(member);
   };
 
+  const toggleMemberSelection = (memberId: string) => {
+    setSelectedMembers((prev) =>
+      prev.includes(memberId)
+        ? prev.filter((id) => id !== memberId)
+        : [...prev, memberId]
+    );
+  };
+
+  const clearSelection = () => {
+    setSelectedMembers([]);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background p-6 pb-20">
@@ -177,6 +193,36 @@ const CoachDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
+            <BulkActionToolbar
+              selectedMembers={selectedMembers.map((id) => {
+                const member = members.find((m) => m.member_id === id);
+                return {
+                  id,
+                  user_id: member?.member_user_id || "",
+                  display_name: member?.member_name || null,
+                };
+              })}
+              onClearSelection={clearSelection}
+            />
+
+            {members.length > 0 && (
+              <div className="flex items-center gap-2 mb-4 p-3 border rounded-lg bg-muted/50">
+                <Checkbox
+                  checked={selectedMembers.length === members.length && members.length > 0}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedMembers(members.map((m) => m.member_id));
+                    } else {
+                      setSelectedMembers([]);
+                    }
+                  }}
+                />
+                <Label className="text-sm font-medium cursor-pointer">
+                  Selecteer alle members
+                </Label>
+              </div>
+            )}
+
                 {members.map((member) => (
                   <Card
                     key={member.member_id}
@@ -188,6 +234,11 @@ const CoachDashboard = () => {
                     onClick={() => handleMemberSelect(member)}
                   >
                     <div className="flex items-center gap-4">
+                      <Checkbox
+                        checked={selectedMembers.includes(member.member_id)}
+                        onCheckedChange={() => toggleMemberSelection(member.member_id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
                       <Avatar>
                         <AvatarImage src={member.member_avatar || undefined} />
                         <AvatarFallback>
