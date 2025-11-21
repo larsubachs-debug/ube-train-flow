@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useAuth } from "@/contexts/AuthContext";
 import { Program } from "@/types/training";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
@@ -28,10 +28,21 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [memberCount, setMemberCount] = useState(0);
   const [nextWorkout, setNextWorkout] = useState<any>(null);
+  const [scrollY, setScrollY] = useState(0);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   const totalWeeks = program.weeks.length;
   const currentWeekNumber = progress?.current_week_number || 1;
   const progressPercentage = (currentWeekNumber / totalWeeks) * 100;
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -109,11 +120,14 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Hero Section with Coach Image */}
-      <div className="relative h-[60vh] md:h-[65vh] lg:h-[70vh] min-h-[450px] md:min-h-[500px] lg:min-h-[600px] overflow-hidden">
+      <div ref={heroRef} className="relative h-[60vh] md:h-[65vh] lg:h-[70vh] min-h-[450px] md:min-h-[500px] lg:min-h-[600px] overflow-hidden">
         <img 
           src={coachMaxime}
           alt="Coach Maxime"
-          className="w-full h-full object-cover object-top"
+          className="w-full h-full object-cover object-top transition-transform duration-100 ease-out"
+          style={{
+            transform: `translateY(${scrollY * 0.5}px)`
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-background" />
         
