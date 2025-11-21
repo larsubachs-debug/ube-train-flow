@@ -125,12 +125,19 @@ export const useMediaUpload = () => {
         uploadFile = await compressImage(file);
       }
 
+      // Ensure we have a valid session for user_id
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+      
       // Generate unique filename
       const timestamp = Date.now();
       const randomString = Math.random().toString(36).substring(7);
       const extension = file.name.split('.').pop();
       const filename = `${timestamp}-${randomString}.${extension}`;
-      const filepath = folder ? `${folder}/${filename}` : filename;
+      
+      // Always use user_id as folder if no folder specified (required for RLS)
+      const actualFolder = folder || session.user.id;
+      const filepath = `${actualFolder}/${filename}`;
 
       // Upload to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -160,10 +167,6 @@ export const useMediaUpload = () => {
 
       setProgress(75);
       if (onProgress) onProgress(75);
-
-      // Ensure we have a valid session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Not authenticated');
       
       // Save to media table with the authenticated user's ID
 
