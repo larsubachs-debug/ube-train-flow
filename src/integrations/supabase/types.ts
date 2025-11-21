@@ -331,6 +331,83 @@ export type Database = {
           },
         ]
       }
+      custom_workout_exercises: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          distance: string | null
+          id: string
+          name: string
+          notes: string | null
+          reps: string | null
+          sets: number | null
+          time: string | null
+          weight: number | null
+          workout_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          distance?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          reps?: string | null
+          sets?: number | null
+          time?: string | null
+          weight?: number | null
+          workout_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          distance?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          reps?: string | null
+          sets?: number | null
+          time?: string | null
+          weight?: number | null
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_workout_exercises_workout_id_fkey"
+            columns: ["workout_id"]
+            isOneToOne: false
+            referencedRelation: "custom_workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_workouts: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_checkins: {
         Row: {
           checkin_date: string
