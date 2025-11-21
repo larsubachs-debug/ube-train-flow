@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
 import { ArrowLeft, Calendar, TrendingUp, Check, Play } from "lucide-react";
@@ -15,6 +17,8 @@ const WorkoutDetail = () => {
   const [notes, setNotes] = useState("");
   const [currentSection, setCurrentSection] = useState<Section>('warmup');
   const [selectedExercise, setSelectedExercise] = useState<{ name: string; videoUrl?: string } | null>(null);
+  // RPE values: { liftIndex: { setIndex: rpeValue } }
+  const [rpeValues, setRpeValues] = useState<Record<number, Record<number, number>>>({});
   const { data: programs = [], isLoading } = usePrograms();
   
   // Refs for scrolling
@@ -214,29 +218,72 @@ const WorkoutDetail = () => {
 
             {/* Sets Table */}
             <div className="space-y-2.5">
-              {Array.from({ length: lift.sets || 6 }).map((_, setIdx) => (
-                <div key={setIdx} className="flex items-center gap-3">
-                  <span className="text-base font-medium w-6 text-center">{setIdx + 1}</span>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      placeholder="50"
-                      className="w-20 h-10 text-sm bg-muted/30 border-0 rounded-xl text-center font-medium"
-                    />
-                    <span className="text-xs text-muted-foreground">kg</span>
+              {Array.from({ length: lift.sets || 6 }).map((_, setIdx) => {
+                const currentRPE = rpeValues[liftIndex]?.[setIdx] || 5;
+                
+                return (
+                  <div key={setIdx} className="flex items-center gap-3">
+                    <span className="text-base font-medium w-6 text-center">{setIdx + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        placeholder="50"
+                        className="w-20 h-10 text-sm bg-muted/30 border-0 rounded-xl text-center font-medium"
+                      />
+                      <span className="text-xs text-muted-foreground">kg</span>
+                    </div>
+                    
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-8 h-8 rounded-full bg-muted/30 flex items-center justify-center text-muted-foreground hover:bg-muted/40 transition-colors relative">
+                          {currentRPE > 5 && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
+                              {currentRPE}
+                            </span>
+                          )}
+                          ✕
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 pointer-events-auto">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-sm">RPE (Rate of Perceived Exertion)</h4>
+                            <span className="text-2xl font-bold text-primary">{currentRPE}</span>
+                          </div>
+                          <Slider
+                            value={[currentRPE]}
+                            onValueChange={(value) => {
+                              setRpeValues(prev => ({
+                                ...prev,
+                                [liftIndex]: {
+                                  ...prev[liftIndex],
+                                  [setIdx]: value[0]
+                                }
+                              }));
+                            }}
+                            min={1}
+                            max={10}
+                            step={0.5}
+                            className="w-full"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>1 - Zeer licht</span>
+                            <span>10 - Maximaal</span>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    
+                    <div className="flex items-center gap-1.5 bg-muted/30 px-3 py-2 rounded-xl">
+                      <span className="text-sm font-semibold">{lift.reps}</span>
+                      <span className="text-xs text-muted-foreground">reps</span>
+                    </div>
+                    <button className="w-8 h-8 rounded-full bg-muted/30 flex items-center justify-center hover:bg-[#86efac] hover:text-[#059669] transition-colors ml-auto">
+                      ✓
+                    </button>
                   </div>
-                  <button className="w-8 h-8 rounded-full bg-muted/30 flex items-center justify-center text-muted-foreground hover:bg-muted/40 transition-colors">
-                    ✕
-                  </button>
-                  <div className="flex items-center gap-1.5 bg-muted/30 px-3 py-2 rounded-xl">
-                    <span className="text-sm font-semibold">{lift.reps}</span>
-                    <span className="text-xs text-muted-foreground">reps</span>
-                  </div>
-                  <button className="w-8 h-8 rounded-full bg-muted/30 flex items-center justify-center hover:bg-[#86efac] hover:text-[#059669] transition-colors ml-auto">
-                    ✓
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
