@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Check, X, UserPlus, Loader2, Mail, Shield } from "lucide-react";
+import { Check, X, UserPlus, Loader2, Mail, Shield, Settings } from "lucide-react";
+import { MemberManagementDialog } from "@/components/admin/MemberManagementDialog";
 import {
   Dialog,
   DialogContent,
@@ -60,6 +61,7 @@ const AdminMembers = () => {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [managingMember, setManagingMember] = useState<{ id: string; userId: string } | null>(null);
 
   const { data: pendingMembers = [], isLoading: pendingLoading } = useQuery<ProfileWithEmail[]>({
     queryKey: ["pending-members"],
@@ -465,9 +467,19 @@ const AdminMembers = () => {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-green-600">
-                        <Check className="h-4 w-4" />
-                        Active
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setManagingMember({ id: member.id, userId: member.user_id })}
+                        >
+                          <Settings className="h-4 w-4 mr-1" />
+                          Beheer
+                        </Button>
+                        <div className="flex items-center gap-2 text-sm text-green-600">
+                          <Check className="h-4 w-4" />
+                          Active
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -477,6 +489,15 @@ const AdminMembers = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {managingMember && (
+        <MemberManagementDialog
+          open={!!managingMember}
+          onOpenChange={(open) => !open && setManagingMember(null)}
+          memberId={managingMember.id}
+          memberUserId={managingMember.userId}
+        />
+      )}
     </div>
   );
 };
