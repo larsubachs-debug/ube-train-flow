@@ -5,7 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Dumbbell, Plus, Video } from "lucide-react";
+import { Search, Dumbbell, Plus, Video, GripVertical } from "lucide-react";
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
@@ -30,6 +32,26 @@ interface ExerciseLibraryItem {
 }
 
 const ExerciseCard = ({ exercise, onClick }: { exercise: ExerciseLibraryItem; onClick?: () => void }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: `library-${exercise.id}`,
+    data: {
+      type: 'library-exercise',
+      exercise: exercise,
+    },
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragging ? 'grabbing' : 'grab',
+  };
+
   const getCategoryColor = () => {
     switch (exercise.category) {
       case 'strength': return 'bg-blue-50 text-blue-700 border-blue-200';
@@ -42,25 +64,37 @@ const ExerciseCard = ({ exercise, onClick }: { exercise: ExerciseLibraryItem; on
 
   return (
     <div 
-      className="p-3 rounded-xl bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer border border-border/50 group"
-      onClick={onClick}
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`p-3 rounded-xl bg-muted/30 hover:bg-muted/60 transition-colors border border-border/50 group ${
+        isDragging ? 'shadow-lg ring-2 ring-ube-blue/50' : ''
+      }`}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h4 className="font-medium text-sm truncate">{exercise.name}</h4>
-            {exercise.video_url && (
-              <Video className="h-3 w-3 text-ube-blue flex-shrink-0" />
-            )}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h4 className="font-medium text-sm truncate">{exercise.name}</h4>
+              {exercise.video_url && (
+                <Video className="h-3 w-3 text-ube-blue flex-shrink-0" />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {exercise.muscle_groups?.[0] || exercise.category}
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {exercise.muscle_groups?.[0] || exercise.category}
-          </p>
         </div>
         <Button
           size="icon"
           variant="ghost"
           className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity bg-ube-blue text-white hover:bg-ube-blue/90"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick?.();
+          }}
         >
           <Plus className="h-3 w-3" />
         </Button>
