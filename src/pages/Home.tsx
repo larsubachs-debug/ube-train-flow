@@ -118,7 +118,7 @@ const Home = () => {
           <Link to="/community" className="group">
             <div className="bg-muted rounded-2xl p-4 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
               <Users className="w-6 h-6 text-muted-foreground" />
-              <span className="text-xs font-medium text-foreground text-center">Locker room</span>
+              <span className="text-xs font-medium text-foreground text-center">Kleedkamer</span>
             </div>
           </Link>
           <Link to="/education" className="group">
