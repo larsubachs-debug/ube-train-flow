@@ -6,7 +6,6 @@ const BottomNav = () => {
 
   const navItems = [
     { path: "/", icon: Calendar, label: "Today" },
-    { path: "/custom-workout", icon: Plus, label: "Eigen" },
     { path: "/strength-program", icon: Dumbbell, label: "Strength" },
     { path: "/cardio-program", icon: Heart, label: "Cardio" },
     { path: "/account", icon: User, label: "Account" },
