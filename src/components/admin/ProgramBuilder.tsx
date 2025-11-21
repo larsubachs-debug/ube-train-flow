@@ -44,7 +44,9 @@ interface Exercise {
 interface SortableExerciseItemProps {
   exercise: Exercise;
   isSelected: boolean;
+  isMultiSelected: boolean;
   onClick: () => void;
+  onMultiSelect: () => void;
 }
 
 interface Day {
@@ -59,7 +61,7 @@ interface ProgramBuilderProps {
   initialData?: any;
 }
 
-const SortableExerciseItem = ({ exercise, isSelected, onClick }: SortableExerciseItemProps) => {
+const SortableExerciseItem = ({ exercise, isSelected, isMultiSelected, onClick, onMultiSelect }: SortableExerciseItemProps) => {
   const {
     attributes,
     listeners,
@@ -82,10 +84,20 @@ const SortableExerciseItem = ({ exercise, isSelected, onClick }: SortableExercis
       className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all ${
         isSelected 
           ? 'bg-[hsl(199,89%,48%)]/10 border-2 border-[hsl(199,89%,48%)]' 
+          : isMultiSelected
+          ? 'bg-primary/5 border-2 border-primary/50'
           : 'bg-muted/50 hover:bg-muted'
       } ${isDragging ? 'shadow-lg ring-2 ring-[hsl(199,89%,48%)]/50' : ''}`}
       onClick={onClick}
     >
+      <Checkbox 
+        checked={isMultiSelected}
+        onClick={(e) => {
+          e.stopPropagation();
+          onMultiSelect();
+        }}
+        className="cursor-pointer"
+      />
       <div 
         {...attributes} 
         {...listeners}
@@ -105,10 +117,6 @@ const SortableExerciseItem = ({ exercise, isSelected, onClick }: SortableExercis
           {exercise.sets.length} sets
         </p>
       </div>
-      <Checkbox 
-        checked={isSelected} 
-        className="pointer-events-none"
-      />
     </div>
   );
 };
@@ -132,9 +140,11 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
   const [selectedDayId, setSelectedDayId] = useState<string>("day-1");
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+  const [selectedExerciseIds, setSelectedExerciseIds] = useState<string[]>([]);
 
   const selectedDay = days.find(d => d.id === selectedDayId);
   const selectedExercise = selectedDay?.exercises.find(e => e.id === selectedExerciseId);
+  const hasMultipleSelected = selectedExerciseIds.length > 1;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -245,15 +255,35 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     setDays(updatedDays);
   };
 
-  const toggleExerciseSelection = (exerciseId: string) => {
-    const updatedDays = days.map(day => ({
-      ...day,
-      exercises: day.exercises.map(ex => 
-        ex.id === exerciseId ? { ...ex, selected: !ex.selected } : ex
-      ),
-    }));
-    setDays(updatedDays);
-    setSelectedExerciseId(exerciseId);
+  const toggleExerciseSelection = (exerciseId: string, isMultiSelect = false) => {
+    if (isMultiSelect) {
+      // Multi-select mode for batch actions
+      setSelectedExerciseIds(prev => 
+        prev.includes(exerciseId)
+          ? prev.filter(id => id !== exerciseId)
+          : [...prev, exerciseId]
+      );
+    } else {
+      // Single select mode for detail view
+      const updatedDays = days.map(day => ({
+        ...day,
+        exercises: day.exercises.map(ex => 
+          ex.id === exerciseId ? { ...ex, selected: !ex.selected } : ex
+        ),
+      }));
+      setDays(updatedDays);
+      setSelectedExerciseId(exerciseId);
+      setSelectedExerciseIds([]);
+    }
+  };
+
+  const selectAllExercises = () => {
+    if (!selectedDay) return;
+    setSelectedExerciseIds(selectedDay.exercises.map(ex => ex.id));
+  };
+
+  const deselectAllExercises = () => {
+    setSelectedExerciseIds([]);
   };
 
   const deleteExercise = (exerciseId: string) => {
@@ -290,6 +320,50 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     setDays(updatedDays);
     setSelectedExerciseId(newExercise.id);
     toast({ description: "Oefening gedupliceerd" });
+  };
+
+  const bulkDuplicateExercises = () => {
+    if (!selectedDay || selectedExerciseIds.length === 0) return;
+
+    const exercisesToDuplicate = selectedDay.exercises.filter(ex => 
+      selectedExerciseIds.includes(ex.id)
+    );
+
+    const newExercises = exercisesToDuplicate.map(exercise => ({
+      ...exercise,
+      id: `ex-${Date.now()}-${Math.random()}`,
+      name: `${exercise.name} (copy)`,
+      sets: exercise.sets.map(set => ({
+        ...set,
+        id: `set-${Date.now()}-${Math.random()}`,
+      })),
+      selected: false,
+    }));
+
+    const updatedDays = days.map(day => 
+      day.id === selectedDayId 
+        ? { ...day, exercises: [...day.exercises, ...newExercises] }
+        : day
+    );
+    
+    setDays(updatedDays);
+    setSelectedExerciseIds([]);
+    toast({ description: `${selectedExerciseIds.length} oefeningen gedupliceerd` });
+  };
+
+  const bulkDeleteExercises = () => {
+    if (!selectedDay || selectedExerciseIds.length === 0) return;
+
+    const updatedDays = days.map(day => ({
+      ...day,
+      exercises: day.exercises.filter(ex => !selectedExerciseIds.includes(ex.id)),
+    }));
+
+    const count = selectedExerciseIds.length;
+    setDays(updatedDays);
+    setSelectedExerciseIds([]);
+    setSelectedExerciseId(null);
+    toast({ description: `${count} oefeningen verwijderd` });
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -443,7 +517,14 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
           <div className="col-span-5">
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">Activities</h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="font-semibold text-foreground">Activities</h3>
+                  {selectedExerciseIds.length > 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {selectedExerciseIds.length} geselecteerd
+                    </span>
+                  )}
+                </div>
                 <Button 
                   size="icon" 
                   variant="ghost"
@@ -453,6 +534,40 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
+
+              {/* Bulk Actions Bar */}
+              {selectedExerciseIds.length > 0 && (
+                <div className="mb-4 p-3 bg-primary/5 rounded-lg flex items-center justify-between animate-fade-in">
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={bulkDuplicateExercises}
+                      className="h-8"
+                    >
+                      <Copy className="h-3 w-3 mr-2" />
+                      Dupliceer ({selectedExerciseIds.length})
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={bulkDeleteExercises}
+                      className="h-8 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-3 w-3 mr-2" />
+                      Verwijder ({selectedExerciseIds.length})
+                    </Button>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={deselectAllExercises}
+                    className="h-8 text-xs"
+                  >
+                    Deselecteer alles
+                  </Button>
+                </div>
+              )}
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -468,7 +583,9 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                         key={exercise.id}
                         exercise={exercise}
                         isSelected={exercise.selected || false}
-                        onClick={() => toggleExerciseSelection(exercise.id)}
+                        isMultiSelected={selectedExerciseIds.includes(exercise.id)}
+                        onClick={() => toggleExerciseSelection(exercise.id, false)}
+                        onMultiSelect={() => toggleExerciseSelection(exercise.id, true)}
                       />
                     ))}
                     {selectedDay && selectedDay.exercises.length === 0 && (
