@@ -16,6 +16,7 @@ import { WeeklyTaskProgress } from "@/components/tasks/WeeklyTaskProgress";
 import { useBranding } from "@/hooks/useBranding";
 import { StreakIndicator } from "@/components/StreakIndicator";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
+import { programs as staticPrograms } from "@/data/programs";
 
 const Home = () => {
   const { user } = useAuth();
@@ -23,6 +24,9 @@ const Home = () => {
   const [userProgramId, setUserProgramId] = useState<string | null>(null);
   const [coachAvatar, setCoachAvatar] = useState<string | null>(null);
   const { data: programs = [] } = usePrograms();
+  
+  // Use database programs or fallback to static programs for display
+  const displayPrograms = programs.length > 0 ? programs : staticPrograms;
   
   // Get user's assigned program
   useEffect(() => {
@@ -71,7 +75,7 @@ const Home = () => {
   }, [user]);
   
   // Use assigned program or fallback to first available
-  const currentProgram = programs.find(p => p.id === userProgramId) || programs[0];
+  const currentProgram = displayPrograms.find(p => p.id === userProgramId) || displayPrograms[0];
   const { progress, currentWeek, loading } = useUserProgress(currentProgram?.id);
   
   // Find the actual week from the program data based on progress
