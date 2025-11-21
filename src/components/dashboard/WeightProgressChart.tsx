@@ -1,10 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBodyMetrics } from "@/hooks/useBodyMetrics";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useGoals } from "@/hooks/useGoals";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Scale, TrendingDown, TrendingUp } from "lucide-react";
+import { GoalSettingDialog } from "./GoalSettingDialog";
 
 interface WeightProgressChartProps {
   userId: string;
@@ -12,6 +14,7 @@ interface WeightProgressChartProps {
 
 export const WeightProgressChart = ({ userId }: WeightProgressChartProps) => {
   const { metrics, isLoading } = useBodyMetrics(userId);
+  const { weightGoal } = useGoals(userId);
 
   if (isLoading) {
     return (
@@ -93,6 +96,7 @@ export const WeightProgressChart = ({ userId }: WeightProgressChartProps) => {
         <div className="flex items-center justify-between">
           <CardTitle>Gewicht Progressie</CardTitle>
           <div className="flex items-center gap-2">
+            <GoalSettingDialog userId={userId} />
             {isPositive ? (
               <TrendingUp className="w-5 h-5 text-accent" />
             ) : (
@@ -106,6 +110,11 @@ export const WeightProgressChart = ({ userId }: WeightProgressChartProps) => {
           <span className={`text-sm font-medium ${isPositive ? 'text-accent' : 'text-secondary'}`}>
             {isPositive ? '+' : ''}{weightChange.toFixed(1)} kg
           </span>
+          {weightGoal && (
+            <span className="text-sm text-muted-foreground ml-2">
+              • Doel: {Number(weightGoal.target_value).toFixed(1)} kg
+            </span>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -129,7 +138,21 @@ export const WeightProgressChart = ({ userId }: WeightProgressChartProps) => {
               domain={['dataMin - 2', 'dataMax + 2']}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Area 
+            {weightGoal && (
+              <ReferenceLine 
+                y={Number(weightGoal.target_value)} 
+                stroke="hsl(var(--accent))" 
+                strokeDasharray="5 5"
+                strokeWidth={2}
+                label={{ 
+                  value: 'Doel', 
+                  position: 'right',
+                  fill: 'hsl(var(--accent))',
+                  fontSize: 12,
+                }}
+              />
+            )}
+            <Area
               type="monotone" 
               dataKey="weight" 
               stroke="hsl(var(--primary))" 

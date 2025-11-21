@@ -2,48 +2,47 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export interface BodyMetric {
+export interface Goal {
   id: string;
   user_id: string;
-  recorded_at: string;
-  weight: number | null;
-  body_fat_percentage: number | null;
-  muscle_mass: number | null;
+  goal_type: 'weight' | 'body_fat' | 'muscle_mass';
+  target_value: number;
+  start_date: string;
+  target_date: string | null;
+  is_active: boolean;
   notes: string | null;
-  front_photo_url: string | null;
-  side_photo_url: string | null;
-  back_photo_url: string | null;
 }
 
-export const useBodyMetrics = (userId: string | undefined) => {
+export const useGoals = (userId: string | undefined) => {
   const queryClient = useQueryClient();
 
-  const { data: metrics, isLoading } = useQuery({
-    queryKey: ['body-metrics', userId],
+  const { data: goals, isLoading } = useQuery({
+    queryKey: ['user-goals', userId],
     queryFn: async () => {
       if (!userId) throw new Error("User ID required");
 
       const { data, error } = await supabase
-        .from('body_metrics')
+        .from('user_goals')
         .select('*')
         .eq('user_id', userId)
-        .order('recorded_at', { ascending: false });
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as BodyMetric[];
+      return data as Goal[];
     },
     enabled: !!userId,
   });
 
-  const addMetric = useMutation({
-    mutationFn: async (metric: Omit<BodyMetric, 'id' | 'user_id'>) => {
+  const addGoal = useMutation({
+    mutationFn: async (goal: Omit<Goal, 'id' | 'user_id'>) => {
       if (!userId) throw new Error("User ID required");
 
       const { data, error } = await supabase
-        .from('body_metrics')
+        .from('user_goals')
         .insert({
           user_id: userId,
-          ...metric,
+          ...goal,
         })
         .select()
         .single();
@@ -52,19 +51,19 @@ export const useBodyMetrics = (userId: string | undefined) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['body-metrics', userId] });
-      toast.success('Body metrics toegevoegd!');
+      queryClient.invalidateQueries({ queryKey: ['user-goals', userId] });
+      toast.success('Doel toegevoegd!');
     },
     onError: (error) => {
       toast.error('Fout bij opslaan: ' + error.message);
     },
   });
 
-  const updateMetric = useMutation({
-    mutationFn: async ({ id, ...metric }: Partial<BodyMetric> & { id: string }) => {
+  const updateGoal = useMutation({
+    mutationFn: async ({ id, ...goal }: Partial<Goal> & { id: string }) => {
       const { data, error } = await supabase
-        .from('body_metrics')
-        .update(metric)
+        .from('user_goals')
+        .update(goal)
         .eq('id', id)
         .select()
         .single();
@@ -73,21 +72,21 @@ export const useBodyMetrics = (userId: string | undefined) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['body-metrics', userId] });
-      toast.success('Body metrics bijgewerkt!');
+      queryClient.invalidateQueries({ queryKey: ['user-goals', userId] });
+      toast.success('Doel bijgewerkt!');
     },
     onError: (error) => {
       toast.error('Fout bij bijwerken: ' + error.message);
     },
   });
 
-  const latestMetric = metrics?.[0];
+  const weightGoal = goals?.find(g => g.goal_type === 'weight');
 
   return {
-    metrics,
-    latestMetric,
+    goals,
+    weightGoal,
     isLoading,
-    addMetric,
-    updateMetric,
+    addGoal,
+    updateGoal,
   };
 };

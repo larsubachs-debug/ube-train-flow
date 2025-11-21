@@ -109,34 +109,43 @@ export type Database = {
       }
       body_metrics: {
         Row: {
+          back_photo_url: string | null
           body_fat_percentage: number | null
           created_at: string
+          front_photo_url: string | null
           id: string
           muscle_mass: number | null
           notes: string | null
           recorded_at: string
+          side_photo_url: string | null
           updated_at: string
           user_id: string
           weight: number | null
         }
         Insert: {
+          back_photo_url?: string | null
           body_fat_percentage?: number | null
           created_at?: string
+          front_photo_url?: string | null
           id?: string
           muscle_mass?: number | null
           notes?: string | null
           recorded_at?: string
+          side_photo_url?: string | null
           updated_at?: string
           user_id: string
           weight?: number | null
         }
         Update: {
+          back_photo_url?: string | null
           body_fat_percentage?: number | null
           created_at?: string
+          front_photo_url?: string | null
           id?: string
           muscle_mass?: number | null
           notes?: string | null
           recorded_at?: string
+          side_photo_url?: string | null
           updated_at?: string
           user_id?: string
           weight?: number | null
@@ -1059,6 +1068,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_goals: {
+        Row: {
+          created_at: string
+          goal_type: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          start_date: string
+          target_date: string | null
+          target_value: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          goal_type: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          start_date?: string
+          target_date?: string | null
+          target_value: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          goal_type?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          start_date?: string
+          target_date?: string | null
+          target_value?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_program_progress: {
         Row: {
