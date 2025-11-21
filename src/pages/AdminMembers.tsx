@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Check, X, UserPlus, Loader2, Mail, Shield, Settings } from "lucide-react";
 import { MemberManagementDialog } from "@/components/admin/MemberManagementDialog";
+import { BulkActionToolbar } from "@/components/admin/BulkActionToolbar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -62,6 +64,7 @@ const AdminMembers = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [managingMember, setManagingMember] = useState<{ id: string; userId: string } | null>(null);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
 
   const { data: pendingMembers = [], isLoading: pendingLoading } = useQuery<ProfileWithEmail[]>({
     queryKey: ["pending-members"],
@@ -211,6 +214,18 @@ const AdminMembers = () => {
       });
     },
   });
+
+  const toggleMemberSelection = (memberId: string) => {
+    setSelectedMembers((prev) =>
+      prev.includes(memberId)
+        ? prev.filter((id) => id !== memberId)
+        : [...prev, memberId]
+    );
+  };
+
+  const clearSelection = () => {
+    setSelectedMembers([]);
+  };
 
   const handleCreateMember = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -408,6 +423,18 @@ const AdminMembers = () => {
           </TabsContent>
 
           <TabsContent value="approved">
+            <BulkActionToolbar
+              selectedMembers={selectedMembers.map((id) => {
+                const member = approvedMembers.find((m) => m.id === id);
+                return {
+                  id,
+                  user_id: member?.user_id || "",
+                  display_name: member?.display_name || null,
+                };
+              })}
+              onClearSelection={clearSelection}
+            />
+
             {approvedLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -421,11 +448,33 @@ const AdminMembers = () => {
                 </p>
               </Card>
             ) : (
+              <>
+                <div className="flex items-center gap-2 mb-4 p-3 border rounded-lg bg-muted/50">
+                  <Checkbox
+                    checked={selectedMembers.length === approvedMembers.length && approvedMembers.length > 0}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedMembers(approvedMembers.map((m) => m.id));
+                      } else {
+                        setSelectedMembers([]);
+                      }
+                    }}
+                  />
+                  <Label className="text-sm font-medium cursor-pointer">
+                    Selecteer alle members
+                  </Label>
+                </div>
               <div className="grid gap-4">
                 {approvedMembers.map((member) => (
                   <Card key={member.id} className="p-6">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          checked={selectedMembers.includes(member.id)}
+                          onCheckedChange={() => toggleMemberSelection(member.id)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
                         <h3 className="text-lg font-semibold">
                           {member.display_name || "No Name"}
                         </h3>
@@ -467,6 +516,7 @@ const AdminMembers = () => {
                           )}
                         </div>
                       </div>
+                      </div>
                       <div className="flex flex-col gap-2">
                         <Button
                           size="sm"
@@ -485,6 +535,7 @@ const AdminMembers = () => {
                   </Card>
                 ))}
               </div>
+              </>
             )}
           </TabsContent>
         </Tabs>
