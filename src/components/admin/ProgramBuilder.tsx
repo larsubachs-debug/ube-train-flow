@@ -654,7 +654,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
         // 3. Insert workouts (days) and their exercises
         for (const day of week.days) {
-          const workoutId = `workout-${day.id}`;
+          const workoutId = `workout-${weekId}-${day.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
           
           const { error: workoutError } = await supabase
             .from("workouts")
@@ -671,10 +671,11 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
           // 4. Insert exercises
           for (const exercise of day.exercises) {
+            const exerciseId = `exercise-${workoutId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             const { error: exerciseError } = await supabase
               .from("exercises")
               .insert({
-                id: exercise.id,
+                id: exerciseId,
                 workout_id: workoutId,
                 name: exercise.name,
                 category: exercise.category.toLowerCase(),
