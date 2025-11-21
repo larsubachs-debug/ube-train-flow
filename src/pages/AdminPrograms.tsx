@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Edit, Trash2, ArrowLeft, Image, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Edit, Trash2, ArrowLeft, Image, Sparkles, Dumbbell, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +8,7 @@ import { usePrograms } from "@/hooks/usePrograms";
 import { ProgramBuilder } from "@/components/admin/ProgramBuilder";
 import { ProgramImageEditor } from "@/components/admin/ProgramImageEditor";
 import { AIProgramGenerator } from "@/components/admin/AIProgramGenerator";
+import { Badge } from "@/components/ui/badge";
 
 const AdminPrograms = () => {
   const { toast } = useToast();
@@ -19,15 +20,50 @@ const AdminPrograms = () => {
     id: string;
     name: string;
   } | null>(null);
+  const [programImages, setProgramImages] = useState<Record<string, string>>({});
+
+  // Fetch program images
+  useEffect(() => {
+    const fetchProgramImages = async () => {
+      const imagePromises = programs.map(async (program) => {
+        const { data } = await supabase
+          .from('program_media')
+          .select('media_id, media:media_id(file_path, bucket_name)')
+          .eq('program_id', program.id)
+          .eq('media_type', 'tile')
+          .single();
+
+        if (data?.media) {
+          const { data: { publicUrl } } = supabase.storage
+            .from((data.media as any).bucket_name)
+            .getPublicUrl((data.media as any).file_path);
+          return { id: program.id, url: publicUrl };
+        }
+        return { id: program.id, url: null };
+      });
+
+      const images = await Promise.all(imagePromises);
+      const imageMap = images.reduce((acc, { id, url }) => {
+        if (url) acc[id] = url;
+        return acc;
+      }, {} as Record<string, string>);
+      
+      setProgramImages(imageMap);
+    };
+
+    if (programs.length > 0) {
+      fetchProgramImages();
+    }
+  }, [programs]);
 
   const handleDelete = async (programId: string) => {
-    if (!confirm("Are you sure you want to delete this program?")) return;
+    if (!confirm("Weet je zeker dat je dit programma wilt verwijderen?")) return;
 
     const { error } = await supabase.from("programs").delete().eq("id", programId);
 
     if (error) {
       toast({
-        title: "Error",
+        title: "Fout",
         description: error.message,
         variant: "destructive",
       });
@@ -35,11 +71,27 @@ const AdminPrograms = () => {
     }
 
     toast({
-      title: "Success",
-      description: "Program deleted successfully",
+      description: "Programma succesvol verwijderd",
     });
 
     refetch();
+  };
+
+  const getTotalExercises = (program: any) => {
+    return program.weeks.reduce((total: number, week: any) => {
+      return total + week.workouts.reduce((weekTotal: number, workout: any) => {
+        return weekTotal + (workout.warmUp?.length || 0) + 
+               (workout.mainLifts?.length || 0) + 
+               (workout.accessories?.length || 0) + 
+               (workout.conditioning?.length || 0);
+      }, 0);
+    }, 0);
+  };
+
+  const getTotalWorkouts = (program: any) => {
+    return program.weeks.reduce((total: number, week: any) => {
+      return total + week.workouts.length;
+    }, 0);
   };
 
   if (isGeneratingWithAI) {
@@ -107,58 +159,113 @@ const AdminPrograms = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Manage Programs</h1>
-            <p className="text-muted-foreground">Create and manage training programs</p>
+            <h1 className="text-3xl font-bold text-foreground">Programma's Beheren</h1>
+            <p className="text-muted-foreground">Maak en beheer training programma's</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => setIsGeneratingWithAI(true)} variant="secondary">
               <Sparkles className="mr-2 h-4 w-4" />
               AI Programma
             </Button>
-            <Button onClick={() => setIsCreating(true)}>
+            <Button onClick={() => setIsCreating(true)} className="bg-ube-blue hover:bg-ube-blue/90">
               <Plus className="mr-2 h-4 w-4" />
               Handmatig
             </Button>
           </div>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {programs.map((program) => (
-            <Card key={program.id} className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-xl font-semibold">{program.name}</h3>
-                    {!(program as any).is_public && (
-                      <span className="text-xs px-2 py-1 bg-muted rounded">Privé</span>
-                    )}
+            <Card key={program.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              {/* Program Image */}
+              <div className="relative h-48 bg-gradient-to-br from-ube-blue/20 to-ube-orange/20">
+                {programImages[program.id] ? (
+                  <img
+                    src={programImages[program.id]}
+                    alt={program.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Dumbbell className="h-16 w-16 text-ube-blue/40" />
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {program.description}
-                  </p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {program.weeks.length} weeks • ID: {program.id}
-                  </p>
+                )}
+                {!(program as any).is_public && (
+                  <Badge className="absolute top-3 right-3 bg-background/90">
+                    Privé
+                  </Badge>
+                )}
+              </div>
+
+              {/* Program Info */}
+              <div className="p-5">
+                <h3 className="text-xl font-bold mb-2 line-clamp-1">{program.name}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                  {program.description}
+                </p>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="text-center p-2 rounded-lg bg-muted/50">
+                    <Calendar className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-xs font-medium">{program.weeks.length}</p>
+                    <p className="text-xs text-muted-foreground">Weken</p>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-muted/50">
+                    <Dumbbell className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-xs font-medium">{getTotalWorkouts(program)}</p>
+                    <p className="text-xs text-muted-foreground">Workouts</p>
+                  </div>
+                  <div className="text-center p-2 rounded-lg bg-muted/50">
+                    <Edit className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                    <p className="text-xs font-medium">{getTotalExercises(program)}</p>
+                    <p className="text-xs text-muted-foreground">Oefeningen</p>
+                  </div>
                 </div>
+
+                {/* Actions */}
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
+                    className="flex-1"
                     onClick={() => setEditingImageProgram({ id: program.id, name: program.name })}
                   >
-                    <Image className="h-4 w-4" />
+                    <Image className="h-4 w-4 mr-2" />
+                    Afbeelding
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleDelete(program.id)}
+                    className="text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             </Card>
           ))}
+
+          {programs.length === 0 && (
+            <div className="col-span-full text-center py-16">
+              <Dumbbell className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-lg font-medium mb-2">Nog geen programma's</p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Begin met het maken van je eerste training programma
+              </p>
+              <div className="flex gap-2 justify-center">
+                <Button onClick={() => setIsGeneratingWithAI(true)} variant="secondary">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  AI Programma
+                </Button>
+                <Button onClick={() => setIsCreating(true)} className="bg-ube-blue hover:bg-ube-blue/90">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Handmatig
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

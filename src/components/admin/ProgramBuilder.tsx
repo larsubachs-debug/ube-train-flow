@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, GripVertical, Copy, MoreVertical, Check } from "lucide-react";
+import { Plus, Trash2, GripVertical, Copy, MoreVertical, Check, Dumbbell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -292,11 +292,19 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
   const selectedDay = selectedWeek?.days.find(d => d.id === selectedDayId);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: 'exercise-drop-zone',
+  });
 
   // Auto-save simulation
   useEffect(() => {
@@ -314,13 +322,17 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     const { active, over } = event;
     setActiveId(null);
     
-    if (!over || !selectedDay) return;
+    if (!selectedDay) return;
 
     // Check if dragging from library
     const isFromLibrary = active.data.current?.type === 'library-exercise';
     
     if (isFromLibrary) {
-      // Add exercise from library
+      // Add exercise from library - accept drop on zone or on existing exercise
+      if (!over || (over.id !== 'exercise-drop-zone' && !selectedDay.exercises.find(ex => ex.id === over.id))) {
+        return;
+      }
+
       const libraryExercise = active.data.current?.exercise;
       if (!libraryExercise) return;
 
@@ -351,12 +363,12 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
       );
       
       setProgram({ ...program, weeks: updatedWeeks });
-      toast({ description: `${libraryExercise.name} toegevoegd` });
+      toast({ description: `${libraryExercise.name} toegevoegd aan ${selectedDay.name}` });
       return;
     }
 
     // Handle reordering existing exercises
-    if (active.id === over.id) return;
+    if (!over || active.id === over.id) return;
 
     const oldIndex = selectedDay.exercises.findIndex(ex => ex.id === active.id);
     const newIndex = selectedDay.exercises.findIndex(ex => ex.id === over.id);
@@ -726,7 +738,13 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
       {/* 3-Column Layout */}
       <div className="container mx-auto px-6 py-6">
-        <div className="grid grid-cols-12 gap-6">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-12 gap-6">
           {/* Left Column - Program & Days */}
           <div className="col-span-3 space-y-4">
             {/* Program Info */}
@@ -895,7 +913,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                     {selectedWeek?.name} - {selectedDay?.name}
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {selectedDay?.exercises.length || 0} exercises
+                    {selectedDay?.exercises.length || 0} oefeningen
                   </p>
                 </div>
                 <Button 
@@ -903,15 +921,15 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                   className="bg-ube-blue hover:bg-ube-blue/90 text-white"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add block
+                  Voeg blok toe
                 </Button>
               </div>
 
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
+              <div 
+                ref={setDroppableRef}
+                className={`min-h-[400px] rounded-lg transition-colors ${
+                  isOver ? 'bg-ube-blue/5 ring-2 ring-ube-blue ring-inset' : ''
+                }`}
               >
                 <SortableContext
                   items={selectedDay?.exercises.map(ex => ex.id) || []}
@@ -928,14 +946,23 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                       />
                     ))}
                     {selectedDay && selectedDay.exercises.length === 0 && (
-                      <div className="text-center py-12 text-muted-foreground">
-                        <p>No exercises yet.</p>
-                        <p className="text-sm mt-2">Click "Add block" or drag exercises from the library →</p>
+                      <div className={`text-center py-16 rounded-lg border-2 border-dashed transition-colors ${
+                        isOver ? 'border-ube-blue bg-ube-blue/5' : 'border-border'
+                      }`}>
+                        <Dumbbell className={`h-12 w-12 mx-auto mb-4 transition-colors ${
+                          isOver ? 'text-ube-blue' : 'text-muted-foreground'
+                        }`} />
+                        <p className="text-lg font-medium mb-2">
+                          {isOver ? 'Drop hier om toe te voegen' : 'Nog geen oefeningen'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Sleep oefeningen vanuit de bibliotheek →
+                        </p>
                       </div>
                     )}
                   </div>
                 </SortableContext>
-              </DndContext>
+              </div>
             </Card>
           </div>
 
@@ -946,6 +973,15 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
             </Card>
           </div>
         </div>
+        
+        <DragOverlay>
+          {activeId && activeId.toString().startsWith('library-') ? (
+            <Card className="p-3 shadow-lg rotate-3 opacity-80">
+              <p className="font-medium text-sm">Oefening</p>
+            </Card>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
       </div>
     </div>
   );
