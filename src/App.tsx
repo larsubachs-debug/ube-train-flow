@@ -17,6 +17,7 @@ import CheckIn from "./pages/CheckIn";
 import Community from "./pages/Community";
 import Account from "./pages/Account";
 import Education from "./pages/Education";
+import EducationDetail from "./pages/EducationDetail";
 import Membership from "./pages/Membership";
 import Media from "./pages/Media";
 import Achievements from "./pages/Achievements";
@@ -81,6 +82,7 @@ const App = () => {
                 <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
                 <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
                 <Route path="/education" element={<ProtectedRoute><Education /></ProtectedRoute>} />
+                <Route path="/education/:id" element={<ProtectedRoute><EducationDetail /></ProtectedRoute>} />
                 <Route path="/membership" element={<ProtectedRoute><Membership /></ProtectedRoute>} />
                 <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
                 <Route path="/achievements" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />

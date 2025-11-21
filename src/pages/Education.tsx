@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { educationModules } from "@/data/programs";
 import { Brain, Heart, Dumbbell, Apple, Lightbulb, Play, Zap, Utensils } from "lucide-react";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const iconMap = {
   sleep: Heart,
@@ -25,6 +26,7 @@ const colorMap = {
 };
 
 const Education = () => {
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   
   const categories = [
@@ -77,7 +79,11 @@ const Education = () => {
             const colorClass = colorMap[module.category];
             
             return (
-              <Card key={module.id} className="p-5 hover:shadow-lg transition-shadow cursor-pointer">
+              <Card 
+                key={module.id} 
+                className="p-5 hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate(`/education/${module.id}`)}
+              >
                 <div className="flex gap-4">
                   <div className={`p-3 rounded-lg ${colorClass}`}>
                     <Icon className="w-6 h-6" />

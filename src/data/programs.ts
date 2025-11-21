@@ -278,7 +278,23 @@ export const educationModules = [
       "Limit screen time 1 hour before bed",
       "Consider magnesium supplementation"
     ],
-    duration: 8
+    duration: 8,
+    content: `Sleep is the foundation of recovery and performance. During deep sleep, your body releases growth hormone, repairs muscle tissue, and consolidates memories from training sessions. Athletes who prioritize sleep see better strength gains, faster recovery, and improved performance compared to those who don't.
+
+The science is clear: 7-9 hours of quality sleep per night is essential for optimal athletic performance. During the first few hours of sleep, your body enters deep sleep stages where the most significant recovery occurs. This is when muscle protein synthesis is at its highest, and your nervous system recovers from the demands of training.
+
+Creating the right sleep environment is crucial. Your bedroom should be cool (around 18°C), completely dark, and quiet. Even small amounts of light can disrupt your circadian rhythm and reduce sleep quality. Consider blackout curtains and removing all electronic devices that emit light.
+
+Screen time before bed is one of the biggest sleep disruptors. The blue light from phones and computers suppresses melatonin production, making it harder to fall asleep. Try to avoid screens at least 1 hour before bed. If you must use devices, enable blue light filters or wear blue light blocking glasses.
+
+Consistency is key for sleep optimization. Going to bed and waking up at the same time every day—even on weekends—helps regulate your circadian rhythm. This makes falling asleep easier and improves overall sleep quality over time.`,
+    actionItems: [
+      "Set a consistent bedtime and wake time for the next 7 days",
+      "Remove all electronic devices from your bedroom tonight",
+      "Lower your bedroom temperature to 18°C",
+      "Try 400mg magnesium glycinate 1 hour before bed",
+      "Track your sleep quality in a journal each morning"
+    ]
   },
   {
     id: "stress-1",
@@ -317,7 +333,23 @@ export const educationModules = [
       "Don't fear healthy fats",
       "Eat whole foods 80% of the time"
     ],
-    duration: 15
+    duration: 15,
+    content: `Nutrition is the foundation of athletic performance and recovery. Without proper fuel, your body cannot adapt to training, build muscle, or perform at its peak. Understanding the basics of performance nutrition will transform your results both in and out of the gym.
+
+Protein is the most important macronutrient for athletes. Aim for 1.6-2.2 grams per kilogram of bodyweight daily. This supports muscle protein synthesis, recovery, and prevents muscle breakdown. Spread your protein intake across 4-5 meals for optimal absorption. Quality sources include lean meats, fish, eggs, dairy, and legumes.
+
+Carbohydrates are your primary fuel source for high-intensity training. Time your carb intake strategically: eat a carb-rich meal 2-3 hours before training, and consume fast-digesting carbs immediately post-workout to replenish glycogen stores. On rest days, you can reduce carb intake slightly.
+
+Don't fear healthy fats—they're essential for hormone production, joint health, and vitamin absorption. Include sources like avocados, nuts, olive oil, and fatty fish. Aim for 0.8-1g per kg bodyweight daily.
+
+Hydration is often overlooked but critical. Aim for 3-4 liters of water daily, more on training days. Even 2% dehydration can significantly impair performance. Monitor your urine color—it should be pale yellow throughout the day.`,
+    actionItems: [
+      "Calculate your daily protein target and track it for a week",
+      "Plan pre and post-workout meals for the next 7 days",
+      "Buy a large water bottle and set hourly hydration reminders",
+      "Meal prep 3-4 protein sources this weekend",
+      "Take progress photos and measurements before changing nutrition"
+    ]
   },
   {
     id: "mindset-1",
@@ -330,7 +362,23 @@ export const educationModules = [
       "Embrace discomfort as growth",
       "Celebrate small wins daily"
     ],
-    duration: 10
+    duration: 10,
+    content: `Motivation is fleeting, but discipline is forever. The athletes who achieve their goals aren't the most motivated—they're the most disciplined. They show up even when they don't feel like it, especially when they don't feel like it. This is the difference between average and exceptional.
+
+Understanding the difference between motivation and discipline is crucial. Motivation is an emotional state that comes and goes. Discipline is a skill you build through consistent practice. It's the ability to do what needs to be done, regardless of how you feel. Start small—commit to showing up, even if the session isn't perfect.
+
+Focus on the process, not just the outcome. Outcomes are often outside your control, but your daily actions aren't. If you focus solely on results (losing 10kg, hitting a PR), you'll feel discouraged when progress is slow. Instead, celebrate the process: showing up to train, hitting your protein target, getting 8 hours of sleep.
+
+Build identity-based habits. Don't just say "I want to lose weight"—say "I am a healthy person who exercises regularly." This subtle shift makes behaviors automatic. You're not forcing yourself to train; you're simply doing what healthy people do.
+
+Embrace discomfort as a sign of growth. Every time you feel uncomfortable during a workout or want to skip a session, that's an opportunity to build discipline. These moments are where real change happens. Lean into the discomfort.`,
+    actionItems: [
+      "Write down your athlete identity statement: 'I am someone who...'",
+      "Set a non-negotiable minimum: '10 minutes of movement daily, no matter what'",
+      "Track daily wins in a journal—focus on actions, not outcomes",
+      "Find an accountability partner and check in weekly",
+      "When you don't feel like training, commit to just 10 minutes—usually you'll keep going"
+    ]
   },
   {
     id: "mindset-2",
@@ -357,7 +405,23 @@ export const educationModules = [
       "Elite mannen: <1:00 uur, Elite vrouwen: <1:10 uur",
       "Singles, Doubles of Relay formaat beschikbaar"
     ],
-    duration: 12
+    duration: 12,
+    content: `Hyrox is een relatief nieuwe fitnesssport die de afgelopen jaren enorm populair is geworden. Het combineert hardlopen met functionele fitness stations in een gestandaardiseerd race format dat overal ter wereld hetzelfde is. Dit maakt het perfect om jezelf te meten en te verbeteren.
+
+De race bestaat uit 8 blokken van 1 kilometer hardlopen, afgewisseld met 8 verschillende fitness stations. Elk station test een specifiek aspect van je fitheid: cardiovasculaire capaciteit, kracht, power, en mentale veerkracht. Het totale race format is ongeveer 8 kilometer hardlopen plus de 8 stations.
+
+De 8 stations zijn: SkiErg (1000m), Sled Push (50m), Sled Pull (50m), Burpee Broad Jumps (80m), Rowing (1000m), Farmers Carry (200m), Sandbag Lunges (100m), en Wall Balls (100 reps). Elk station heeft specifieke techniek en strategie requirements die je moet beheersen voor een goede race performance.
+
+Voor beginners duurt een Hyrox race gemiddeld tussen de 1:15 en 1:45 uur. Intermediate atleten zitten vaak rond het uur, terwijl elite mannen onder het uur finishen en elite vrouwen onder 1:10 uur. Deze tijden geven je een benchmark om naar te streven.
+
+Je kunt Hyrox doen in verschillende formaten: Singles (alleen), Doubles (met een partner, waarbij je de workload verdeelt), of Relay (met een team van 4, waarbij elke persoon 2 runs en 2 stations doet). Voor je eerste race is Doubles vaak een goed startpunt.`,
+    actionItems: [
+      "Zoek een Hyrox event in jouw buurt en schrijf je in",
+      "Plan een test workout: 4x (1km run + 1 station)",
+      "Film jezelf bij elk station om techniek te analyseren",
+      "Join een Hyrox training groep of vind een training partner",
+      "Zet een target finishtijd voor je eerste race"
+    ]
   },
   {
     id: "hyrox-2",

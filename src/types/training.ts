@@ -119,8 +119,10 @@ export interface CommunityMessage {
 export interface EducationModule {
   id: string;
   title: string;
-  category: 'sleep' | 'stress' | 'training' | 'nutrition' | 'mindset';
+  category: 'sleep' | 'stress' | 'training' | 'nutrition' | 'mindset' | 'hyrox' | 'lifestyle';
   videoUrl?: string;
   keyPoints: string[];
   duration?: number;
+  content?: string;
+  actionItems?: string[];
 }
