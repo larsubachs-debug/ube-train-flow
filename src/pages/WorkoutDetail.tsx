@@ -5,13 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
-import { ArrowLeft, Calendar, TrendingUp, Check, Play, BarChart3 } from "lucide-react";
+import { ArrowLeft, Calendar, TrendingUp, Check, Play, BarChart3, Timer, Trophy } from "lucide-react";
 import { WorkoutCompleteButton } from "@/components/workouts/WorkoutCompleteButton";
 import { ExerciseVideoDialog } from "@/components/workouts/ExerciseVideoDialog";
 import { EMOMTimer } from "@/components/workouts/EMOMTimer";
 import { RPEHistoryChart } from "@/components/workouts/RPEHistoryChart";
+import { RestTimer } from "@/components/workouts/RestTimer";
 import { useWorkoutSets } from "@/hooks/useWorkoutSets";
 import { toast } from "sonner";
 
@@ -28,14 +30,20 @@ const WorkoutDetail = () => {
   const [currentSection, setCurrentSection] = useState<Section>('warmup');
   const [selectedExercise, setSelectedExercise] = useState<{ name: string; videoUrl?: string } | null>(null);
   const [showRPEHistory, setShowRPEHistory] = useState<{ exerciseName: string; liftIndex: number } | null>(null);
+  const [showRestTimer, setShowRestTimer] = useState(false);
+  const [restTimerDuration, setRestTimerDuration] = useState(90); // default 90 seconds
   // RPE values: { liftIndex: { setIndex: rpeValue } }
   const [rpeValues, setRpeValues] = useState<Record<number, Record<number, number>>>({});
   // Weight values: { liftIndex: { setIndex: weight } }
   const [weightValues, setWeightValues] = useState<Record<number, Record<number, number>>>({});
   // Set completion: { liftIndex: { setIndex: completed } }
   const [setsCompleted, setSetsCompleted] = useState<Record<number, Record<number, boolean>>>({});
+  // PR status: { liftIndex: { setIndex: isPR } }
+  const [prStatus, setPrStatus] = useState<Record<number, Record<number, boolean>>>({});
+  // Rest time per exercise: { liftIndex: restTime }
+  const [restTimes, setRestTimes] = useState<Record<number, number>>({});
   const { data: programs = [], isLoading } = usePrograms();
-  const { saveSet } = useWorkoutSets(workoutId || "");
+  const { saveSet, checkIfPR, getPersonalRecord } = useWorkoutSets(workoutId || "");
   
   // Refs for scrolling
   const warmupRef = useRef<HTMLDivElement>(null);
@@ -123,6 +131,29 @@ const WorkoutDetail = () => {
     return sectionIndex < currentIndex;
   };
 
+  // Check for PR when weight changes
+  const checkForPR = async (liftIndex: number, setIdx: number, exerciseName: string, weight: number) => {
+    if (weight <= 0) {
+      setPrStatus((prev) => ({
+        ...prev,
+        [liftIndex]: {
+          ...prev[liftIndex],
+          [setIdx]: false,
+        },
+      }));
+      return;
+    }
+
+    const isPR = await checkIfPR(exerciseName, weight);
+    setPrStatus((prev) => ({
+      ...prev,
+      [liftIndex]: {
+        ...prev[liftIndex],
+        [setIdx]: isPR,
+      },
+    }));
+  };
+
   // Function to handle set completion
   const handleSetComplete = async (
     liftIndex: number,
@@ -132,6 +163,7 @@ const WorkoutDetail = () => {
   ) => {
     const weight = weightValues[liftIndex]?.[setIdx] || 0;
     const rpe = rpeValues[liftIndex]?.[setIdx] || null;
+    const isPR = prStatus[liftIndex]?.[setIdx] || false;
 
     // Save to database
     const success = await saveSet(exerciseName, setIdx + 1, weight, reps, rpe);
@@ -145,7 +177,19 @@ const WorkoutDetail = () => {
           [setIdx]: true,
         },
       }));
-      toast.success(`Set ${setIdx + 1} voltooid!`);
+      
+      if (isPR) {
+        toast.success(`🏆 Nieuw PR! Set ${setIdx + 1} voltooid met ${weight}kg!`, {
+          duration: 5000,
+        });
+      } else {
+        toast.success(`Set ${setIdx + 1} voltooid!`);
+      }
+
+      // Start rest timer after set completion
+      const configuredRestTime = restTimes[liftIndex] || 90;
+      setRestTimerDuration(configuredRestTime);
+      setShowRestTimer(true);
     }
   };
 
@@ -249,9 +293,37 @@ const WorkoutDetail = () => {
                 <h3 className="text-xl font-bold">{lift.name}</h3>
               </div>
               <div className="flex gap-1">
-                <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
-                  ✏️
-                </button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
+                      <Timer className="h-5 w-5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm">Rest Tijd</h4>
+                      <div className="space-y-2">
+                        {[60, 90, 120, 180].map((seconds) => (
+                          <button
+                            key={seconds}
+                            onClick={() => setRestTimes((prev) => ({ ...prev, [liftIndex]: seconds }))}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                              restTimes[liftIndex] === seconds
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted/20"
+                            }`}
+                          >
+                            {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, "0")}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Huidige: {Math.floor((restTimes[liftIndex] || 90) / 60)}:
+                        {((restTimes[liftIndex] || 90) % 60).toString().padStart(2, "0")}
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <button
                   onClick={() => setShowRPEHistory({ exerciseName: lift.name, liftIndex })}
                   className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors"
@@ -270,11 +342,12 @@ const WorkoutDetail = () => {
                 const currentRPE = rpeValues[liftIndex]?.[setIdx] || 5;
                 const currentWeight = weightValues[liftIndex]?.[setIdx] || 0;
                 const isCompleted = setsCompleted[liftIndex]?.[setIdx] || false;
+                const isPR = prStatus[liftIndex]?.[setIdx] || false;
                 
                 return (
-                  <div key={setIdx} className="flex items-center gap-3">
+                  <div key={setIdx} className="flex items-center gap-3 relative">
                     <span className="text-base font-medium w-6 text-center">{setIdx + 1}</span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 relative">
                       <Input
                         type="number"
                         placeholder="50"
@@ -288,12 +361,28 @@ const WorkoutDetail = () => {
                               [setIdx]: value,
                             },
                           }));
+                          // Check for PR when weight changes
+                          if (value > 0) {
+                            checkForPR(liftIndex, setIdx, lift.name, value);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const value = parseFloat(e.target.value) || 0;
+                          if (value > 0) {
+                            checkForPR(liftIndex, setIdx, lift.name, value);
+                          }
                         }}
                         disabled={isCompleted}
                         className={`w-20 h-10 text-sm border-0 rounded-xl text-center font-medium ${
-                          isCompleted ? "bg-muted/50" : "bg-muted/30"
+                          isCompleted ? "bg-muted/50" : isPR ? "bg-amber-100 dark:bg-amber-900/20 border-2 border-amber-500" : "bg-muted/30"
                         }`}
                       />
+                      {isPR && !isCompleted && (
+                        <Badge className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-1.5 py-0.5 pointer-events-none">
+                          <Trophy className="h-3 w-3 mr-0.5" />
+                          PR
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">kg</span>
                     </div>
                     
@@ -394,6 +483,16 @@ const WorkoutDetail = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Rest Timer */}
+      <RestTimer
+        isOpen={showRestTimer}
+        onClose={() => setShowRestTimer(false)}
+        defaultRestTime={restTimerDuration}
+        onRestComplete={() => {
+          toast.info("Rust voltooid! Start je volgende set 💪");
+        }}
+      />
     </div>
   );
 };
