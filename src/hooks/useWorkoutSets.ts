@@ -117,6 +117,38 @@ export const useWorkoutSets = (workoutId: string, exerciseName?: string) => {
     }
   };
 
+  const getPersonalRecord = async (exerciseName: string) => {
+    if (!user) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from("workout_sets")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("exercise_name", exerciseName)
+        .not("weight", "is", null)
+        .order("weight", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching PR:", error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error in getPersonalRecord:", error);
+      return null;
+    }
+  };
+
+  const checkIfPR = async (exerciseName: string, weight: number): Promise<boolean> => {
+    const currentPR = await getPersonalRecord(exerciseName);
+    if (!currentPR || !currentPR.weight) return true; // First time is always a PR
+    return weight > currentPR.weight;
+  };
+
   useEffect(() => {
     fetchSets();
   }, [user, workoutId, exerciseName]);
@@ -126,6 +158,8 @@ export const useWorkoutSets = (workoutId: string, exerciseName?: string) => {
     loading,
     saveSet,
     getHistoricalRPE,
+    getPersonalRecord,
+    checkIfPR,
     refetch: fetchSets,
   };
 };
