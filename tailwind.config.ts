@@ -54,6 +54,8 @@ export default {
           "light-gray": "hsl(var(--ube-light-gray))",
           green: "hsl(var(--ube-green))",
           "green-light": "hsl(var(--ube-green-light))",
+          blue: "hsl(var(--ube-blue))",
+          "blue-light": "hsl(var(--ube-blue-light))",
         },
       },
       borderRadius: {
