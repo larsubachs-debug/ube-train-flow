@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import ubeLogo from "@/assets/ube-logo.png";
+import { LuxuryBackground } from "@/components/auth/LuxuryBackground";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Invalid email address"),
@@ -140,8 +141,9 @@ const Auth = () => {
 
   if (showForgotPassword) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/5 p-4">
-        <Card className="w-full max-w-md border-2 shadow-xl">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/5 p-4 relative overflow-hidden">
+        <LuxuryBackground />
+        <Card className="w-full max-w-md border-2 shadow-xl backdrop-blur-md bg-card/95 relative z-10">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl">Reset Password</CardTitle>
             <CardDescription className="text-base">
@@ -189,9 +191,10 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/5 p-4">
-      <div className="w-full max-w-md">
-        <Card className="border-2 shadow-xl backdrop-blur-sm bg-card/95">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent/5 p-4 relative overflow-hidden">
+      <LuxuryBackground />
+      <div className="w-full max-w-md relative z-10">
+        <Card className="border-2 shadow-xl backdrop-blur-md bg-card/95">
           <CardHeader className="text-center space-y-4 pb-6">
             <div className="flex justify-center">
               <img src={ubeLogo} alt="U.be" className="h-20" />
