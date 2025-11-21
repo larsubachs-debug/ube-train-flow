@@ -31,7 +31,7 @@ import Chat from "./pages/Chat";
 import CoachChat from "./pages/CoachChat";
 import Auth from "./pages/Auth";
 import PendingApproval from "./pages/PendingApproval";
-import BottomNav from "./components/BottomNav";
+import TopNav from "./components/TopNav";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,28 +67,29 @@ const App = () => {
           )}
           <div className={showSplash ? 'invisible' : 'visible'}>
             <BrowserRouter>
+              <TopNav />
               <Routes>
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/pending-approval" element={<PendingApproval />} />
                 <Route path="/onboarding" element={<Onboarding />} />
-                <Route path="/" element={<ProtectedRoute><Home /><BottomNav /></ProtectedRoute>} />
-                <Route path="/programs" element={<ProtectedRoute><Programs /><BottomNav /></ProtectedRoute>} />
-                <Route path="/program/:programId" element={<ProtectedRoute><ProgramDetail /><BottomNav /></ProtectedRoute>} />
-                <Route path="/workout/:workoutId" element={<ProtectedRoute><WorkoutDetail /><BottomNav /></ProtectedRoute>} />
-                <Route path="/check-in" element={<ProtectedRoute><CheckIn /><BottomNav /></ProtectedRoute>} />
-                <Route path="/community" element={<ProtectedRoute><Community /><BottomNav /></ProtectedRoute>} />
-                <Route path="/account" element={<ProtectedRoute><Account /><BottomNav /></ProtectedRoute>} />
-                <Route path="/education" element={<ProtectedRoute><Education /><BottomNav /></ProtectedRoute>} />
-                <Route path="/membership" element={<ProtectedRoute><Membership /><BottomNav /></ProtectedRoute>} />
-                <Route path="/media" element={<ProtectedRoute><Media /><BottomNav /></ProtectedRoute>} />
-                <Route path="/achievements" element={<ProtectedRoute><Achievements /><BottomNav /></ProtectedRoute>} />
-                <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /><BottomNav /></ProtectedRoute>} />
-                <Route path="/admin/programs" element={<ProtectedRoute requiredRole="coach"><AdminPrograms /><BottomNav /></ProtectedRoute>} />
-                <Route path="/admin/members" element={<ProtectedRoute requiredRole="coach"><AdminMembers /><BottomNav /></ProtectedRoute>} />
-                <Route path="/admin/checkins" element={<ProtectedRoute requiredRole="coach"><AdminCheckins /><BottomNav /></ProtectedRoute>} />
-                <Route path="/admin/tasks" element={<ProtectedRoute requiredRole="coach"><AdminTasks /><BottomNav /></ProtectedRoute>} />
-                <Route path="/admin/branding" element={<ProtectedRoute requiredRole="coach"><AdminBranding /><BottomNav /></ProtectedRoute>} />
-                <Route path="/coach/dashboard" element={<ProtectedRoute requiredRole="coach"><CoachDashboard /><BottomNav /></ProtectedRoute>} />
+                <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                <Route path="/programs" element={<ProtectedRoute><Programs /></ProtectedRoute>} />
+                <Route path="/program/:programId" element={<ProtectedRoute><ProgramDetail /></ProtectedRoute>} />
+                <Route path="/workout/:workoutId" element={<ProtectedRoute><WorkoutDetail /></ProtectedRoute>} />
+                <Route path="/check-in" element={<ProtectedRoute><CheckIn /></ProtectedRoute>} />
+                <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
+                <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+                <Route path="/education" element={<ProtectedRoute><Education /></ProtectedRoute>} />
+                <Route path="/membership" element={<ProtectedRoute><Membership /></ProtectedRoute>} />
+                <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
+                <Route path="/achievements" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
+                <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+                <Route path="/admin/programs" element={<ProtectedRoute requiredRole="coach"><AdminPrograms /></ProtectedRoute>} />
+                <Route path="/admin/members" element={<ProtectedRoute requiredRole="coach"><AdminMembers /></ProtectedRoute>} />
+                <Route path="/admin/checkins" element={<ProtectedRoute requiredRole="coach"><AdminCheckins /></ProtectedRoute>} />
+                <Route path="/admin/tasks" element={<ProtectedRoute requiredRole="coach"><AdminTasks /></ProtectedRoute>} />
+                <Route path="/admin/branding" element={<ProtectedRoute requiredRole="coach"><AdminBranding /></ProtectedRoute>} />
+                <Route path="/coach/dashboard" element={<ProtectedRoute requiredRole="coach"><CoachDashboard /></ProtectedRoute>} />
                 <Route path="/coach/chat/:memberId" element={<ProtectedRoute requiredRole="coach"><CoachChat /></ProtectedRoute>} />
                 <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
