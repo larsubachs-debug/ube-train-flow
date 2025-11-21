@@ -21,6 +21,10 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  DragOverEvent,
+  useDroppable,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -261,6 +265,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   
   const [program, setProgram] = useState<Program>({
     name: initialData?.name || "",
@@ -301,9 +306,57 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     return () => clearTimeout(timer);
   }, [program]);
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id || !selectedDay) return;
+    setActiveId(null);
+    
+    if (!over || !selectedDay) return;
+
+    // Check if dragging from library
+    const isFromLibrary = active.data.current?.type === 'library-exercise';
+    
+    if (isFromLibrary) {
+      // Add exercise from library
+      const libraryExercise = active.data.current?.exercise;
+      if (!libraryExercise) return;
+
+      const newExercise: Exercise = {
+        id: `ex-${Date.now()}`,
+        name: libraryExercise.name,
+        category: libraryExercise.category || 'Strength',
+        restTimer: '01:00',
+        notes: libraryExercise.description || '',
+        sets: [
+          { id: `set-1`, reps: '10', weight: '20', targetRPE: '7' },
+          { id: `set-2`, reps: '10', weight: '20', targetRPE: '7' },
+          { id: `set-3`, reps: '10', weight: '20', targetRPE: '7' },
+        ],
+      };
+
+      const updatedWeeks = program.weeks.map(week =>
+        week.id === selectedWeekId
+          ? {
+              ...week,
+              days: week.days.map(day =>
+                day.id === selectedDayId
+                  ? { ...day, exercises: [...day.exercises, newExercise] }
+                  : day
+              ),
+            }
+          : week
+      );
+      
+      setProgram({ ...program, weeks: updatedWeeks });
+      toast({ description: `${libraryExercise.name} toegevoegd` });
+      return;
+    }
+
+    // Handle reordering existing exercises
+    if (active.id === over.id) return;
 
     const oldIndex = selectedDay.exercises.findIndex(ex => ex.id === active.id);
     const newIndex = selectedDay.exercises.findIndex(ex => ex.id === over.id);
@@ -857,6 +910,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
