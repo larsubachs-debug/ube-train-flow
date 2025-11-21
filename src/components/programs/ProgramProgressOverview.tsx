@@ -109,11 +109,11 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Hero Section with Coach Image */}
-      <div className="relative h-[70vh] min-h-[500px] overflow-hidden">
+      <div className="relative h-[65vh] min-h-[550px] overflow-hidden">
         <img 
           src={coachMaxime}
           alt="Coach Maxime"
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-cover object-top"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-background" />
         
