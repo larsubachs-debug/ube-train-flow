@@ -161,14 +161,16 @@ export const useMediaUpload = () => {
       setProgress(75);
       if (onProgress) onProgress(75);
 
-      // Save to media table
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('Not authenticated');
+      // Ensure we have a valid session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+      
+      // Save to media table with the authenticated user's ID
 
       const { data: mediaData, error: mediaError } = await supabase
         .from('media')
         .insert({
-          user_id: user.user.id,
+          user_id: session.user.id,
           bucket_name: bucket,
           file_path: filepath,
           file_name: file.name,
