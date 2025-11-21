@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { BodyMetricsCard } from "@/components/dashboard/BodyMetricsCard";
 import { OneRMCard } from "@/components/dashboard/OneRMCard";
+import { BodyCompositionChart } from "@/components/dashboard/BodyCompositionChart";
+import { WeightProgressChart } from "@/components/dashboard/WeightProgressChart";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -96,6 +98,10 @@ const Dashboard = () => {
         <BodyMetricsCard userId={user?.id || ''} />
         <OneRMCard userId={user?.id || ''} />
       </div>
+
+      {/* Body Composition Progress Charts */}
+      <WeightProgressChart userId={user?.id || ''} />
+      <BodyCompositionChart userId={user?.id || ''} />
 
       {/* Weekly Volume Chart */}
       {stats?.weeklyVolumeData && stats.weeklyVolumeData.length > 0 && (
