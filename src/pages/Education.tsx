@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { educationModules } from "@/data/programs";
-import { Brain, Heart, Dumbbell, Apple, Lightbulb, Play, Zap } from "lucide-react";
+import { Brain, Heart, Dumbbell, Apple, Lightbulb, Play, Zap, Utensils } from "lucide-react";
 import React from "react";
 
 const iconMap = {
@@ -11,6 +11,7 @@ const iconMap = {
   nutrition: Apple,
   mindset: Lightbulb,
   hyrox: Zap,
+  lifestyle: Utensils,
 };
 
 const colorMap = {
@@ -20,6 +21,7 @@ const colorMap = {
   nutrition: "bg-green-500/10 text-green-600",
   mindset: "bg-amber-500/10 text-amber-600",
   hyrox: "bg-red-500/10 text-red-600",
+  lifestyle: "bg-pink-500/10 text-pink-600",
 };
 
 const Education = () => {
@@ -33,6 +35,7 @@ const Education = () => {
     { id: "sleep", name: "Slaap", icon: Heart },
     { id: "stress", name: "Stress", icon: Brain },
     { id: "mindset", name: "Mindset", icon: Lightbulb },
+    { id: "lifestyle", name: "Lifestyle", icon: Utensils },
   ];
 
   const filteredModules = selectedCategory

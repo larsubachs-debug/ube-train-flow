@@ -475,5 +475,19 @@ export const educationModules = [
       "Listen to body: persistent pain = take extra rest day"
     ],
     duration: 12
+  },
+  // LIFESTYLE GUIDES
+  {
+    id: "lifestyle-1",
+    title: "Veerle's Favoriete Restaurants in Amsterdam",
+    category: "lifestyle" as const,
+    keyPoints: [
+      "De Tros: Gezellig eetcafé met heerlijke Nederlandse gerechten en een warme sfeer",
+      "Nikotin: Hip restaurant met moderne keuken en creatieve cocktails",
+      "De Kamer: Intiem restaurant met seizoensgebonden menu en persoonlijke service",
+      "Perfect voor een ontspannen avond na een intense trainingsweek",
+      "Reserveren wordt aangeraden, vooral in het weekend"
+    ],
+    duration: 5
   }
 ];
