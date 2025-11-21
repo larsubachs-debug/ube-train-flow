@@ -186,8 +186,8 @@ const Community = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-6">
-        <h1 className="text-3xl font-bold mb-2">Community</h1>
-        <p className="text-muted-foreground mb-6">Connect with other athletes</p>
+        <h1 className="text-3xl font-bold mb-2">Kleedkamer Talk</h1>
+        <p className="text-muted-foreground mb-6">Deel je successen, stel vragen en motiveer elkaar</p>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full grid grid-cols-3 mb-6">
@@ -200,7 +200,7 @@ const Community = () => {
             {/* Message Input */}
             <Card className="p-4">
               <Textarea
-                placeholder="Share your progress, ask questions..."
+                placeholder="Deel je PR, stel een vraag, of moedig een teamgenoot aan..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 className="resize-none mb-3"
@@ -268,7 +268,7 @@ const Community = () => {
             <div className="space-y-4">
               {posts.length === 0 ? (
                 <Card className="p-8 text-center">
-                  <p className="text-muted-foreground">Nog geen posts. Wees de eerste om te posten!</p>
+                  <p className="text-muted-foreground">De kleedkamer is nog stil... Trap af! 💪</p>
                 </Card>
               ) : (
                 posts.map((post) => (
