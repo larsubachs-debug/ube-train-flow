@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
-import { ArrowLeft, Calendar, TrendingUp, Check } from "lucide-react";
+import { ArrowLeft, Calendar, TrendingUp, Check, Play } from "lucide-react";
 import { WorkoutCompleteButton } from "@/components/workouts/WorkoutCompleteButton";
+import { ExerciseVideoDialog } from "@/components/workouts/ExerciseVideoDialog";
 
 type Section = 'warmup' | 'main' | 'accessories' | 'conditioning' | 'complete';
 
@@ -13,6 +14,7 @@ const WorkoutDetail = () => {
   const { workoutId } = useParams();
   const [notes, setNotes] = useState("");
   const [currentSection, setCurrentSection] = useState<Section>('warmup');
+  const [selectedExercise, setSelectedExercise] = useState<{ name: string; videoUrl?: string } | null>(null);
   const { data: programs = [], isLoading } = usePrograms();
   
   // Refs for scrolling
@@ -171,9 +173,22 @@ const WorkoutDetail = () => {
             </div>
             <div className="space-y-2">
               {workout.warmUp.map((exercise) => (
-                <div key={exercise.id} className="flex items-baseline justify-between py-2">
+                <div 
+                  key={exercise.id} 
+                  className="flex items-baseline justify-between py-2 hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors"
+                >
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">{exercise.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium text-sm">{exercise.name}</h4>
+                      {exercise.videoUrl && (
+                        <button
+                          onClick={() => setSelectedExercise({ name: exercise.name, videoUrl: exercise.videoUrl })}
+                          className="p-1 hover:bg-ube-blue/10 rounded-full transition-colors"
+                        >
+                          <Play className="h-4 w-4 text-ube-blue" fill="currentColor" />
+                        </button>
+                      )}
+                    </div>
                     <div className="flex gap-3 text-xs text-muted-foreground mt-1">
                       {exercise.sets && <span>{exercise.sets} sets</span>}
                       {exercise.reps && <span>{exercise.reps} reps</span>}
@@ -227,13 +242,28 @@ const WorkoutDetail = () => {
             {/* Main Lifts Overview */}
             <div className="space-y-2 mb-4">
               {workout.mainLifts.map((lift, liftIndex) => (
-                <div key={lift.id} className="flex items-baseline justify-between py-2 border-b border-border/30">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Min {liftIndex}-{liftIndex + 1}</p>
-                    <h3 className="font-semibold text-base">{lift.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {lift.reps} reps
-                    </p>
+                <div 
+                  key={lift.id} 
+                  className="flex items-baseline justify-between py-2 border-b border-border/30 hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Min {liftIndex}-{liftIndex + 1}</p>
+                        <h3 className="font-semibold text-base">{lift.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {lift.reps} reps
+                        </p>
+                      </div>
+                      {lift.videoUrl && (
+                        <button
+                          onClick={() => setSelectedExercise({ name: lift.name, videoUrl: lift.videoUrl })}
+                          className="p-1 hover:bg-ube-blue/10 rounded-full transition-colors ml-auto"
+                        >
+                          <Play className="h-4 w-4 text-ube-blue" fill="currentColor" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -243,9 +273,19 @@ const WorkoutDetail = () => {
             {workout.mainLifts.map((lift, liftIndex) => (
               <div key={`detail-${lift.id}`} className="pt-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Barbell</p>
-                    <h3 className="text-lg font-semibold mt-1">{lift.name}</h3>
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Barbell</p>
+                      <h3 className="text-lg font-semibold mt-1">{lift.name}</h3>
+                    </div>
+                    {lift.videoUrl && (
+                      <button
+                        onClick={() => setSelectedExercise({ name: lift.name, videoUrl: lift.videoUrl })}
+                        className="p-2 hover:bg-ube-blue/10 rounded-full transition-colors"
+                      >
+                        <Play className="h-5 w-5 text-ube-blue" fill="currentColor" />
+                      </button>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <button className="p-2 hover:bg-muted/20 rounded">
@@ -310,9 +350,22 @@ const WorkoutDetail = () => {
             </div>
             <div className="space-y-2">
               {workout.accessories.map((exercise) => (
-                <div key={exercise.id} className="flex items-baseline justify-between py-2 border-b border-border/30 last:border-0">
+                <div 
+                  key={exercise.id} 
+                  className="flex items-baseline justify-between py-2 border-b border-border/30 last:border-0 hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors"
+                >
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">{exercise.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium text-sm">{exercise.name}</h4>
+                      {exercise.videoUrl && (
+                        <button
+                          onClick={() => setSelectedExercise({ name: exercise.name, videoUrl: exercise.videoUrl })}
+                          className="p-1 hover:bg-ube-blue/10 rounded-full transition-colors"
+                        >
+                          <Play className="h-4 w-4 text-ube-blue" fill="currentColor" />
+                        </button>
+                      )}
+                    </div>
                     <div className="flex gap-3 text-xs text-muted-foreground mt-1">
                       {exercise.sets && <span>{exercise.sets} sets</span>}
                       {exercise.reps && <span>{exercise.reps} reps</span>}
@@ -345,9 +398,22 @@ const WorkoutDetail = () => {
             </div>
             <div className="space-y-2">
               {workout.conditioning.map((exercise) => (
-                <div key={exercise.id} className="flex items-baseline justify-between py-2 border-b border-border/30 last:border-0">
+                <div 
+                  key={exercise.id} 
+                  className="flex items-baseline justify-between py-2 border-b border-border/30 last:border-0 hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors"
+                >
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">{exercise.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium text-sm">{exercise.name}</h4>
+                      {exercise.videoUrl && (
+                        <button
+                          onClick={() => setSelectedExercise({ name: exercise.name, videoUrl: exercise.videoUrl })}
+                          className="p-1 hover:bg-ube-blue/10 rounded-full transition-colors"
+                        >
+                          <Play className="h-4 w-4 text-ube-blue" fill="currentColor" />
+                        </button>
+                      )}
+                    </div>
                     <div className="flex gap-3 text-xs text-muted-foreground mt-1">
                       {exercise.distance && <span>{exercise.distance}</span>}
                       {exercise.time && <span>{exercise.time}</span>}
@@ -364,6 +430,14 @@ const WorkoutDetail = () => {
           <WorkoutCompleteButton workoutId={workoutId || ""} />
         </div>
       </div>
+
+      {/* Exercise Video Dialog */}
+      <ExerciseVideoDialog
+        open={!!selectedExercise}
+        onOpenChange={(open) => !open && setSelectedExercise(null)}
+        exerciseName={selectedExercise?.name || ""}
+        videoUrl={selectedExercise?.videoUrl}
+      />
     </div>
   );
 };
