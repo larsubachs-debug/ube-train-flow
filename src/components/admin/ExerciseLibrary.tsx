@@ -3,9 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Dumbbell, Plus } from "lucide-react";
+import { Search, Dumbbell, Plus, Video } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
@@ -14,6 +14,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { MediaUploadZone } from "@/components/media/MediaUploadZone";
+import { useToast } from "@/hooks/use-toast";
 
 interface ExerciseLibraryItem {
   id: string;
@@ -23,9 +26,10 @@ interface ExerciseLibraryItem {
   difficulty: string;
   muscle_groups: string[] | null;
   equipment: string[] | null;
+  video_url: string | null;
 }
 
-const ExerciseCard = ({ exercise }: { exercise: ExerciseLibraryItem }) => {
+const ExerciseCard = ({ exercise, onClick }: { exercise: ExerciseLibraryItem; onClick?: () => void }) => {
   const getCategoryColor = () => {
     switch (exercise.category) {
       case 'strength': return 'bg-blue-50 text-blue-700 border-blue-200';
@@ -37,10 +41,18 @@ const ExerciseCard = ({ exercise }: { exercise: ExerciseLibraryItem }) => {
   };
 
   return (
-    <div className="p-3 rounded-xl bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer border border-border/50 group">
+    <div 
+      className="p-3 rounded-xl bg-muted/30 hover:bg-muted/60 transition-colors cursor-pointer border border-border/50 group"
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-sm truncate">{exercise.name}</h4>
+          <div className="flex items-center gap-2">
+            <h4 className="font-medium text-sm truncate">{exercise.name}</h4>
+            {exercise.video_url && (
+              <Video className="h-3 w-3 text-ube-blue flex-shrink-0" />
+            )}
+          </div>
           <p className="text-xs text-muted-foreground mt-0.5">
             {exercise.muscle_groups?.[0] || exercise.category}
           </p>
@@ -60,21 +72,132 @@ const ExerciseCard = ({ exercise }: { exercise: ExerciseLibraryItem }) => {
   );
 };
 
-const CustomExerciseDialog = () => {
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState("strength");
+const CustomExerciseDialog = ({ exercise, onClose }: { exercise?: ExerciseLibraryItem; onClose?: () => void }) => {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(exercise?.name || "");
+  const [description, setDescription] = useState(exercise?.description || "");
+  const [category, setCategory] = useState(exercise?.category || "strength");
+  const [difficulty, setDifficulty] = useState(exercise?.difficulty || "intermediate");
+  const [muscleGroups, setMuscleGroups] = useState<string[]>(exercise?.muscle_groups || []);
+  const [equipment, setEquipment] = useState<string[]>(exercise?.equipment || []);
+  const [videoUrl, setVideoUrl] = useState(exercise?.video_url || "");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      toast({
+        title: "Name required",
+        description: "Please enter an exercise name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const exerciseData = {
+        name: name.trim(),
+        description: description.trim() || null,
+        category,
+        difficulty,
+        muscle_groups: muscleGroups.length > 0 ? muscleGroups : null,
+        equipment: equipment.length > 0 ? equipment : null,
+        video_url: videoUrl || null,
+      };
+
+      if (exercise) {
+        // Update existing exercise
+        const { error } = await supabase
+          .from('exercise_library')
+          .update(exerciseData)
+          .eq('id', exercise.id);
+
+        if (error) throw error;
+        
+        toast({
+          title: "Exercise updated",
+          description: "Exercise has been updated successfully",
+        });
+      } else {
+        // Create new exercise
+        const { error } = await supabase
+          .from('exercise_library')
+          .insert(exerciseData);
+
+        if (error) throw error;
+        
+        toast({
+          title: "Exercise created",
+          description: "New exercise has been added to the library",
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['exercise-library'] });
+      setOpen(false);
+      if (onClose) onClose();
+      
+      // Reset form
+      if (!exercise) {
+        setName("");
+        setDescription("");
+        setCategory("strength");
+        setDifficulty("intermediate");
+        setMuscleGroups([]);
+        setEquipment([]);
+        setVideoUrl("");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVideoUpload = (mediaId: string, publicUrl: string) => {
+    setVideoUrl(publicUrl);
+    toast({
+      title: "Video uploaded",
+      description: "Exercise video has been uploaded successfully",
+    });
+  };
+
+  const toggleMuscleGroup = (muscle: string) => {
+    setMuscleGroups(prev => 
+      prev.includes(muscle) 
+        ? prev.filter(m => m !== muscle)
+        : [...prev, muscle]
+    );
+  };
+
+  const toggleEquipment = (equip: string) => {
+    setEquipment(prev => 
+      prev.includes(equip) 
+        ? prev.filter(e => e !== equip)
+        : [...prev, equip]
+    );
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full">
-          <Plus className="h-3 w-3 mr-2" />
-          Custom exercise
-        </Button>
+        {exercise ? (
+          <div />
+        ) : (
+          <Button variant="outline" size="sm" className="w-full">
+            <Plus className="h-3 w-3 mr-2" />
+            Custom exercise
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Custom Exercise</DialogTitle>
+          <DialogTitle>{exercise ? 'Edit Exercise' : 'Create Custom Exercise'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-4">
           <div>
@@ -85,22 +208,99 @@ const CustomExerciseDialog = () => {
               onChange={(e) => setName(e.target.value)}
             />
           </div>
+
           <div>
-            <label className="text-sm font-medium mb-2 block">Category</label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="strength">Strength</SelectItem>
-                <SelectItem value="cardio">Cardio</SelectItem>
-                <SelectItem value="mobility">Mobility</SelectItem>
-                <SelectItem value="core">Core</SelectItem>
-              </SelectContent>
-            </Select>
+            <label className="text-sm font-medium mb-2 block">Description</label>
+            <Textarea
+              placeholder="Detailed description of the exercise..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+            />
           </div>
-          <Button className="w-full bg-ube-blue hover:bg-ube-blue/90 text-white">
-            Create Exercise
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Category</label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="strength">Strength</SelectItem>
+                  <SelectItem value="cardio">Cardio</SelectItem>
+                  <SelectItem value="mobility">Mobility</SelectItem>
+                  <SelectItem value="core">Core</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Difficulty</label>
+              <Select value={difficulty} onValueChange={setDifficulty}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">Muscle Groups</label>
+            <div className="flex flex-wrap gap-2">
+              {['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Full body'].map((muscle) => (
+                <Badge
+                  key={muscle}
+                  variant={muscleGroups.includes(muscle) ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => toggleMuscleGroup(muscle)}
+                >
+                  {muscle}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">Equipment</label>
+            <div className="flex flex-wrap gap-2">
+              {['Bodyweight', 'Barbell', 'Dumbbell', 'Machine', 'Cable', 'Bands'].map((equip) => (
+                <Badge
+                  key={equip}
+                  variant={equipment.includes(equip) ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => toggleEquipment(equip)}
+                >
+                  {equip}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">Exercise Video</label>
+            <MediaUploadZone
+              bucket="exercise-media"
+              folder="videos"
+              accept="video"
+              aspectRatio="16:9"
+              maxSizeMB={100}
+              onUploadComplete={handleVideoUpload}
+              currentMediaUrl={videoUrl}
+            />
+          </div>
+
+          <Button 
+            className="w-full bg-ube-blue hover:bg-ube-blue/90 text-white"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Saving...' : exercise ? 'Update Exercise' : 'Create Exercise'}
           </Button>
         </div>
       </DialogContent>
@@ -112,6 +312,7 @@ export const ExerciseLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [equipmentFilter, setEquipmentFilter] = useState<string>("all");
   const [muscleFilter, setMuscleFilter] = useState<string>("all");
+  const [selectedExercise, setSelectedExercise] = useState<ExerciseLibraryItem | null>(null);
 
   const { data: exercises = [], isLoading } = useQuery({
     queryKey: ['exercise-library'],
@@ -203,11 +404,23 @@ export const ExerciseLibrary = () => {
             </p>
           ) : (
             filteredExercises.map((exercise: ExerciseLibraryItem) => (
-              <ExerciseCard key={exercise.id} exercise={exercise} />
+              <ExerciseCard 
+                key={exercise.id} 
+                exercise={exercise}
+                onClick={() => setSelectedExercise(exercise)}
+              />
             ))
           )}
         </div>
       </ScrollArea>
+
+      {/* Edit Dialog */}
+      {selectedExercise && (
+        <CustomExerciseDialog 
+          exercise={selectedExercise} 
+          onClose={() => setSelectedExercise(null)}
+        />
+      )}
     </div>
   );
 };
