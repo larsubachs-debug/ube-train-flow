@@ -11,8 +11,6 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import Programs from "./pages/Programs";
-import StrengthProgram from "./pages/StrengthProgram";
-import CardioProgram from "./pages/CardioProgram";
 import ProgramDetail from "./pages/ProgramDetail";
 import WorkoutDetail from "./pages/WorkoutDetail";
 import CheckIn from "./pages/CheckIn";
@@ -75,8 +73,6 @@ const App = () => {
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/" element={<ProtectedRoute><Home /><BottomNav /></ProtectedRoute>} />
                 <Route path="/programs" element={<ProtectedRoute><Programs /><BottomNav /></ProtectedRoute>} />
-                <Route path="/strength-program" element={<ProtectedRoute><StrengthProgram /><BottomNav /></ProtectedRoute>} />
-                <Route path="/cardio-program" element={<ProtectedRoute><CardioProgram /><BottomNav /></ProtectedRoute>} />
                 <Route path="/program/:programId" element={<ProtectedRoute><ProgramDetail /><BottomNav /></ProtectedRoute>} />
                 <Route path="/workout/:workoutId" element={<ProtectedRoute><WorkoutDetail /><BottomNav /></ProtectedRoute>} />
                 <Route path="/check-in" element={<ProtectedRoute><CheckIn /><BottomNav /></ProtectedRoute>} />

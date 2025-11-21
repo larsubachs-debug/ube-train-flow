@@ -1,13 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, Dumbbell, User, Heart, Plus } from "lucide-react";
+import { Calendar, Dumbbell, User } from "lucide-react";
 
 const BottomNav = () => {
   const location = useLocation();
 
   const navItems = [
     { path: "/", icon: Calendar, label: "Today" },
-    { path: "/strength-program", icon: Dumbbell, label: "Strength" },
-    { path: "/cardio-program", icon: Heart, label: "Cardio" },
+    { path: "/programs", icon: Dumbbell, label: "Programs" },
     { path: "/account", icon: User, label: "Account" },
   ];
 
