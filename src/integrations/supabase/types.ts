@@ -107,6 +107,42 @@ export type Database = {
         }
         Relationships: []
       }
+      body_metrics: {
+        Row: {
+          body_fat_percentage: number | null
+          created_at: string
+          id: string
+          muscle_mass: number | null
+          notes: string | null
+          recorded_at: string
+          updated_at: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          body_fat_percentage?: number | null
+          created_at?: string
+          id?: string
+          muscle_mass?: number | null
+          notes?: string | null
+          recorded_at?: string
+          updated_at?: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          body_fat_percentage?: number | null
+          created_at?: string
+          id?: string
+          muscle_mass?: number | null
+          notes?: string | null
+          recorded_at?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           coach_id: string

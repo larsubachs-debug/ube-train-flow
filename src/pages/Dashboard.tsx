@@ -5,6 +5,8 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { Activity, TrendingUp, Flame, Trophy, Calendar, Dumbbell } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { BodyMetricsCard } from "@/components/dashboard/BodyMetricsCard";
+import { OneRMCard } from "@/components/dashboard/OneRMCard";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -87,6 +89,12 @@ const Dashboard = () => {
             </Card>
           );
         })}
+      </div>
+
+      {/* Body Metrics & 1RM Section */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <BodyMetricsCard userId={user?.id || ''} />
+        <OneRMCard userId={user?.id || ''} />
       </div>
 
       {/* Weekly Volume Chart */}
