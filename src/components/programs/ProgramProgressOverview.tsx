@@ -109,7 +109,7 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Hero Section with Coach Image */}
-      <div className="relative h-[65vh] min-h-[550px] overflow-hidden">
+      <div className="relative h-[60vh] md:h-[65vh] lg:h-[70vh] min-h-[450px] md:min-h-[500px] lg:min-h-[600px] overflow-hidden">
         <img 
           src={coachMaxime}
           alt="Coach Maxime"
@@ -118,33 +118,33 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-background" />
         
         {/* Program Title Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 px-6 pb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+        <div className="absolute bottom-0 left-0 right-0 px-4 pb-6 md:px-6 md:pb-8 lg:px-8 lg:pb-10">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-3">
             {currentWeek?.name || program.name}
           </h1>
-          <p className="text-white/90 text-base md:text-lg leading-relaxed max-w-2xl">
+          <p className="text-sm md:text-base lg:text-lg text-white/90 leading-relaxed max-w-2xl">
             {currentWeek?.description || program.description}
           </p>
         </div>
       </div>
 
-      <div className="px-6 -mt-8 relative z-10 space-y-6">
+      <div className="px-4 md:px-6 -mt-6 md:-mt-8 relative z-10 space-y-4 md:space-y-6">
         {/* Training Block Progress Card */}
-        <Card className="bg-card/95 backdrop-blur-sm border-border p-6">
-          <h2 className="text-xl font-semibold text-foreground mb-4">
+        <Card className="bg-card/95 backdrop-blur-sm border-border p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-semibold text-foreground mb-3 md:mb-4">
             Training block progress
           </h2>
           
           {/* Current Phase/Week Name */}
-          <div className="mb-4">
-            <p className="text-lg font-medium text-foreground mb-3">
+          <div className="mb-3 md:mb-4">
+            <p className="text-base md:text-lg font-medium text-foreground mb-2 md:mb-3">
               {currentWeek?.phase_name || currentWeek?.name || `Week ${currentWeekNumber}`}
             </p>
             
             {/* Progress Bar */}
             <div className="space-y-2">
               <Progress value={progressPercentage} className="h-2 bg-muted" />
-              <div className="flex justify-between items-center text-sm">
+              <div className="flex justify-between items-center text-xs md:text-sm">
                 <span className="text-muted-foreground">
                   <span className="font-semibold text-foreground">Total:</span> {totalWeeks} weeks
                 </span>
@@ -155,7 +155,7 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
             </div>
           </div>
 
-          <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+          <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mb-3 md:mb-4">
             Blocks are run in real-time. After completing your first week you'll be ready to join your coach and community on the current block.
           </p>
 
@@ -163,49 +163,49 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
               {[1, 2, 3].map((i) => (
-                <Avatar key={i} className="w-8 h-8 border-2 border-background">
+                <Avatar key={i} className="w-7 h-7 md:w-8 md:h-8 border-2 border-background">
                   <AvatarFallback className="bg-muted text-xs">
                     {i === 1 ? 'M' : i === 2 ? 'J' : 'S'}
                   </AvatarFallback>
                 </Avatar>
               ))}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs md:text-sm text-muted-foreground">
               {memberCount.toLocaleString()} members on {program.name.split(' ')[0]}
             </p>
           </div>
         </Card>
 
         {/* Block KPIs */}
-        <Card className="bg-card border-border p-6">
-          <h2 className="text-xl font-semibold text-foreground mb-4">
+        <Card className="bg-card border-border p-4 md:p-6">
+          <h2 className="text-lg md:text-xl font-semibold text-foreground mb-3 md:mb-4">
             {program.name.split(' ')[0]} Block KPIs
           </h2>
           
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-4 rounded-lg bg-muted/30">
-              <p className="text-3xl font-bold text-foreground mb-1">
+          <div className="grid grid-cols-3 gap-3 md:gap-4">
+            <div className="text-center p-3 md:p-4 rounded-lg bg-muted/30">
+              <p className="text-2xl md:text-3xl font-bold text-foreground mb-1">
                 {userStats?.total_workouts || 0}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] md:text-xs text-muted-foreground leading-tight">
                 Workouts<br/>Completed
               </p>
             </div>
             
-            <div className="text-center p-4 rounded-lg bg-muted/30">
-              <p className="text-3xl font-bold text-foreground mb-1">
+            <div className="text-center p-3 md:p-4 rounded-lg bg-muted/30">
+              <p className="text-2xl md:text-3xl font-bold text-foreground mb-1">
                 {userStats?.current_streak || 0}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] md:text-xs text-muted-foreground leading-tight">
                 Day<br/>Streak
               </p>
             </div>
             
-            <div className="text-center p-4 rounded-lg bg-muted/30">
-              <p className="text-3xl font-bold text-foreground mb-1">
+            <div className="text-center p-3 md:p-4 rounded-lg bg-muted/30">
+              <p className="text-2xl md:text-3xl font-bold text-foreground mb-1">
                 {Math.round((userStats?.total_volume_kg || 0) / 1000)}k
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] md:text-xs text-muted-foreground leading-tight">
                 Total Volume<br/>(kg)
               </p>
             </div>
@@ -215,7 +215,7 @@ export const ProgramProgressOverview = ({ program, programImage }: ProgramProgre
         {/* Next Workout CTA */}
         {nextWorkout && (
           <Link to={`/workout/${nextWorkout.id}`}>
-            <Button className="w-full py-6 text-lg bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
+            <Button className="w-full py-5 md:py-6 text-base md:text-lg bg-accent hover:bg-accent/90 text-accent-foreground font-semibold">
               Start {nextWorkout.name}
             </Button>
           </Link>
