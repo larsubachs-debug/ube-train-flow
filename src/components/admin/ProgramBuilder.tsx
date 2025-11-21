@@ -256,6 +256,16 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     setSelectedExerciseId(exerciseId);
   };
 
+  const deleteExercise = (exerciseId: string) => {
+    const updatedDays = days.map(day => ({
+      ...day,
+      exercises: day.exercises.filter(ex => ex.id !== exerciseId),
+    }));
+    setDays(updatedDays);
+    setSelectedExerciseId(null);
+    toast({ description: "Oefening verwijderd" });
+  };
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -451,6 +461,19 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
             {selectedExercise ? (
               <Card className="p-6">
                 <div className="space-y-6">
+                  {/* Header with Delete Button */}
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-muted-foreground">Exercise details</h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteExercise(selectedExercise.id)}
+                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
                   {/* Exercise Image */}
                   <div className="aspect-video rounded-xl bg-muted flex items-center justify-center">
                     <span className="text-6xl">💪</span>
