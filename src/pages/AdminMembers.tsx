@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Check, X, UserPlus, Loader2, Mail, Shield, Settings } from "lucide-react";
+import { Check, X, UserPlus, Loader2, Mail, Shield, Settings, Calendar } from "lucide-react";
 import { MemberManagementDialog } from "@/components/admin/MemberManagementDialog";
 import { BulkActionToolbar } from "@/components/admin/BulkActionToolbar";
 import { Checkbox } from "@/components/ui/checkbox";
+import CoachWeeklyOverview from "@/components/admin/CoachWeeklyOverview";
 import {
   Dialog,
   DialogContent,
@@ -356,8 +357,12 @@ const AdminMembers = () => {
           </Dialog>
         </div>
 
-        <Tabs defaultValue="pending" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="overview">
+              <Calendar className="h-4 w-4 mr-2" />
+              Week Overzicht
+            </TabsTrigger>
             <TabsTrigger value="pending">
               Pending ({pendingMembers.length})
             </TabsTrigger>
@@ -365,6 +370,10 @@ const AdminMembers = () => {
               Approved ({approvedMembers.length})
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="overview">
+            <CoachWeeklyOverview />
+          </TabsContent>
 
           <TabsContent value="pending">
             {pendingLoading ? (
