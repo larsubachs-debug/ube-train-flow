@@ -1,13 +1,19 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { ChevronLeft, ChevronRight, Calendar, Dumbbell, CheckSquare, Star, GripVertical } from "lucide-react";
+import { 
+  ChevronLeft, ChevronRight, Calendar, Dumbbell, CheckSquare, Star, 
+  GripVertical, Filter, X, Plus, Trash2, Edit2, Clock, Users
+} from "lucide-react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, eachDayOfInterval, isToday, isSameMonth, parseISO } from "date-fns";
 import { nl } from "date-fns/locale";
 import { toast } from "sonner";
@@ -23,6 +29,30 @@ import {
   useDroppable,
   useDraggable,
 } from "@dnd-kit/core";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const eventTypeIcons = {
   workout: Dumbbell,
@@ -39,10 +69,14 @@ const eventTypeColors = {
 interface ScheduledEvent {
   id: string;
   title: string;
+  description: string | null;
   event_type: string;
   scheduled_date: string;
   scheduled_time: string | null;
+  duration_minutes: number | null;
   status: string;
+  notes: string | null;
+  member_id: string;
   member: {
     id: string;
     display_name: string;
@@ -53,9 +87,10 @@ interface ScheduledEvent {
 interface DraggableEventProps {
   event: ScheduledEvent;
   isDragging?: boolean;
+  onClick: () => void;
 }
 
-const DraggableEvent = ({ event, isDragging }: DraggableEventProps) => {
+const DraggableEvent = ({ event, isDragging, onClick }: DraggableEventProps) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: event.id,
     data: event,
@@ -72,9 +107,15 @@ const DraggableEvent = ({ event, isDragging }: DraggableEventProps) => {
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-1 p-1.5 rounded text-xs bg-card border cursor-grab active:cursor-grabbing transition-opacity ${
+      className={`flex items-center gap-1 p-1.5 rounded text-xs bg-card border cursor-grab active:cursor-grabbing transition-opacity hover:bg-accent/10 ${
         isDragging ? "opacity-50" : ""
       }`}
+      onClick={(e) => {
+        if (!transform) {
+          e.stopPropagation();
+          onClick();
+        }
+      }}
       {...attributes}
       {...listeners}
     >
@@ -96,9 +137,11 @@ interface DroppableDayProps {
   events: ScheduledEvent[];
   isCurrentMonth: boolean;
   activeId: string | null;
+  onDayClick: (date: Date) => void;
+  onEventClick: (event: ScheduledEvent) => void;
 }
 
-const DroppableDay = ({ date, events, isCurrentMonth, activeId }: DroppableDayProps) => {
+const DroppableDay = ({ date, events, isCurrentMonth, activeId, onDayClick, onEventClick }: DroppableDayProps) => {
   const dateKey = format(date, "yyyy-MM-dd");
   const { isOver, setNodeRef } = useDroppable({
     id: dateKey,
@@ -109,21 +152,24 @@ const DroppableDay = ({ date, events, isCurrentMonth, activeId }: DroppableDayPr
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[100px] p-1 border-r border-b transition-colors ${
+      className={`min-h-[100px] p-1 border-r border-b transition-colors cursor-pointer hover:bg-accent/5 ${
         isOver ? "bg-accent/20" : ""
       } ${!isCurrentMonth ? "bg-muted/30" : ""} ${isDayToday ? "bg-accent/10" : ""}`}
+      onClick={() => onDayClick(date)}
     >
-      <div className={`text-xs font-medium mb-1 ${
+      <div className={`flex items-center justify-between text-xs font-medium mb-1 ${
         isDayToday ? "text-accent" : !isCurrentMonth ? "text-muted-foreground/50" : "text-muted-foreground"
       }`}>
-        {format(date, "d")}
+        <span>{format(date, "d")}</span>
+        <Plus className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
-      <div className="space-y-1">
+      <div className="space-y-1" onClick={(e) => e.stopPropagation()}>
         {events.map((event) => (
           <DraggableEvent 
             key={event.id} 
             event={event} 
             isDragging={activeId === event.id}
+            onClick={() => onEventClick(event)}
           />
         ))}
       </div>
@@ -137,6 +183,27 @@ const CoachDragDropCalendar = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeEvent, setActiveEvent] = useState<ScheduledEvent | null>(null);
+  
+  // Filters
+  const [memberFilter, setMemberFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Dialogs
+  const [selectedEvent, setSelectedEvent] = useState<ScheduledEvent | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createDate, setCreateDate] = useState<Date | null>(null);
+  
+  // Form state
+  const [formTitle, setFormTitle] = useState("");
+  const [formDescription, setFormDescription] = useState("");
+  const [formTime, setFormTime] = useState("");
+  const [formDuration, setFormDuration] = useState("");
+  const [formEventType, setFormEventType] = useState<string>("workout");
+  const [formMemberId, setFormMemberId] = useState<string>("");
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -158,6 +225,36 @@ const CoachDragDropCalendar = () => {
     })
   );
 
+  // Fetch coach profile
+  const { data: coachProfile } = useQuery({
+    queryKey: ["coach-profile", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch all members for filter
+  const { data: members } = useQuery({
+    queryKey: ["all-members"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .eq("approval_status", "approved")
+        .order("display_name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
   // Fetch all scheduled events for this month view
   const { data: monthEvents, isLoading } = useQuery({
     queryKey: ["coach-calendar-events", format(calendarStart, "yyyy-MM-dd"), format(calendarEnd, "yyyy-MM-dd")],
@@ -167,10 +264,14 @@ const CoachDragDropCalendar = () => {
         .select(`
           id,
           title,
+          description,
           event_type,
           scheduled_date,
           scheduled_time,
+          duration_minutes,
           status,
+          notes,
+          member_id,
           member:profiles!scheduled_events_member_id_fkey (
             id,
             display_name,
@@ -186,6 +287,16 @@ const CoachDragDropCalendar = () => {
     },
     enabled: !!user,
   });
+
+  // Filter events
+  const filteredEvents = useMemo(() => {
+    if (!monthEvents) return [];
+    return monthEvents.filter((event) => {
+      const matchesMember = memberFilter === "all" || event.member_id === memberFilter;
+      const matchesType = typeFilter === "all" || event.event_type === typeFilter;
+      return matchesMember && matchesType;
+    });
+  }, [monthEvents, memberFilter, typeFilter]);
 
   // Update event date mutation
   const updateEventDate = useMutation({
@@ -207,15 +318,99 @@ const CoachDragDropCalendar = () => {
     },
   });
 
+  // Update event mutation
+  const updateEvent = useMutation({
+    mutationFn: async (updates: Partial<ScheduledEvent> & { id: string }) => {
+      const { error } = await supabase
+        .from("scheduled_events")
+        .update({
+          title: updates.title,
+          description: updates.description,
+          scheduled_time: updates.scheduled_time,
+          duration_minutes: updates.duration_minutes,
+          event_type: updates.event_type,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", updates.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coach-calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-week-events"] });
+      toast.success("Activiteit bijgewerkt");
+      setIsDetailOpen(false);
+      setIsEditMode(false);
+    },
+    onError: () => {
+      toast.error("Kon activiteit niet bijwerken");
+    },
+  });
+
+  // Delete event mutation
+  const deleteEvent = useMutation({
+    mutationFn: async (eventId: string) => {
+      const { error } = await supabase
+        .from("scheduled_events")
+        .delete()
+        .eq("id", eventId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coach-calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-week-events"] });
+      toast.success("Activiteit verwijderd");
+      setIsDeleteOpen(false);
+      setIsDetailOpen(false);
+    },
+    onError: () => {
+      toast.error("Kon activiteit niet verwijderen");
+    },
+  });
+
+  // Create event mutation
+  const createEvent = useMutation({
+    mutationFn: async (event: {
+      member_id: string;
+      coach_id: string;
+      title: string;
+      description: string | null;
+      event_type: string;
+      scheduled_date: string;
+      scheduled_time: string | null;
+      duration_minutes: number | null;
+    }) => {
+      const { error } = await supabase
+        .from("scheduled_events")
+        .insert({
+          ...event,
+          status: "scheduled",
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coach-calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-week-events"] });
+      toast.success("Activiteit aangemaakt");
+      setIsCreateOpen(false);
+      resetCreateForm();
+    },
+    onError: () => {
+      toast.error("Kon activiteit niet aanmaken");
+    },
+  });
+
   // Group events by date
-  const eventsByDate = monthEvents?.reduce((acc, event) => {
+  const eventsByDate = filteredEvents.reduce((acc, event) => {
     const dateKey = event.scheduled_date;
     if (!acc[dateKey]) {
       acc[dateKey] = [];
     }
     acc[dateKey].push(event);
     return acc;
-  }, {} as Record<string, ScheduledEvent[]>) || {};
+  }, {} as Record<string, ScheduledEvent[]>);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -239,111 +434,476 @@ const CoachDragDropCalendar = () => {
     }
   }, [monthEvents, updateEventDate]);
 
+  const handleEventClick = (event: ScheduledEvent) => {
+    setSelectedEvent(event);
+    setFormTitle(event.title);
+    setFormDescription(event.description || "");
+    setFormTime(event.scheduled_time?.slice(0, 5) || "");
+    setFormDuration(event.duration_minutes?.toString() || "");
+    setFormEventType(event.event_type);
+    setIsEditMode(false);
+    setIsDetailOpen(true);
+  };
+
+  const handleDayClick = (date: Date) => {
+    setCreateDate(date);
+    resetCreateForm();
+    setIsCreateOpen(true);
+  };
+
+  const resetCreateForm = () => {
+    setFormTitle("");
+    setFormDescription("");
+    setFormTime("");
+    setFormDuration("");
+    setFormEventType("workout");
+    setFormMemberId("");
+  };
+
+  const handleSaveEdit = () => {
+    if (!selectedEvent) return;
+    updateEvent.mutate({
+      id: selectedEvent.id,
+      title: formTitle,
+      description: formDescription || null,
+      scheduled_time: formTime || null,
+      duration_minutes: formDuration ? parseInt(formDuration) : null,
+      event_type: formEventType,
+    });
+  };
+
+  const handleCreateEvent = () => {
+    if (!createDate || !coachProfile || !formMemberId || !formTitle) return;
+    createEvent.mutate({
+      member_id: formMemberId,
+      coach_id: coachProfile.id,
+      title: formTitle,
+      description: formDescription || null,
+      event_type: formEventType,
+      scheduled_date: format(createDate, "yyyy-MM-dd"),
+      scheduled_time: formTime || null,
+      duration_minutes: formDuration ? parseInt(formDuration) : null,
+    });
+  };
+
   const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const goToThisMonth = () => setCurrentMonth(new Date());
 
   const weekDays = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
 
+  const activeFiltersCount = (memberFilter !== "all" ? 1 : 0) + (typeFilter !== "all" ? 1 : 0);
+
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <Calendar className="h-5 w-5 text-accent" />
-          <h2 className="text-lg font-semibold capitalize">
-            {format(currentMonth, "MMMM yyyy", { locale: nl })}
-          </h2>
+    <>
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Calendar className="h-5 w-5 text-accent" />
+            <h2 className="text-lg font-semibold capitalize">
+              {format(currentMonth, "MMMM yyyy", { locale: nl })}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant={showFilters ? "secondary" : "outline"} 
+              size="sm" 
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              Filters
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={goToPreviousMonth}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={goToThisMonth}>
+              Vandaag
+            </Button>
+            <Button variant="ghost" size="icon" onClick={goToNextMonth}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={goToPreviousMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={goToThisMonth}>
-            Vandaag
-          </Button>
-          <Button variant="ghost" size="icon" onClick={goToNextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
 
-      <p className="text-sm text-muted-foreground mb-4">
-        Sleep activiteiten naar een andere dag om ze te verplaatsen
-      </p>
-
-      {isLoading ? (
-        <Skeleton className="h-[500px] w-full" />
-      ) : (
-        <DndContext
-          sensors={sensors}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="border-l border-t rounded-lg overflow-hidden">
-            {/* Week day headers */}
-            <div className="grid grid-cols-7">
-              {weekDays.map((day) => (
-                <div
-                  key={day}
-                  className="p-2 text-center text-xs font-medium text-muted-foreground bg-muted/50 border-r border-b"
-                >
-                  {day}
-                </div>
-              ))}
+        {/* Filters */}
+        {showFilters && (
+          <div className="flex flex-wrap items-center gap-4 mb-4 p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <Select value={memberFilter} onValueChange={setMemberFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Alle members" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle members</SelectItem>
+                  {members?.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.display_name || "Naamloos"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Calendar grid */}
-            <div className="grid grid-cols-7">
-              {calendarDays.map((day) => {
-                const dateKey = format(day, "yyyy-MM-dd");
-                const dayEvents = eventsByDate[dateKey] || [];
-                const isCurrentMonth = isSameMonth(day, currentMonth);
+            <div className="flex items-center gap-2">
+              <Dumbbell className="h-4 w-4 text-muted-foreground" />
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Alle types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle types</SelectItem>
+                  <SelectItem value="workout">Workout</SelectItem>
+                  <SelectItem value="task">Taak</SelectItem>
+                  <SelectItem value="custom">Anders</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-                return (
-                  <DroppableDay
-                    key={dateKey}
-                    date={day}
-                    events={dayEvents}
-                    isCurrentMonth={isCurrentMonth}
-                    activeId={activeId}
+            {activeFiltersCount > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => { setMemberFilter("all"); setTypeFilter("all"); }}
+                className="gap-1 text-muted-foreground"
+              >
+                <X className="h-3 w-3" />
+                Reset
+              </Button>
+            )}
+          </div>
+        )}
+
+        <p className="text-sm text-muted-foreground mb-4">
+          Klik op een dag om een activiteit toe te voegen • Sleep activiteiten om te verplaatsen • Klik op een activiteit voor details
+        </p>
+
+        {isLoading ? (
+          <Skeleton className="h-[500px] w-full" />
+        ) : (
+          <DndContext
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="border-l border-t rounded-lg overflow-hidden">
+              {/* Week day headers */}
+              <div className="grid grid-cols-7">
+                {weekDays.map((day) => (
+                  <div
+                    key={day}
+                    className="p-2 text-center text-xs font-medium text-muted-foreground bg-muted/50 border-r border-b"
+                  >
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Calendar grid */}
+              <div className="grid grid-cols-7">
+                {calendarDays.map((day) => {
+                  const dateKey = format(day, "yyyy-MM-dd");
+                  const dayEvents = eventsByDate[dateKey] || [];
+                  const isCurrentMonth = isSameMonth(day, currentMonth);
+
+                  return (
+                    <DroppableDay
+                      key={dateKey}
+                      date={day}
+                      events={dayEvents}
+                      isCurrentMonth={isCurrentMonth}
+                      activeId={activeId}
+                      onDayClick={handleDayClick}
+                      onEventClick={handleEventClick}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            <DragOverlay>
+              {activeEvent ? (
+                <div className="flex items-center gap-1 p-1.5 rounded text-xs bg-card border shadow-lg">
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={activeEvent.member?.avatar_url || undefined} />
+                    <AvatarFallback className="text-[10px]">
+                      {activeEvent.member?.display_name?.[0]?.toUpperCase() || "M"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="truncate">{activeEvent.title}</span>
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        )}
+
+        {/* Legend */}
+        <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Dumbbell className="h-3 w-3 text-orange-600" />
+            <span>Workout</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <CheckSquare className="h-3 w-3 text-blue-600" />
+            <span>Taak</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Star className="h-3 w-3 text-purple-600" />
+            <span>Anders</span>
+          </div>
+        </div>
+      </Card>
+
+      {/* Event Detail Dialog */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedEvent && (
+                <>
+                  {(() => {
+                    const Icon = eventTypeIcons[selectedEvent.event_type as keyof typeof eventTypeIcons] || Star;
+                    return <Icon className="h-5 w-5" />;
+                  })()}
+                  {isEditMode ? "Activiteit bewerken" : selectedEvent.title}
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedEvent && !isEditMode && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={selectedEvent.member?.avatar_url || undefined} />
+                  <AvatarFallback>
+                    {selectedEvent.member?.display_name?.[0]?.toUpperCase() || "M"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">{selectedEvent.member?.display_name || "Member"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {format(parseISO(selectedEvent.scheduled_date), "EEEE d MMMM yyyy", { locale: nl })}
+                  </p>
+                </div>
+              </div>
+
+              {selectedEvent.scheduled_time && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span>{selectedEvent.scheduled_time.slice(0, 5)}</span>
+                  {selectedEvent.duration_minutes && (
+                    <span className="text-muted-foreground">({selectedEvent.duration_minutes} min)</span>
+                  )}
+                </div>
+              )}
+
+              {selectedEvent.description && (
+                <p className="text-sm text-muted-foreground">{selectedEvent.description}</p>
+              )}
+
+              <Badge className={eventTypeColors[selectedEvent.event_type as keyof typeof eventTypeColors]}>
+                {selectedEvent.event_type === "workout" ? "Workout" : selectedEvent.event_type === "task" ? "Taak" : "Anders"}
+              </Badge>
+            </div>
+          )}
+
+          {selectedEvent && isEditMode && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Titel</Label>
+                <Input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={formEventType} onValueChange={setFormEventType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="workout">Workout</SelectItem>
+                    <SelectItem value="task">Taak</SelectItem>
+                    <SelectItem value="custom">Anders</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tijd</Label>
+                  <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Duur (min)</Label>
+                  <Input 
+                    type="number" 
+                    value={formDuration} 
+                    onChange={(e) => setFormDuration(e.target.value)}
+                    placeholder="60"
                   />
-                );
-              })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Beschrijving</Label>
+                <Textarea 
+                  value={formDescription} 
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  rows={2}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            {!isEditMode ? (
+              <>
+                <Button variant="outline" onClick={() => setIsEditMode(true)} className="gap-2">
+                  <Edit2 className="h-4 w-4" />
+                  Bewerken
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={() => setIsDeleteOpen(true)}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Verwijderen
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setIsEditMode(false)}>
+                  Annuleren
+                </Button>
+                <Button onClick={handleSaveEdit} disabled={updateEvent.isPending}>
+                  {updateEvent.isPending ? "Opslaan..." : "Opslaan"}
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Activiteit verwijderen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Weet je zeker dat je "{selectedEvent?.title}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => selectedEvent && deleteEvent.mutate(selectedEvent.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Verwijderen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Create Event Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Nieuwe activiteit op {createDate && format(createDate, "d MMMM", { locale: nl })}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Member *</Label>
+              <Select value={formMemberId} onValueChange={setFormMemberId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecteer een member..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {members?.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.display_name || "Naamloos"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Titel *</Label>
+              <Input 
+                value={formTitle} 
+                onChange={(e) => setFormTitle(e.target.value)} 
+                placeholder="Titel van de activiteit"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select value={formEventType} onValueChange={setFormEventType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="workout">Workout</SelectItem>
+                  <SelectItem value="task">Taak</SelectItem>
+                  <SelectItem value="custom">Anders</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tijd</Label>
+                <Input type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Duur (min)</Label>
+                <Input 
+                  type="number" 
+                  value={formDuration} 
+                  onChange={(e) => setFormDuration(e.target.value)}
+                  placeholder="60"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Beschrijving</Label>
+              <Textarea 
+                value={formDescription} 
+                onChange={(e) => setFormDescription(e.target.value)}
+                placeholder="Extra informatie..."
+                rows={2}
+              />
             </div>
           </div>
 
-          <DragOverlay>
-            {activeEvent ? (
-              <div className="flex items-center gap-1 p-1.5 rounded text-xs bg-card border shadow-lg">
-                <Avatar className="h-5 w-5">
-                  <AvatarImage src={activeEvent.member?.avatar_url || undefined} />
-                  <AvatarFallback className="text-[10px]">
-                    {activeEvent.member?.display_name?.[0]?.toUpperCase() || "M"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="truncate">{activeEvent.title}</span>
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-      )}
-
-      {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <Dumbbell className="h-3 w-3 text-orange-600" />
-          <span>Workout</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <CheckSquare className="h-3 w-3 text-blue-600" />
-          <span>Taak</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Star className="h-3 w-3 text-purple-600" />
-          <span>Anders</span>
-        </div>
-      </div>
-    </Card>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+              Annuleren
+            </Button>
+            <Button 
+              onClick={handleCreateEvent} 
+              disabled={createEvent.isPending || !formMemberId || !formTitle}
+            >
+              {createEvent.isPending ? "Aanmaken..." : "Aanmaken"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
