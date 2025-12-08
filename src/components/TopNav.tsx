@@ -18,9 +18,9 @@ const TopNav = () => {
   const { t } = useTranslation();
 
   const navItems = [
-    { path: "/", icon: Calendar, label: t('time.today') },
-    { path: "/programs", icon: Dumbbell, label: t('nav.programs') },
-    { path: "/account", icon: User, label: t('nav.account') },
+    { path: "/", icon: Calendar, labelKey: 'time.today' },
+    { path: "/programs", icon: Dumbbell, labelKey: 'nav.programs' },
+    { path: "/account", icon: User, labelKey: 'nav.account' },
   ];
 
   return (
@@ -66,7 +66,7 @@ const TopNav = () => {
                   }`}
                 >
                   <Icon className="w-5 h-5" />
-                  <span className="text-lg font-medium">{item.label}</span>
+                  <span className="text-lg font-medium">{t(item.labelKey)}</span>
                 </Link>
               );
             })}
