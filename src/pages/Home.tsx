@@ -19,12 +19,16 @@ import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { programs as staticPrograms } from "@/data/programs";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
+
 const Home = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: branding } = useBranding();
   const [userProgramId, setUserProgramId] = useState<string | null>(null);
   const [coachAvatar, setCoachAvatar] = useState<string | null>(null);
-  const { data: programs = [], refetch: refetchPrograms } = usePrograms();
+  const { data: programs = [], refetch: refetchPrograms, isLoading: programsLoading } = usePrograms();
   const queryClient = useQueryClient();
 
   // Use database programs or fallback to static programs for display
@@ -89,10 +93,14 @@ const Home = () => {
     return (
       <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
         <div className="text-center animate-fade-in">
-          <p className="text-muted-foreground">Geen programma toegewezen</p>
+          <p className="text-muted-foreground">{t('home.noProgram')}</p>
         </div>
       </div>
     );
+  }
+
+  if (programsLoading && loading) {
+    return <DashboardSkeleton />;
   }
 
   const completedWorkouts = 3;
@@ -105,9 +113,9 @@ const Home = () => {
       {/* Header with centered logo */}
       <div className="relative flex items-center px-6 pt-6 pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Today</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t('home.today')}</h1>
           {user && <p className="text-sm text-muted-foreground">
-              Welcome, {user.user_metadata?.display_name || user.email?.split('@')[0]}
+              {t('home.welcome')}, {user.user_metadata?.display_name || user.email?.split('@')[0]}
             </p>}
         </div>
         
@@ -117,8 +125,8 @@ const Home = () => {
         {/* Weekly Progress */}
         {branding?.show_weekly_progress !== false && <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-foreground">Weekly progress</h2>
-              <span className="text-sm text-muted-foreground">{completedWorkouts}/{totalWorkouts} sessions</span>
+              <h2 className="text-sm font-semibold text-foreground">{t('home.weeklyProgress')}</h2>
+              <span className="text-sm text-muted-foreground">{completedWorkouts}/{totalWorkouts} {t('home.sessions')}</span>
             </div>
             
             <div className="flex gap-2">
@@ -133,25 +141,25 @@ const Home = () => {
           <Link to="/community" className="group">
             <div className="bg-muted rounded-2xl p-4 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
               <Users className="w-6 h-6 text-muted-foreground" />
-              <span className="text-xs font-medium text-foreground text-center">Kleedkamer</span>
+              <span className="text-xs font-medium text-foreground text-center">{t('nav.community')}</span>
             </div>
           </Link>
           <Link to="/education" className="group">
             <div className="bg-muted rounded-2xl p-4 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
               <BookOpen className="w-6 h-6 text-muted-foreground" />
-              <span className="text-xs font-medium text-foreground text-center">Guides</span>
+              <span className="text-xs font-medium text-foreground text-center">{t('home.guides')}</span>
             </div>
           </Link>
           <Link to="/dashboard" className="group">
             <div className="bg-muted rounded-2xl p-4 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
               <Calendar className="w-6 h-6 text-muted-foreground" />
-              <span className="text-xs font-medium text-foreground text-center">KPI</span>
+              <span className="text-xs font-medium text-foreground text-center">{t('home.kpi')}</span>
             </div>
           </Link>
           <Link to="/programs" className="group">
             <div className="bg-muted rounded-2xl p-4 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
               <Zap className="w-6 h-6 text-muted-foreground" />
-              <span className="text-xs font-medium text-foreground text-center">Program details</span>
+              <span className="text-xs font-medium text-foreground text-center">{t('home.programDetails')}</span>
             </div>
           </Link>
         </div>
@@ -196,8 +204,8 @@ const Home = () => {
         {/* Your Training Plan */}
         <div className="space-y-4">
           <div>
-            <h2 className="text-xl font-bold text-foreground">Your training plan</h2>
-            <p className="text-sm text-muted-foreground mt-1">Next week's workouts drop Sunday</p>
+            <h2 className="text-xl font-bold text-foreground">{t('home.yourTrainingPlan')}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{t('home.nextWeekDrops')}</p>
           </div>
 
           <div className="space-y-3">
@@ -219,19 +227,19 @@ const Home = () => {
 
                     <div className="grid grid-cols-4 gap-3">
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Time</p>
+                        <p className="text-xs text-muted-foreground mb-1">{t('home.time')}</p>
                         <p className="text-sm font-bold text-foreground">{workout.duration}:00</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Weight</p>
+                        <p className="text-xs text-muted-foreground mb-1">{t('home.weight')}</p>
                         <p className="text-sm font-bold text-foreground">-</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Sets</p>
+                        <p className="text-xs text-muted-foreground mb-1">{t('home.sets')}</p>
                         <p className="text-sm font-bold text-foreground">{totalExercises}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">PB</p>
+                        <p className="text-xs text-muted-foreground mb-1">{t('home.pb')}</p>
                         <p className="text-sm font-bold text-foreground">-</p>
                       </div>
                     </div>
@@ -242,7 +250,7 @@ const Home = () => {
 
           <Link to={`/programs/${currentProgram.id}`}>
             <Button variant="outline" className="w-full">
-              View All Workouts
+              {t('home.viewAllWorkouts')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
