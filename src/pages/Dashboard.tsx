@@ -11,6 +11,7 @@ import { BodyCompositionChart } from "@/components/dashboard/BodyCompositionChar
 import { WeightProgressChart } from "@/components/dashboard/WeightProgressChart";
 import { ProgressPhotosComparison } from "@/components/dashboard/ProgressPhotosComparison";
 import { BodyMetricsTimeline } from "@/components/dashboard/BodyMetricsTimeline";
+import MemberAgenda from "@/components/agenda/MemberAgenda";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -94,6 +95,9 @@ const Dashboard = () => {
           );
         })}
       </div>
+
+      {/* Member Agenda */}
+      <MemberAgenda />
 
       {/* Body Metrics & 1RM Section */}
       <div className="grid md:grid-cols-2 gap-6">

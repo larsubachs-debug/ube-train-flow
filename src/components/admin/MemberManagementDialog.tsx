@@ -19,6 +19,7 @@ import { ProgramAssigner } from "./ProgramAssigner";
 import { TaskAssignment } from "@/components/tasks/TaskAssignment";
 import { AdminCheckinAssignment } from "@/components/checkin/AdminCheckinAssignment";
 import { Link } from "react-router-dom";
+import MemberScheduler from "./MemberScheduler";
 
 interface MemberManagementDialogProps {
   open: boolean;
@@ -226,8 +227,12 @@ export const MemberManagementDialog = ({
             </div>
           </DialogHeader>
 
-          <Tabs defaultValue="profile" className="mt-6">
-            <TabsList className="grid w-full grid-cols-5">
+          <Tabs defaultValue="agenda" className="mt-6">
+            <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="agenda">
+                <Calendar className="h-4 w-4 mr-2" />
+                Agenda
+              </TabsTrigger>
               <TabsTrigger value="profile">
                 <User className="h-4 w-4 mr-2" />
                 Profiel
@@ -249,6 +254,15 @@ export const MemberManagementDialog = ({
                 Stats
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="agenda" className="space-y-4">
+              <Card className="p-6">
+                <MemberScheduler 
+                  memberId={memberId} 
+                  memberName={profile?.display_name || "Member"} 
+                />
+              </Card>
+            </TabsContent>
 
             <TabsContent value="profile" className="space-y-4">
               <Card className="p-6">

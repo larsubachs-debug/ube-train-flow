@@ -1010,6 +1010,99 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_events: {
+        Row: {
+          coach_id: string
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          event_type: string
+          id: string
+          member_id: string
+          notes: string | null
+          scheduled_date: string
+          scheduled_time: string | null
+          status: string
+          task_id: string | null
+          title: string
+          updated_at: string
+          workout_id: string | null
+        }
+        Insert: {
+          coach_id: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          event_type: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          scheduled_date: string
+          scheduled_time?: string | null
+          status?: string
+          task_id?: string | null
+          title: string
+          updated_at?: string
+          workout_id?: string | null
+        }
+        Update: {
+          coach_id?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          event_type?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          scheduled_date?: string
+          scheduled_time?: string | null
+          status?: string
+          task_id?: string | null
+          title?: string
+          updated_at?: string
+          workout_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_events_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "scheduled_events_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_events_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "scheduled_events_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_events_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_completions: {
         Row: {
           completed_at: string | null
