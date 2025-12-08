@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Check, X, UserPlus, Loader2, Mail, Shield, Settings, Calendar } from "lucide-react";
+import { Check, X, UserPlus, Loader2, Mail, Shield, Settings, Calendar, GripVertical } from "lucide-react";
 import { MemberManagementDialog } from "@/components/admin/MemberManagementDialog";
 import { BulkActionToolbar } from "@/components/admin/BulkActionToolbar";
 import { Checkbox } from "@/components/ui/checkbox";
 import CoachWeeklyOverview from "@/components/admin/CoachWeeklyOverview";
+import CoachDragDropCalendar from "@/components/admin/CoachDragDropCalendar";
 import {
   Dialog,
   DialogContent,
@@ -358,10 +359,14 @@ const AdminMembers = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="overview">
               <Calendar className="h-4 w-4 mr-2" />
               Week Overzicht
+            </TabsTrigger>
+            <TabsTrigger value="calendar">
+              <GripVertical className="h-4 w-4 mr-2" />
+              Kalender
             </TabsTrigger>
             <TabsTrigger value="pending">
               Pending ({pendingMembers.length})
@@ -373,6 +378,10 @@ const AdminMembers = () => {
 
           <TabsContent value="overview">
             <CoachWeeklyOverview />
+          </TabsContent>
+
+          <TabsContent value="calendar">
+            <CoachDragDropCalendar />
           </TabsContent>
 
           <TabsContent value="pending">
