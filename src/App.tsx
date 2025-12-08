@@ -41,6 +41,7 @@ const PendingApproval = lazy(() => import("./pages/PendingApproval"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Install = lazy(() => import("./pages/Install"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -116,6 +117,7 @@ const App = () => {
                         <Route path="/coach/dashboard" element={<ProtectedRoute requiredRole="coach"><CoachDashboard /></ProtectedRoute>} />
                         <Route path="/coach/chat/:memberId" element={<ProtectedRoute requiredRole="coach"><CoachChat /></ProtectedRoute>} />
                         <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+                        <Route path="/install" element={<Install />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
