@@ -22,6 +22,7 @@ import { PlateCalculator } from "@/components/workouts/PlateCalculator";
 import { ExerciseVideoButton } from "@/components/workouts/ExerciseVideoButton";
 import { WarmupSetTracker } from "@/components/workouts/WarmupSetTracker";
 import { SupersetIndicator, SupersetWrapper } from "@/components/workouts/SupersetIndicator";
+import { ShareWorkoutDialog } from "@/components/social/ShareWorkoutDialog";
 import { useWorkoutSets } from "@/hooks/useWorkoutSets";
 import { toast } from "sonner";
 
@@ -45,6 +46,8 @@ const WorkoutDetail = () => {
   const [show1RMCalc, setShow1RMCalc] = useState<Record<number, Record<number, boolean>>>({});
   // Leaderboard state
   const [showLeaderboard, setShowLeaderboard] = useState<{ exerciseName: string } | null>(null);
+  // Share workout dialog
+  const [showShareDialog, setShowShareDialog] = useState(false);
   // RPE values: { liftIndex: { setIndex: rpeValue } }
   const [rpeValues, setRpeValues] = useState<Record<number, Record<number, number>>>({});
   // Weight values: { liftIndex: { setIndex: weight } }
@@ -280,6 +283,10 @@ const WorkoutDetail = () => {
 
   const handleWorkoutComplete = () => {
     setShowSummary(true);
+  };
+
+  const handleShareWorkout = () => {
+    setShowShareDialog(true);
   };
 
   return (
@@ -727,6 +734,19 @@ const WorkoutDetail = () => {
         open={!!showLeaderboard}
         onOpenChange={(open) => !open && setShowLeaderboard(null)}
         exerciseName={showLeaderboard?.exerciseName || ""}
+      />
+
+      {/* Share Workout Dialog */}
+      <ShareWorkoutDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        workoutId={workoutId || ""}
+        workoutName={workout.name}
+        stats={{
+          ...calculateWorkoutStats(),
+          durationMinutes: Math.floor(workoutElapsedTime / 60),
+        }}
+        onShared={() => toast.success("Workout gedeeld! 🎉")}
       />
     </div>
   );
