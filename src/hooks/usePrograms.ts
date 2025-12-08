@@ -92,6 +92,8 @@ export const usePrograms = () => {
             id: week.id,
             weekNumber: week.week_number,
             name: week.name,
+            description: week.description,
+            phase_name: week.phase_name,
             workouts,
           });
         }
