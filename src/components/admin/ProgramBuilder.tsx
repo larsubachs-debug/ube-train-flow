@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronRight, Dumbbell, Library, ArrowLeft, Save, Eye, Pencil, Play, Clock, Target } from "lucide-react";
+import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronRight, Dumbbell, Library, ArrowLeft, Save, Eye, Pencil, Play, Clock, Target, FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,6 +33,14 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ExerciseLibrary } from "./ExerciseLibrary";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 
 interface Set {
   id: string;
@@ -77,6 +85,240 @@ interface ProgramBuilderProps {
   onCancel: () => void;
   initialData?: any;
 }
+
+interface WorkoutTemplate {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  exercises: Omit<Exercise, 'id'>[];
+}
+
+// Predefined workout templates
+const WORKOUT_TEMPLATES: WorkoutTemplate[] = [
+  {
+    id: 'push-day',
+    name: 'Push Day',
+    category: 'Strength',
+    description: 'Chest, shoulders & triceps',
+    exercises: [
+      { name: 'Bench Press', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '8', weight: '60', targetRPE: '7' },
+        { id: '2', reps: '8', weight: '60', targetRPE: '8' },
+        { id: '3', reps: '8', weight: '60', targetRPE: '8' },
+        { id: '4', reps: '8', weight: '60', targetRPE: '9' },
+      ]},
+      { name: 'Overhead Press', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '8', weight: '40', targetRPE: '7' },
+        { id: '2', reps: '8', weight: '40', targetRPE: '8' },
+        { id: '3', reps: '8', weight: '40', targetRPE: '8' },
+      ]},
+      { name: 'Incline Dumbbell Press', category: 'Strength', restTimer: '01:30', sets: [
+        { id: '1', reps: '10', weight: '24', targetRPE: '7' },
+        { id: '2', reps: '10', weight: '24', targetRPE: '8' },
+        { id: '3', reps: '10', weight: '24', targetRPE: '8' },
+      ]},
+      { name: 'Lateral Raises', category: 'Strength', restTimer: '01:00', sets: [
+        { id: '1', reps: '12', weight: '10', targetRPE: '7' },
+        { id: '2', reps: '12', weight: '10', targetRPE: '8' },
+        { id: '3', reps: '12', weight: '10', targetRPE: '8' },
+      ]},
+      { name: 'Tricep Pushdowns', category: 'Strength', restTimer: '01:00', sets: [
+        { id: '1', reps: '12', weight: '25', targetRPE: '7' },
+        { id: '2', reps: '12', weight: '25', targetRPE: '8' },
+        { id: '3', reps: '12', weight: '25', targetRPE: '8' },
+      ]},
+    ],
+  },
+  {
+    id: 'pull-day',
+    name: 'Pull Day',
+    category: 'Strength',
+    description: 'Back & biceps',
+    exercises: [
+      { name: 'Deadlift', category: 'Strength', restTimer: '03:00', sets: [
+        { id: '1', reps: '5', weight: '100', targetRPE: '7' },
+        { id: '2', reps: '5', weight: '100', targetRPE: '8' },
+        { id: '3', reps: '5', weight: '100', targetRPE: '8' },
+      ]},
+      { name: 'Pull-ups', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '8', weight: '0', targetRPE: '7' },
+        { id: '2', reps: '8', weight: '0', targetRPE: '8' },
+        { id: '3', reps: '8', weight: '0', targetRPE: '8' },
+      ]},
+      { name: 'Barbell Row', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '8', weight: '60', targetRPE: '7' },
+        { id: '2', reps: '8', weight: '60', targetRPE: '8' },
+        { id: '3', reps: '8', weight: '60', targetRPE: '8' },
+      ]},
+      { name: 'Face Pulls', category: 'Strength', restTimer: '01:00', sets: [
+        { id: '1', reps: '15', weight: '20', targetRPE: '7' },
+        { id: '2', reps: '15', weight: '20', targetRPE: '8' },
+        { id: '3', reps: '15', weight: '20', targetRPE: '8' },
+      ]},
+      { name: 'Bicep Curls', category: 'Strength', restTimer: '01:00', sets: [
+        { id: '1', reps: '12', weight: '12', targetRPE: '7' },
+        { id: '2', reps: '12', weight: '12', targetRPE: '8' },
+        { id: '3', reps: '12', weight: '12', targetRPE: '8' },
+      ]},
+    ],
+  },
+  {
+    id: 'leg-day',
+    name: 'Leg Day',
+    category: 'Strength',
+    description: 'Quads, hamstrings & glutes',
+    exercises: [
+      { name: 'Back Squat', category: 'Strength', restTimer: '03:00', sets: [
+        { id: '1', reps: '6', weight: '80', targetRPE: '7' },
+        { id: '2', reps: '6', weight: '80', targetRPE: '8' },
+        { id: '3', reps: '6', weight: '80', targetRPE: '8' },
+        { id: '4', reps: '6', weight: '80', targetRPE: '9' },
+      ]},
+      { name: 'Romanian Deadlift', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '10', weight: '60', targetRPE: '7' },
+        { id: '2', reps: '10', weight: '60', targetRPE: '8' },
+        { id: '3', reps: '10', weight: '60', targetRPE: '8' },
+      ]},
+      { name: 'Leg Press', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '10', weight: '120', targetRPE: '7' },
+        { id: '2', reps: '10', weight: '120', targetRPE: '8' },
+        { id: '3', reps: '10', weight: '120', targetRPE: '8' },
+      ]},
+      { name: 'Walking Lunges', category: 'Strength', restTimer: '01:30', sets: [
+        { id: '1', reps: '12', weight: '20', targetRPE: '7' },
+        { id: '2', reps: '12', weight: '20', targetRPE: '8' },
+        { id: '3', reps: '12', weight: '20', targetRPE: '8' },
+      ]},
+      { name: 'Calf Raises', category: 'Strength', restTimer: '01:00', sets: [
+        { id: '1', reps: '15', weight: '40', targetRPE: '7' },
+        { id: '2', reps: '15', weight: '40', targetRPE: '8' },
+        { id: '3', reps: '15', weight: '40', targetRPE: '8' },
+      ]},
+    ],
+  },
+  {
+    id: 'upper-body',
+    name: 'Upper Body',
+    category: 'Strength',
+    description: 'Complete upper body',
+    exercises: [
+      { name: 'Bench Press', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '8', weight: '60', targetRPE: '7' },
+        { id: '2', reps: '8', weight: '60', targetRPE: '8' },
+        { id: '3', reps: '8', weight: '60', targetRPE: '8' },
+      ]},
+      { name: 'Barbell Row', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '8', weight: '50', targetRPE: '7' },
+        { id: '2', reps: '8', weight: '50', targetRPE: '8' },
+        { id: '3', reps: '8', weight: '50', targetRPE: '8' },
+      ]},
+      { name: 'Overhead Press', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '8', weight: '35', targetRPE: '7' },
+        { id: '2', reps: '8', weight: '35', targetRPE: '8' },
+        { id: '3', reps: '8', weight: '35', targetRPE: '8' },
+      ]},
+      { name: 'Lat Pulldown', category: 'Strength', restTimer: '01:30', sets: [
+        { id: '1', reps: '10', weight: '50', targetRPE: '7' },
+        { id: '2', reps: '10', weight: '50', targetRPE: '8' },
+        { id: '3', reps: '10', weight: '50', targetRPE: '8' },
+      ]},
+    ],
+  },
+  {
+    id: 'lower-body',
+    name: 'Lower Body',
+    category: 'Strength',
+    description: 'Complete lower body',
+    exercises: [
+      { name: 'Back Squat', category: 'Strength', restTimer: '03:00', sets: [
+        { id: '1', reps: '8', weight: '70', targetRPE: '7' },
+        { id: '2', reps: '8', weight: '70', targetRPE: '8' },
+        { id: '3', reps: '8', weight: '70', targetRPE: '8' },
+      ]},
+      { name: 'Hip Thrust', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '10', weight: '80', targetRPE: '7' },
+        { id: '2', reps: '10', weight: '80', targetRPE: '8' },
+        { id: '3', reps: '10', weight: '80', targetRPE: '8' },
+      ]},
+      { name: 'Leg Curl', category: 'Strength', restTimer: '01:30', sets: [
+        { id: '1', reps: '12', weight: '40', targetRPE: '7' },
+        { id: '2', reps: '12', weight: '40', targetRPE: '8' },
+        { id: '3', reps: '12', weight: '40', targetRPE: '8' },
+      ]},
+      { name: 'Leg Extension', category: 'Strength', restTimer: '01:30', sets: [
+        { id: '1', reps: '12', weight: '40', targetRPE: '7' },
+        { id: '2', reps: '12', weight: '40', targetRPE: '8' },
+        { id: '3', reps: '12', weight: '40', targetRPE: '8' },
+      ]},
+    ],
+  },
+  {
+    id: 'full-body',
+    name: 'Full Body',
+    category: 'Strength',
+    description: 'Complete full body',
+    exercises: [
+      { name: 'Back Squat', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '8', weight: '60', targetRPE: '7' },
+        { id: '2', reps: '8', weight: '60', targetRPE: '8' },
+        { id: '3', reps: '8', weight: '60', targetRPE: '8' },
+      ]},
+      { name: 'Bench Press', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '8', weight: '50', targetRPE: '7' },
+        { id: '2', reps: '8', weight: '50', targetRPE: '8' },
+        { id: '3', reps: '8', weight: '50', targetRPE: '8' },
+      ]},
+      { name: 'Barbell Row', category: 'Strength', restTimer: '02:00', sets: [
+        { id: '1', reps: '8', weight: '50', targetRPE: '7' },
+        { id: '2', reps: '8', weight: '50', targetRPE: '8' },
+        { id: '3', reps: '8', weight: '50', targetRPE: '8' },
+      ]},
+      { name: 'Overhead Press', category: 'Strength', restTimer: '01:30', sets: [
+        { id: '1', reps: '10', weight: '30', targetRPE: '7' },
+        { id: '2', reps: '10', weight: '30', targetRPE: '8' },
+        { id: '3', reps: '10', weight: '30', targetRPE: '8' },
+      ]},
+    ],
+  },
+  {
+    id: 'hyrox',
+    name: 'Hyrox Training',
+    category: 'Hyrox',
+    description: 'Hyrox race simulation',
+    exercises: [
+      { name: 'SkiErg', category: 'Cardio', restTimer: '01:00', notes: '1000m', sets: [
+        { id: '1', reps: '1', weight: '0', targetRPE: '8' },
+      ]},
+      { name: 'Sled Push', category: 'Strength', restTimer: '01:00', notes: '50m', sets: [
+        { id: '1', reps: '1', weight: '125', targetRPE: '8' },
+      ]},
+      { name: 'Sled Pull', category: 'Strength', restTimer: '01:00', notes: '50m', sets: [
+        { id: '1', reps: '1', weight: '75', targetRPE: '8' },
+      ]},
+      { name: 'Wall Balls', category: 'Strength', restTimer: '01:00', sets: [
+        { id: '1', reps: '75', weight: '9', targetRPE: '8' },
+      ]},
+    ],
+  },
+  {
+    id: 'cardio',
+    name: 'Cardio Session',
+    category: 'Cardio',
+    description: 'Endurance focused',
+    exercises: [
+      { name: 'Treadmill Run', category: 'Cardio', restTimer: '00:30', notes: '20 min steady state', sets: [
+        { id: '1', reps: '1', weight: '0', targetRPE: '6' },
+      ]},
+      { name: 'Rowing Intervals', category: 'Cardio', restTimer: '01:00', notes: '500m x 4', sets: [
+        { id: '1', reps: '4', weight: '0', targetRPE: '8' },
+      ]},
+      { name: 'Assault Bike', category: 'Cardio', restTimer: '01:00', notes: '30s on / 30s off x 10', sets: [
+        { id: '1', reps: '10', weight: '0', targetRPE: '9' },
+      ]},
+    ],
+  },
+];
 
 // Compact sortable exercise card
 const SortableExerciseCard = ({ 
@@ -596,6 +838,43 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     setProgram({ ...program, weeks: updatedWeeks });
   };
 
+  // Apply a workout template to the current day
+  const applyTemplate = (template: WorkoutTemplate) => {
+    if (!selectedDay) return;
+
+    const templateExercises: Exercise[] = template.exercises.map((ex, index) => ({
+      id: `ex-${Date.now()}-${index}`,
+      name: ex.name,
+      category: ex.category,
+      restTimer: ex.restTimer,
+      notes: ex.notes,
+      sets: ex.sets.map((set, setIndex) => ({
+        ...set,
+        id: `set-${Date.now()}-${index}-${setIndex}`,
+      })),
+    }));
+
+    const updatedWeeks = program.weeks.map(week =>
+      week.id === selectedWeekId
+        ? {
+            ...week,
+            days: week.days.map(day =>
+              day.id === selectedDayId
+                ? { 
+                    ...day, 
+                    name: template.name,
+                    exercises: [...day.exercises, ...templateExercises] 
+                  }
+                : day
+            ),
+          }
+        : week
+    );
+
+    setProgram({ ...program, weeks: updatedWeeks });
+    toast({ description: `Template "${template.name}" toegepast` });
+  };
+
   const addWeek = () => {
     const newWeek: Week = {
       id: `week-${Date.now()}`,
@@ -1078,10 +1357,39 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                             </Button>
                           )}
                         </div>
-                        <Button onClick={addExercise} size="sm">
-                          <Plus className="h-3 w-3 mr-1" />
-                          Oefening
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          {/* Template Dropdown */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <FileDown className="h-3 w-3 mr-1" />
+                                Template
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              <DropdownMenuLabel>Workout Templates</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {WORKOUT_TEMPLATES.map((template) => (
+                                <DropdownMenuItem
+                                  key={template.id}
+                                  onClick={() => applyTemplate(template)}
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{template.name}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {template.description} • {template.exercises.length} oefeningen
+                                    </span>
+                                  </div>
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          
+                          <Button onClick={addExercise} size="sm">
+                            <Plus className="h-3 w-3 mr-1" />
+                            Oefening
+                          </Button>
+                        </div>
                       </div>
 
                       <SortableContext
