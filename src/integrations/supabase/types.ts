@@ -152,6 +152,143 @@ export type Database = {
         }
         Relationships: []
       }
+      buddy_matches: {
+        Row: {
+          created_at: string
+          id: string
+          receiver_id: string
+          requester_id: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          receiver_id: string
+          requester_id: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          receiver_id?: string
+          requester_id?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      buddy_profiles: {
+        Row: {
+          bio: string | null
+          created_at: string
+          experience_level: string | null
+          goals: string[] | null
+          gym_name: string | null
+          id: string
+          looking_for_buddy: boolean | null
+          preferred_workout_times: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          experience_level?: string | null
+          goals?: string[] | null
+          gym_name?: string | null
+          id?: string
+          looking_for_buddy?: boolean | null
+          preferred_workout_times?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          experience_level?: string | null
+          goals?: string[] | null
+          gym_name?: string | null
+          id?: string
+          looking_for_buddy?: boolean | null
+          preferred_workout_times?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      challenge_participants: {
+        Row: {
+          challenge_id: string
+          current_progress: number | null
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          current_progress?: number | null
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          current_progress?: number | null
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string
+          id: string
+          is_active: boolean | null
+          start_date: string
+          target_value: number
+          title: string
+        }
+        Insert: {
+          challenge_type?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          start_date: string
+          target_value: number
+          title: string
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          start_date?: string
+          target_value?: number
+          title?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           coach_id: string
@@ -652,6 +789,38 @@ export type Database = {
           },
         ]
       }
+      kudos: {
+        Row: {
+          created_at: string
+          id: string
+          kudos_type: string
+          shared_workout_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kudos_type?: string
+          shared_workout_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kudos_type?: string
+          shared_workout_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kudos_shared_workout_id_fkey"
+            columns: ["shared_workout_id"]
+            isOneToOne: false
+            referencedRelation: "shared_workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media: {
         Row: {
           bucket_name: string
@@ -1137,6 +1306,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shared_workouts: {
+        Row: {
+          caption: string | null
+          created_at: string
+          duration_minutes: number | null
+          exercises_completed: number | null
+          id: string
+          personal_records: number | null
+          total_sets: number | null
+          total_volume: number | null
+          user_id: string
+          workout_id: string
+          workout_name: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          exercises_completed?: number | null
+          id?: string
+          personal_records?: number | null
+          total_sets?: number | null
+          total_volume?: number | null
+          user_id: string
+          workout_id: string
+          workout_name: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          exercises_completed?: number | null
+          id?: string
+          personal_records?: number | null
+          total_sets?: number | null
+          total_volume?: number | null
+          user_id?: string
+          workout_id?: string
+          workout_name?: string
+        }
+        Relationships: []
       }
       task_completions: {
         Row: {

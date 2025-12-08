@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, MessageCircle, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { Send, MessageCircle, ChevronDown, ChevronUp, Trash2, Dumbbell, Trophy, Users } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -24,6 +24,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
 import { nl } from "date-fns/locale";
+import { SharedWorkoutsFeed } from "@/components/social/SharedWorkoutsFeed";
+import { ChallengesCard } from "@/components/social/ChallengesCard";
+import { BuddyMatchingCard } from "@/components/social/BuddyMatchingCard";
 
 interface Comment {
   id: string;
@@ -63,7 +66,8 @@ const Community = () => {
   const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string>("");
   const [uploadedMediaType, setUploadedMediaType] = useState<string>("");
   const [posts, setPosts] = useState<Post[]>([]);
-  const [activeTab, setActiveTab] = useState("strength");
+  const [activeTab, setActiveTab] = useState("feed");
+  const [chatTab, setChatTab] = useState("strength");
   const [loading, setLoading] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
@@ -406,17 +410,43 @@ const Community = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="p-6">
-        <h1 className="text-3xl font-bold mb-2">Kleedkamer Talk</h1>
-        <p className="text-muted-foreground mb-6">Deel je successen, stel vragen en motiveer elkaar</p>
+        <h1 className="text-3xl font-bold mb-2">Community</h1>
+        <p className="text-muted-foreground mb-6">Deel je successen en motiveer elkaar</p>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-3 mb-6">
-            <TabsTrigger value="strength">Strength</TabsTrigger>
-            <TabsTrigger value="hyrox">Hyrox</TabsTrigger>
-            <TabsTrigger value="run">Run</TabsTrigger>
+          <TabsList className="w-full grid grid-cols-4 mb-6">
+            <TabsTrigger value="feed" className="gap-1">
+              <Dumbbell className="w-4 h-4" />
+              Feed
+            </TabsTrigger>
+            <TabsTrigger value="challenges" className="gap-1">
+              <Trophy className="w-4 h-4" />
+              Challenges
+            </TabsTrigger>
+            <TabsTrigger value="buddies" className="gap-1">
+              <Users className="w-4 h-4" />
+              Buddies
+            </TabsTrigger>
+            <TabsTrigger value="chat">Chat</TabsTrigger>
           </TabsList>
 
-          <TabsContent value={activeTab} className="space-y-4">
+          {/* Shared Workouts Feed Tab */}
+          <TabsContent value="feed" className="space-y-4">
+            <SharedWorkoutsFeed />
+          </TabsContent>
+
+          {/* Challenges Tab */}
+          <TabsContent value="challenges" className="space-y-4">
+            <ChallengesCard />
+          </TabsContent>
+
+          {/* Buddies Tab */}
+          <TabsContent value="buddies" className="space-y-4">
+            <BuddyMatchingCard />
+          </TabsContent>
+
+          {/* Chat Tab - existing community posts */}
+          <TabsContent value="chat" className="space-y-4">
             {/* Message Input */}
             <Card className="p-4">
               <Textarea
