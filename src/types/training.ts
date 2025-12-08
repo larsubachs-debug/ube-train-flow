@@ -19,6 +19,8 @@ export interface Week {
   id: string;
   weekNumber: number;
   name: string;
+  description?: string;
+  phase_name?: string;
   workouts: Workout[];
 }
 
