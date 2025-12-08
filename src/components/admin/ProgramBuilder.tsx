@@ -875,6 +875,101 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     toast({ description: `Template "${template.name}" toegepast` });
   };
 
+  // Save current day as custom template
+  const saveAsTemplate = async () => {
+    if (!selectedDay || selectedDay.exercises.length === 0) {
+      toast({ description: "Voeg eerst oefeningen toe om op te slaan", variant: "destructive" });
+      return;
+    }
+
+    const templateName = prompt("Geef je template een naam:", selectedDay.name);
+    if (!templateName) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Je moet ingelogd zijn");
+
+      const exercisesForTemplate = selectedDay.exercises.map(ex => ({
+        name: ex.name,
+        category: ex.category,
+        restTimer: ex.restTimer,
+        notes: ex.notes,
+        sets: ex.sets.map(s => ({
+          reps: s.reps,
+          weight: s.weight,
+          targetRPE: s.targetRPE,
+        })),
+      }));
+
+      const { error } = await supabase
+        .from('workout_templates')
+        .insert({
+          name: templateName,
+          description: `${selectedDay.exercises.length} oefeningen`,
+          category: program.goal,
+          exercises: exercisesForTemplate,
+          created_by: user.id,
+          is_public: false,
+        });
+
+      if (error) throw error;
+      toast({ description: `Template "${templateName}" opgeslagen!` });
+    } catch (error: any) {
+      toast({ title: "Fout bij opslaan", description: error.message, variant: "destructive" });
+    }
+  };
+
+  // Load custom templates from database
+  const [customTemplates, setCustomTemplates] = useState<WorkoutTemplate[]>([]);
+  
+  useEffect(() => {
+    const loadCustomTemplates = async () => {
+      const { data } = await supabase
+        .from('workout_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (data) {
+        const templates: WorkoutTemplate[] = data.map(t => ({
+          id: t.id,
+          name: t.name,
+          category: t.category || 'Strength',
+          description: t.description || '',
+          exercises: (t.exercises as any[]).map(ex => ({
+            name: ex.name,
+            category: ex.category,
+            restTimer: ex.restTimer,
+            notes: ex.notes,
+            sets: ex.sets.map((s: any, idx: number) => ({
+              id: String(idx),
+              reps: s.reps,
+              weight: s.weight,
+              targetRPE: s.targetRPE,
+            })),
+          })),
+        }));
+        setCustomTemplates(templates);
+      }
+    };
+    loadCustomTemplates();
+  }, []);
+
+  // Delete custom template
+  const deleteCustomTemplate = async (templateId: string) => {
+    try {
+      const { error } = await supabase
+        .from('workout_templates')
+        .delete()
+        .eq('id', templateId);
+      
+      if (error) throw error;
+      setCustomTemplates(prev => prev.filter(t => t.id !== templateId));
+      toast({ description: "Template verwijderd" });
+    } catch (error: any) {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    }
+  };
+
   const addWeek = () => {
     const newWeek: Week = {
       id: `week-${Date.now()}`,
@@ -911,6 +1006,35 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     };
     setProgram({ ...program, weeks: [...program.weeks, newWeek] });
     toast({ description: "Week gedupliceerd" });
+  };
+
+  // Duplicate week with progressive overload
+  const duplicateWeekWithProgression = (weekId: string, weightIncrement: number = 2.5) => {
+    const week = program.weeks.find(w => w.id === weekId);
+    if (!week) return;
+
+    const newWeek: Week = {
+      ...week,
+      id: `week-${Date.now()}`,
+      name: `Week ${program.weeks.length + 1}`,
+      weekNumber: program.weeks.length + 1,
+      days: week.days.map(day => ({
+        ...day,
+        id: `day-${Date.now()}-${Math.random()}`,
+        exercises: day.exercises.map(ex => ({
+          ...ex,
+          id: `ex-${Date.now()}-${Math.random()}`,
+          sets: ex.sets.map(s => ({ 
+            ...s, 
+            id: `set-${Date.now()}-${Math.random()}`,
+            // Add weight increment for progressive overload
+            weight: String(parseFloat(s.weight || '0') + weightIncrement),
+          })),
+        })),
+      })),
+    };
+    setProgram({ ...program, weeks: [...program.weeks, newWeek] });
+    toast({ description: `Week gedupliceerd met +${weightIncrement}kg progressie` });
   };
 
   const deleteWeek = (weekId: string) => {
@@ -1256,30 +1380,48 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-semibold">Weken</h2>
-              <Button variant="outline" size="sm" onClick={addWeek}>
-                <Plus className="h-3 w-3 mr-1" />
-                Week
-              </Button>
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-3 w-3 mr-1" />
+                      Week
+                      <ChevronDown className="h-3 w-3 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={addWeek}>
+                      Lege week toevoegen
+                    </DropdownMenuItem>
+                    {selectedWeek && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-xs">Kopieer {selectedWeek.name}</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => duplicateWeek(selectedWeekId)}>
+                          <Copy className="h-3 w-3 mr-2" />
+                          Exacte kopie
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => duplicateWeekWithProgression(selectedWeekId, 2.5)}>
+                          +2.5kg progressie
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => duplicateWeekWithProgression(selectedWeekId, 5)}>
+                          +5kg progressie
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => duplicateWeekWithProgression(selectedWeekId, 10)}>
+                          +10kg progressie
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
             
             <Tabs value={selectedWeekId} onValueChange={setSelectedWeekId}>
               <TabsList className="w-full justify-start overflow-x-auto">
                 {program.weeks.map((week) => (
-                  <TabsTrigger key={week.id} value={week.id} className="relative group">
+                  <TabsTrigger key={week.id} value={week.id} className="relative">
                     {week.name}
-                    <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-4 w-4"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          duplicateWeek(week.id);
-                        }}
-                      >
-                        <Copy className="h-2 w-2" />
-                      </Button>
-                    </div>
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -1366,9 +1508,55 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                                 Template
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuLabel>Workout Templates</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
+                            <DropdownMenuContent align="end" className="w-64 max-h-80 overflow-y-auto">
+                              {/* Save as template option */}
+                              {selectedDay && selectedDay.exercises.length > 0 && (
+                                <>
+                                  <DropdownMenuItem onClick={saveAsTemplate}>
+                                    <Save className="h-3 w-3 mr-2" />
+                                    Opslaan als template
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
+                              
+                              {/* Custom templates */}
+                              {customTemplates.length > 0 && (
+                                <>
+                                  <DropdownMenuLabel>Mijn Templates</DropdownMenuLabel>
+                                  {customTemplates.map((template) => (
+                                    <DropdownMenuItem
+                                      key={template.id}
+                                      className="flex justify-between"
+                                    >
+                                      <div 
+                                        className="flex-1 cursor-pointer"
+                                        onClick={() => applyTemplate(template)}
+                                      >
+                                        <span className="font-medium">{template.name}</span>
+                                        <span className="text-xs text-muted-foreground ml-2">
+                                          ({template.exercises.length})
+                                        </span>
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-5 w-5 text-destructive hover:text-destructive"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          deleteCustomTemplate(template.id);
+                                        }}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </DropdownMenuItem>
+                                  ))}
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
+                              
+                              {/* Standard templates */}
+                              <DropdownMenuLabel>Standaard Templates</DropdownMenuLabel>
                               {WORKOUT_TEMPLATES.map((template) => (
                                 <DropdownMenuItem
                                   key={template.id}
