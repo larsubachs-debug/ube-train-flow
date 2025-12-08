@@ -480,6 +480,27 @@ export type Database = {
         }
         Relationships: []
       }
+      education_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          module_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercise_library: {
         Row: {
           category: string | null
