@@ -1,23 +1,26 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Calendar, Dumbbell, User, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useBranding } from "@/hooks/useBranding";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import ubeLogo from "@/assets/ube-logo.png";
 
 const TopNav = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { data: branding } = useBranding();
+  const { t } = useTranslation();
 
   const navItems = [
-    { path: "/", icon: Calendar, label: "Today" },
-    { path: "/programs", icon: Dumbbell, label: "Programs" },
-    { path: "/account", icon: User, label: "Account" },
+    { path: "/", icon: Calendar, label: t('time.today') },
+    { path: "/programs", icon: Dumbbell, label: t('nav.programs') },
+    { path: "/account", icon: User, label: t('nav.account') },
   ];
 
   return (
@@ -37,13 +40,16 @@ const TopNav = () => {
 
         <CollapsibleContent className="bg-card border-b border-border animate-accordion-down">
           <div className="flex flex-col p-4 space-y-2 max-w-lg mx-auto">
-            <button
-              onClick={() => setIsOpen(false)}
-              className="self-end p-2 hover:bg-muted rounded-lg transition-colors"
-              aria-label="Sluit menu"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center justify-between">
+              <LanguageSwitcher />
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+                aria-label={t('common.close')}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
