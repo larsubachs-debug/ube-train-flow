@@ -15,42 +15,129 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['ube-logo.png'],
+      includeAssets: ['ube-logo.png', 'favicon.ico'],
       manifest: {
         name: 'U.be Health Member App',
-        short_name: 'U.be Health',
+        short_name: 'U.be',
         description: 'Accountability en coaching tool voor U.be Health members',
-        theme_color: '#ff6b00',
-        background_color: '#ffffff',
+        theme_color: '#1a1a1a',
+        background_color: '#1a1a1a',
         display: 'standalone',
+        orientation: 'portrait',
         start_url: '/',
+        scope: '/',
+        categories: ['fitness', 'health', 'lifestyle'],
         icons: [
           {
             src: '/ube-logo.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
             src: '/ube-logo.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any'
+          },
+          {
+            src: '/ube-logo.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ],
+        shortcuts: [
+          {
+            name: 'Start Workout',
+            short_name: 'Workout',
+            description: 'Start je volgende workout',
+            url: '/programs',
+            icons: [{ src: '/ube-logo.png', sizes: '192x192' }]
+          },
+          {
+            name: 'Dashboard',
+            short_name: 'Dashboard',
+            description: 'Bekijk je voortgang',
+            url: '/dashboard',
+            icons: [{ src: '/ube-logo.png', sizes: '192x192' }]
           }
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,jpg,jpeg,webp}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
+          // Cache Supabase API calls
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/(programs|workouts|exercises|weeks).*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'workout-data-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          // Cache Supabase storage (images, videos)
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'media-cache',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          // Cache other API calls with network first
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'supabase-cache',
+              cacheName: 'supabase-api-cache',
+              networkTimeoutSeconds: 10,
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24 // 24 hours
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          // Cache Google Fonts
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              }
+            }
+          },
+          // Cache font files
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'gstatic-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
               }
             }
           }
