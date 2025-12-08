@@ -15,9 +15,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { 
   ChevronLeft, ChevronRight, Calendar, Dumbbell, CheckSquare, Star, 
   GripVertical, Filter, X, Plus, Trash2, Edit2, Clock, Users, 
-  Download, Repeat, Check
+  Download, Repeat, Check, Copy, Save, FileText
 } from "lucide-react";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, eachDayOfInterval, isToday, isSameMonth, parseISO, addWeeks } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, eachDayOfInterval, isToday, isSameMonth, parseISO, addWeeks, addDays, getDay, differenceInDays } from "date-fns";
 import { nl } from "date-fns/locale";
 import { toast } from "sonner";
 import {
@@ -293,6 +293,20 @@ const CoachDragDropCalendar = () => {
   // Recurring event options
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringWeeks, setRecurringWeeks] = useState("4");
+  
+  // Template dialog
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
+  const [isSaveTemplateOpen, setIsSaveTemplateOpen] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [applyTemplateDate, setApplyTemplateDate] = useState<Date | null>(null);
+  const [applyTemplateMemberId, setApplyTemplateMemberId] = useState<string>("");
+  
+  // Copy week dialog
+  const [isCopyWeekOpen, setIsCopyWeekOpen] = useState(false);
+  const [copySourceWeekStart, setCopySourceWeekStart] = useState<Date | null>(null);
+  const [copyTargetWeekStart, setCopyTargetWeekStart] = useState<string>("");
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -342,6 +356,21 @@ const CoachDragDropCalendar = () => {
       return data;
     },
     enabled: !!user,
+  });
+
+  // Fetch week templates
+  const { data: weekTemplates } = useQuery({
+    queryKey: ["week-templates", coachProfile?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("week_templates")
+        .select("*")
+        .eq("coach_id", coachProfile!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!coachProfile,
   });
 
   // Fetch all scheduled events for this month view
@@ -548,6 +577,140 @@ const CoachDragDropCalendar = () => {
     },
   });
 
+  // Save week template mutation
+  const saveTemplate = useMutation({
+    mutationFn: async (template: { name: string; description: string; events: unknown[] }) => {
+      const { error } = await supabase
+        .from("week_templates")
+        .insert([{
+          coach_id: coachProfile!.id,
+          name: template.name,
+          description: template.description,
+          events: template.events as unknown,
+        }] as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["week-templates"] });
+      toast.success("Template opgeslagen");
+      setIsSaveTemplateOpen(false);
+      setTemplateName("");
+      setTemplateDescription("");
+    },
+    onError: () => {
+      toast.error("Kon template niet opslaan");
+    },
+  });
+
+  // Delete template mutation
+  const deleteTemplate = useMutation({
+    mutationFn: async (templateId: string) => {
+      const { error } = await supabase
+        .from("week_templates")
+        .delete()
+        .eq("id", templateId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["week-templates"] });
+      toast.success("Template verwijderd");
+    },
+    onError: () => {
+      toast.error("Kon template niet verwijderen");
+    },
+  });
+
+  // Apply template mutation
+  const applyTemplate = useMutation({
+    mutationFn: async ({ templateId, startDate, memberId }: { templateId: string; startDate: Date; memberId: string }) => {
+      const template = weekTemplates?.find(t => t.id === templateId);
+      if (!template) throw new Error("Template niet gevonden");
+      
+      const templateEvents = template.events as { day_offset: number; title: string; description: string | null; event_type: string; scheduled_time: string | null; duration_minutes: number | null }[];
+      
+      const newEvents = templateEvents.map(evt => ({
+        member_id: memberId,
+        coach_id: coachProfile!.id,
+        title: evt.title,
+        description: evt.description,
+        event_type: evt.event_type,
+        scheduled_date: format(addDays(startDate, evt.day_offset), "yyyy-MM-dd"),
+        scheduled_time: evt.scheduled_time,
+        duration_minutes: evt.duration_minutes,
+        status: "scheduled",
+      }));
+      
+      const { error } = await supabase
+        .from("scheduled_events")
+        .insert(newEvents);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coach-calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-week-events"] });
+      toast.success("Template toegepast");
+      setIsTemplateDialogOpen(false);
+      setSelectedTemplate("");
+      setApplyTemplateMemberId("");
+    },
+    onError: () => {
+      toast.error("Kon template niet toepassen");
+    },
+  });
+
+  // Copy week mutation
+  const copyWeek = useMutation({
+    mutationFn: async ({ sourceWeekStart, targetWeekStart }: { sourceWeekStart: Date; targetWeekStart: Date }) => {
+      // Find all events in the source week
+      const weekEnd = addDays(sourceWeekStart, 6);
+      const sourceEvents = monthEvents?.filter(evt => {
+        const evtDate = parseISO(evt.scheduled_date);
+        return evtDate >= sourceWeekStart && evtDate <= weekEnd;
+      }) || [];
+      
+      if (sourceEvents.length === 0) {
+        throw new Error("Geen activiteiten in de bronweek");
+      }
+      
+      // Create new events for target week
+      const newEvents = sourceEvents.map(evt => {
+        const evtDate = parseISO(evt.scheduled_date);
+        const dayOffset = differenceInDays(evtDate, sourceWeekStart);
+        const newDate = addDays(targetWeekStart, dayOffset);
+        
+        return {
+          member_id: evt.member_id,
+          coach_id: coachProfile!.id,
+          title: evt.title,
+          description: evt.description,
+          event_type: evt.event_type,
+          scheduled_date: format(newDate, "yyyy-MM-dd"),
+          scheduled_time: evt.scheduled_time,
+          duration_minutes: evt.duration_minutes,
+          status: "scheduled",
+        };
+      });
+      
+      const { error } = await supabase
+        .from("scheduled_events")
+        .insert(newEvents);
+      if (error) throw error;
+      
+      return newEvents.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["coach-calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-week-events"] });
+      toast.success(`${count} activiteiten gekopieerd`);
+      setIsCopyWeekOpen(false);
+      setCopySourceWeekStart(null);
+      setCopyTargetWeekStart("");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Kon week niet kopiëren");
+    },
+  });
+
   // Group events by date
   const eventsByDate = filteredEvents.reduce((acc, event) => {
     const dateKey = event.scheduled_date;
@@ -663,6 +826,74 @@ const CoachDragDropCalendar = () => {
     toast.success("Agenda geëxporteerd als .ics bestand");
   };
 
+  const handleSaveTemplate = () => {
+    if (!templateName.trim()) return;
+    
+    // Get current week's events and convert to template format
+    const weekStart = startOfWeek(currentMonth, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(currentMonth, { weekStartsOn: 1 });
+    
+    const weekEvents = monthEvents?.filter(evt => {
+      const evtDate = parseISO(evt.scheduled_date);
+      return evtDate >= weekStart && evtDate <= weekEnd;
+    }) || [];
+    
+    if (weekEvents.length === 0) {
+      toast.error("Geen activiteiten in deze week om op te slaan");
+      return;
+    }
+    
+    const templateEvents = weekEvents.map(evt => {
+      const evtDate = parseISO(evt.scheduled_date);
+      const dayOffset = differenceInDays(evtDate, weekStart);
+      return {
+        day_offset: dayOffset,
+        title: evt.title,
+        description: evt.description,
+        event_type: evt.event_type,
+        scheduled_time: evt.scheduled_time,
+        duration_minutes: evt.duration_minutes,
+      };
+    });
+    
+    saveTemplate.mutate({
+      name: templateName,
+      description: templateDescription,
+      events: templateEvents,
+    });
+  };
+
+  const handleApplyTemplate = () => {
+    if (!selectedTemplate || !applyTemplateDate || !applyTemplateMemberId) return;
+    applyTemplate.mutate({
+      templateId: selectedTemplate,
+      startDate: applyTemplateDate,
+      memberId: applyTemplateMemberId,
+    });
+  };
+
+  const handleCopyWeek = () => {
+    if (!copySourceWeekStart || !copyTargetWeekStart) return;
+    copyWeek.mutate({
+      sourceWeekStart: copySourceWeekStart,
+      targetWeekStart: parseISO(copyTargetWeekStart),
+    });
+  };
+
+  // Generate upcoming week start dates for copy functionality
+  const upcomingWeekStarts = useMemo(() => {
+    const weeks = [];
+    const startWeek = startOfWeek(currentMonth, { weekStartsOn: 1 });
+    for (let i = 1; i <= 8; i++) {
+      const weekStart = addWeeks(startWeek, i);
+      weeks.push({
+        date: weekStart,
+        label: `Week van ${format(weekStart, "d MMMM", { locale: nl })}`,
+      });
+    }
+    return weeks;
+  }, [currentMonth]);
+
   const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const goToThisMonth = () => setCurrentMonth(new Date());
@@ -681,7 +912,43 @@ const CoachDragDropCalendar = () => {
               {format(currentMonth, "MMMM yyyy", { locale: nl })}
             </h2>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Templates button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsTemplateDialogOpen(true)}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Templates</span>
+            </Button>
+            
+            {/* Copy week button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                setCopySourceWeekStart(startOfWeek(currentMonth, { weekStartsOn: 1 }));
+                setIsCopyWeekOpen(true);
+              }}
+              className="gap-2"
+            >
+              <Copy className="h-4 w-4" />
+              <span className="hidden sm:inline">Kopieer week</span>
+            </Button>
+            
+            {/* Save template button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsSaveTemplateOpen(true)}
+              className="gap-2"
+            >
+              <Save className="h-4 w-4" />
+              <span className="hidden sm:inline">Template opslaan</span>
+            </Button>
+            
             <Button 
               variant="outline" 
               size="sm" 
@@ -1186,6 +1453,225 @@ const CoachDragDropCalendar = () => {
                   ? `${recurringWeeks}x Aanmaken`
                   : "Aanmaken"
               }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Template Management Dialog */}
+      <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Week Templates
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {weekTemplates && weekTemplates.length > 0 ? (
+              <div className="space-y-2">
+                <Label>Selecteer een template om toe te passen</Label>
+                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Kies een template..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {weekTemplates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {selectedTemplate && (
+                  <>
+                    <div className="space-y-2 mt-4">
+                      <Label>Member *</Label>
+                      <Select value={applyTemplateMemberId} onValueChange={setApplyTemplateMemberId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecteer een member..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {members?.map((member) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              {member.display_name || "Naamloos"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Startdatum</Label>
+                      <Input 
+                        type="date" 
+                        value={applyTemplateDate ? format(applyTemplateDate, "yyyy-MM-dd") : ""}
+                        onChange={(e) => setApplyTemplateDate(e.target.value ? parseISO(e.target.value) : null)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Template list with delete option */}
+                <div className="mt-4 border-t pt-4">
+                  <Label className="text-muted-foreground text-xs">Opgeslagen templates</Label>
+                  <div className="mt-2 space-y-2 max-h-40 overflow-y-auto">
+                    {weekTemplates.map((template) => (
+                      <div key={template.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                        <div>
+                          <p className="text-sm font-medium">{template.name}</p>
+                          {template.description && (
+                            <p className="text-xs text-muted-foreground">{template.description}</p>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => deleteTemplate.mutate(template.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Nog geen templates opgeslagen. Sla eerst een week op als template.
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsTemplateDialogOpen(false)}>
+              Sluiten
+            </Button>
+            {selectedTemplate && (
+              <Button 
+                onClick={handleApplyTemplate}
+                disabled={applyTemplate.isPending || !applyTemplateMemberId || !applyTemplateDate}
+              >
+                {applyTemplate.isPending ? "Toepassen..." : "Template toepassen"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save Template Dialog */}
+      <Dialog open={isSaveTemplateOpen} onOpenChange={setIsSaveTemplateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Save className="h-5 w-5" />
+              Week opslaan als template
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Sla de activiteiten van de huidige week op als herbruikbaar template.
+            </p>
+
+            <div className="space-y-2">
+              <Label>Template naam *</Label>
+              <Input 
+                value={templateName} 
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="Bijv. Standaard trainingsweek"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Beschrijving (optioneel)</Label>
+              <Textarea 
+                value={templateDescription}
+                onChange={(e) => setTemplateDescription(e.target.value)}
+                placeholder="Extra notities over dit template..."
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSaveTemplateOpen(false)}>
+              Annuleren
+            </Button>
+            <Button 
+              onClick={handleSaveTemplate}
+              disabled={saveTemplate.isPending || !templateName.trim()}
+            >
+              {saveTemplate.isPending ? "Opslaan..." : "Opslaan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Copy Week Dialog */}
+      <Dialog open={isCopyWeekOpen} onOpenChange={setIsCopyWeekOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Copy className="h-5 w-5" />
+              Week kopiëren
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Kopieer alle activiteiten van een week naar een andere week.
+            </p>
+
+            <div className="space-y-2">
+              <Label>Bronweek</Label>
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="text-sm font-medium">
+                  Week van {copySourceWeekStart && format(copySourceWeekStart, "d MMMM yyyy", { locale: nl })}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {(() => {
+                    if (!copySourceWeekStart || !monthEvents) return "0 activiteiten";
+                    const weekEnd = addDays(copySourceWeekStart, 6);
+                    const count = monthEvents.filter(evt => {
+                      const evtDate = parseISO(evt.scheduled_date);
+                      return evtDate >= copySourceWeekStart && evtDate <= weekEnd;
+                    }).length;
+                    return `${count} activiteit${count !== 1 ? "en" : ""}`;
+                  })()}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Doelweek *</Label>
+              <Select value={copyTargetWeekStart} onValueChange={setCopyTargetWeekStart}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecteer een week..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {upcomingWeekStarts.map(({ date, label }) => (
+                    <SelectItem key={format(date, "yyyy-MM-dd")} value={format(date, "yyyy-MM-dd")}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCopyWeekOpen(false)}>
+              Annuleren
+            </Button>
+            <Button 
+              onClick={handleCopyWeek}
+              disabled={copyWeek.isPending || !copyTargetWeekStart}
+            >
+              {copyWeek.isPending ? "Kopiëren..." : "Week kopiëren"}
             </Button>
           </DialogFooter>
         </DialogContent>
