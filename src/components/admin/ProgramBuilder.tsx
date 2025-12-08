@@ -3,16 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, GripVertical, Copy, MoreVertical, Check, Dumbbell } from "lucide-react";
+import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronRight, Dumbbell, Library, ArrowLeft, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
 import {
   DndContext,
   closestCenter,
@@ -21,9 +19,6 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  DragOverEvent,
   useDroppable,
 } from '@dnd-kit/core';
 import {
@@ -80,7 +75,8 @@ interface ProgramBuilderProps {
   initialData?: any;
 }
 
-const SortableExerciseBlock = ({ 
+// Compact sortable exercise card
+const SortableExerciseCard = ({ 
   exercise, 
   onUpdate, 
   onDelete, 
@@ -91,6 +87,7 @@ const SortableExerciseBlock = ({
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -131,33 +128,43 @@ const SortableExerciseBlock = ({
 
   return (
     <div ref={setNodeRef} style={style}>
-      <Card className={`p-5 ${isDragging ? 'shadow-lg ring-2 ring-ube-blue/50' : ''}`}>
-        {/* Exercise Header */}
-        <div className="flex items-start gap-3 mb-4">
-          <div 
-            {...attributes} 
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing touch-none mt-1"
-          >
-            <GripVertical className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
-          </div>
-          
-          <div className="flex-1 space-y-3">
-            <div className="flex items-center gap-2 justify-between">
-              <Input
-                placeholder="Naam oefening"
-                value={exercise.name}
-                onChange={(e) => onUpdate(exercise.id, 'name', e.target.value)}
-                className="text-base font-semibold border-0 px-0 focus-visible:ring-0 bg-transparent"
-              />
-              <div className="flex items-center gap-1">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <Card className={`overflow-hidden ${isDragging ? 'shadow-lg ring-2 ring-primary/50' : ''}`}>
+          {/* Collapsed Header */}
+          <CollapsibleTrigger asChild>
+            <div className="flex items-center gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors">
+              <div 
+                {...attributes} 
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing touch-none"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+              </div>
+              
+              {isOpen ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+              
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">
+                  {exercise.name || "Nieuwe oefening"}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {exercise.sets.length} sets • {exercise.category}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => onDuplicate(exercise.id)}
                   className="h-8 w-8"
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-3 w-3" />
                 </Button>
                 <Button
                   variant="ghost"
@@ -165,98 +172,110 @@ const SortableExerciseBlock = ({
                   onClick={() => onDelete(exercise.id)}
                   className="h-8 w-8 text-destructive hover:text-destructive"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
             </div>
+          </CollapsibleTrigger>
 
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>{exercise.category || "Strength"}</span>
-              <span>•</span>
-              <Select 
-                value={exercise.restTimer} 
-                onValueChange={(val) => onUpdate(exercise.id, 'restTimer', val)}
-              >
-                <SelectTrigger className="w-auto h-7 border-0 px-0 gap-2">
-                  <SelectValue placeholder="Rest" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="00:30">00:30</SelectItem>
-                  <SelectItem value="01:00">01:00</SelectItem>
-                  <SelectItem value="01:30">01:30</SelectItem>
-                  <SelectItem value="02:00">02:00</SelectItem>
-                  <SelectItem value="03:00">03:00</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Sets Table */}
-            <div className="space-y-2">
-              <div className="grid grid-cols-[60px_1fr_1fr_1fr_40px] gap-2 text-xs text-muted-foreground font-medium">
-                <div>Set</div>
-                <div className="text-center">Weight (kg)</div>
-                <div className="text-center">Reps</div>
-                <div className="text-center">Target RPE</div>
-                <div></div>
-              </div>
-              
-              {exercise.sets.map((set, index) => (
-                <div key={set.id} className="grid grid-cols-[60px_1fr_1fr_1fr_40px] gap-2 items-center">
-                  <div className="text-sm font-medium text-muted-foreground">
-                    Set {index + 1}
-                  </div>
+          {/* Expanded Content */}
+          <CollapsibleContent>
+            <div className="px-4 pb-4 space-y-4 border-t pt-4">
+              {/* Exercise Name & Settings */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Naam</label>
                   <Input
-                    type="text"
-                    value={set.weight}
-                    onChange={(e) => updateSet(set.id, 'weight', e.target.value)}
-                    className="text-center h-9"
+                    placeholder="Naam oefening"
+                    value={exercise.name}
+                    onChange={(e) => onUpdate(exercise.id, 'name', e.target.value)}
                   />
-                  <Input
-                    type="text"
-                    value={set.reps}
-                    onChange={(e) => updateSet(set.id, 'reps', e.target.value)}
-                    className="text-center h-9"
-                  />
-                  <Input
-                    type="text"
-                    value={set.targetRPE || ""}
-                    onChange={(e) => updateSet(set.id, 'targetRPE', e.target.value)}
-                    placeholder="-"
-                    className="text-center h-9"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeSet(set.id)}
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
                 </div>
-              ))}
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Rest</label>
+                  <Select 
+                    value={exercise.restTimer} 
+                    onValueChange={(val) => onUpdate(exercise.id, 'restTimer', val)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Rest" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="00:30">00:30</SelectItem>
+                      <SelectItem value="01:00">01:00</SelectItem>
+                      <SelectItem value="01:30">01:30</SelectItem>
+                      <SelectItem value="02:00">02:00</SelectItem>
+                      <SelectItem value="03:00">03:00</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addSet}
-                className="w-full"
-              >
-                <Plus className="h-3 w-3 mr-2" />
-                Add set
-              </Button>
+              {/* Sets Table - Compact */}
+              <div className="space-y-2">
+                <div className="grid grid-cols-[50px_1fr_1fr_1fr_32px] gap-2 text-xs text-muted-foreground font-medium px-1">
+                  <div>Set</div>
+                  <div>Kg</div>
+                  <div>Reps</div>
+                  <div>RPE</div>
+                  <div></div>
+                </div>
+                
+                {exercise.sets.map((set, index) => (
+                  <div key={set.id} className="grid grid-cols-[50px_1fr_1fr_1fr_32px] gap-2 items-center">
+                    <div className="text-sm text-muted-foreground pl-1">{index + 1}</div>
+                    <Input
+                      type="text"
+                      value={set.weight}
+                      onChange={(e) => updateSet(set.id, 'weight', e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                    <Input
+                      type="text"
+                      value={set.reps}
+                      onChange={(e) => updateSet(set.id, 'reps', e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                    <Input
+                      type="text"
+                      value={set.targetRPE || ""}
+                      onChange={(e) => updateSet(set.id, 'targetRPE', e.target.value)}
+                      placeholder="-"
+                      className="h-8 text-sm"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeSet(set.id)}
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addSet}
+                  className="w-full h-8"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Set toevoegen
+                </Button>
+              </div>
+
+              {/* Notes */}
+              <Textarea
+                placeholder="Notities (optioneel)"
+                value={exercise.notes || ""}
+                onChange={(e) => onUpdate(exercise.id, 'notes', e.target.value)}
+                className="resize-none text-sm h-16"
+              />
             </div>
-
-            {/* Notes */}
-            <Textarea
-              placeholder="Add note..."
-              value={exercise.notes || ""}
-              onChange={(e) => onUpdate(exercise.id, 'notes', e.target.value)}
-              className="resize-none text-sm"
-              rows={2}
-            />
-          </div>
-        </div>
-      </Card>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 };
@@ -264,8 +283,7 @@ const SortableExerciseBlock = ({
 export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBuilderProps) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   
   const [program, setProgram] = useState<Program>({
     name: initialData?.name || "",
@@ -277,9 +295,9 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
         name: "Week 1",
         weekNumber: 1,
         days: [
-          { id: "day-1", name: "Day 1", exercises: [] },
-          { id: "day-2", name: "Day 2", exercises: [] },
-          { id: "day-3", name: "Day 3", exercises: [] },
+          { id: "day-1", name: "Dag 1", exercises: [] },
+          { id: "day-2", name: "Dag 2", exercises: [] },
+          { id: "day-3", name: "Dag 3", exercises: [] },
         ],
       },
     ],
@@ -293,9 +311,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
+      activationConstraint: { distance: 8 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -306,29 +322,22 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     id: 'exercise-drop-zone',
   });
 
-  // Auto-save simulation
+  // When week changes, select first day
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLastSaved(new Date());
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [program]);
-
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
+    if (selectedWeek && selectedWeek.days.length > 0) {
+      if (!selectedWeek.days.find(d => d.id === selectedDayId)) {
+        setSelectedDayId(selectedWeek.days[0].id);
+      }
+    }
+  }, [selectedWeekId, selectedWeek]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    setActiveId(null);
-    
     if (!selectedDay) return;
 
-    // Check if dragging from library
     const isFromLibrary = active.data.current?.type === 'library-exercise';
     
     if (isFromLibrary) {
-      // Add exercise from library - accept drop on zone or on existing exercise
       if (!over || (over.id !== 'exercise-drop-zone' && !selectedDay.exercises.find(ex => ex.id === over.id))) {
         return;
       }
@@ -363,11 +372,10 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
       );
       
       setProgram({ ...program, weeks: updatedWeeks });
-      toast({ description: `${libraryExercise.name} toegevoegd aan ${selectedDay.name}` });
+      toast({ description: `${libraryExercise.name} toegevoegd` });
       return;
     }
 
-    // Handle reordering existing exercises
     if (!over || active.id === over.id) return;
 
     const oldIndex = selectedDay.exercises.findIndex(ex => ex.id === active.id);
@@ -397,12 +405,13 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
       name: `Week ${program.weeks.length + 1}`,
       weekNumber: program.weeks.length + 1,
       days: [
-        { id: `day-${Date.now()}-1`, name: "Day 1", exercises: [] },
-        { id: `day-${Date.now()}-2`, name: "Day 2", exercises: [] },
-        { id: `day-${Date.now()}-3`, name: "Day 3", exercises: [] },
+        { id: `day-${Date.now()}-1`, name: "Dag 1", exercises: [] },
+        { id: `day-${Date.now()}-2`, name: "Dag 2", exercises: [] },
+        { id: `day-${Date.now()}-3`, name: "Dag 3", exercises: [] },
       ],
     };
     setProgram({ ...program, weeks: [...program.weeks, newWeek] });
+    setSelectedWeekId(newWeek.id);
   };
 
   const duplicateWeek = (weekId: string) => {
@@ -412,7 +421,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     const newWeek: Week = {
       ...week,
       id: `week-${Date.now()}`,
-      name: `${week.name} (copy)`,
+      name: `Week ${program.weeks.length + 1}`,
       weekNumber: program.weeks.length + 1,
       days: week.days.map(day => ({
         ...day,
@@ -433,22 +442,18 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
       toast({ description: "Je moet minstens 1 week hebben", variant: "destructive" });
       return;
     }
-    setProgram({ ...program, weeks: program.weeks.filter(w => w.id !== weekId) });
-    toast({ description: "Week verwijderd" });
-  };
-
-  const updateWeekName = (weekId: string, name: string) => {
-    const updatedWeeks = program.weeks.map(week =>
-      week.id === weekId ? { ...week, name } : week
-    );
-    setProgram({ ...program, weeks: updatedWeeks });
+    const newWeeks = program.weeks.filter(w => w.id !== weekId);
+    setProgram({ ...program, weeks: newWeeks });
+    if (selectedWeekId === weekId) {
+      setSelectedWeekId(newWeeks[0].id);
+    }
   };
 
   const addDay = () => {
     if (!selectedWeek) return;
     const newDay: Day = {
       id: `day-${Date.now()}`,
-      name: `Day ${selectedWeek.days.length + 1}`,
+      name: `Dag ${selectedWeek.days.length + 1}`,
       exercises: [],
     };
     const updatedWeeks = program.weeks.map(week =>
@@ -457,30 +462,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
         : week
     );
     setProgram({ ...program, weeks: updatedWeeks });
-  };
-
-  const duplicateDay = (dayId: string) => {
-    if (!selectedWeek) return;
-    const day = selectedWeek.days.find(d => d.id === dayId);
-    if (!day) return;
-
-    const newDay: Day = {
-      ...day,
-      id: `day-${Date.now()}`,
-      name: `${day.name} (copy)`,
-      exercises: day.exercises.map(ex => ({
-        ...ex,
-        id: `ex-${Date.now()}-${Math.random()}`,
-        sets: ex.sets.map(s => ({ ...s, id: `set-${Date.now()}-${Math.random()}` })),
-      })),
-    };
-    const updatedWeeks = program.weeks.map(week =>
-      week.id === selectedWeekId
-        ? { ...week, days: [...week.days, newDay] }
-        : week
-    );
-    setProgram({ ...program, weeks: updatedWeeks });
-    toast({ description: "Dag gedupliceerd" });
+    setSelectedDayId(newDay.id);
   };
 
   const deleteDay = (dayId: string) => {
@@ -494,21 +476,10 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
         : week
     );
     setProgram({ ...program, weeks: updatedWeeks });
-    toast({ description: "Dag verwijderd" });
-  };
-
-  const updateDayName = (dayId: string, name: string) => {
-    const updatedWeeks = program.weeks.map(week =>
-      week.id === selectedWeekId
-        ? {
-            ...week,
-            days: week.days.map(day =>
-              day.id === dayId ? { ...day, name } : day
-            ),
-          }
-        : week
-    );
-    setProgram({ ...program, weeks: updatedWeeks });
+    if (selectedDayId === dayId) {
+      const remaining = selectedWeek.days.filter(d => d.id !== dayId);
+      setSelectedDayId(remaining[0]?.id || "");
+    }
   };
 
   const addExercise = () => {
@@ -575,7 +546,6 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
         : week
     );
     setProgram({ ...program, weeks: updatedWeeks });
-    toast({ description: "Oefening verwijderd" });
   };
 
   const duplicateExercise = (exerciseId: string) => {
@@ -585,7 +555,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     const newExercise: Exercise = {
       ...exercise,
       id: `ex-${Date.now()}`,
-      name: `${exercise.name} (copy)`,
+      name: `${exercise.name} (kopie)`,
       sets: exercise.sets.map(set => ({ ...set, id: `set-${Date.now()}-${Math.random()}` })),
     };
 
@@ -602,7 +572,6 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
         : week
     );
     setProgram({ ...program, weeks: updatedWeeks });
-    toast({ description: "Oefening gedupliceerd" });
   };
 
   const handleSubmit = async () => {
@@ -613,16 +582,11 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
     setSaving(true);
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error("Je moet ingelogd zijn");
-      }
+      if (!user) throw new Error("Je moet ingelogd zijn");
 
-      // Generate program ID
       const programId = `program-${Date.now()}`;
 
-      // 1. Insert program
       const { error: programError } = await supabase
         .from("programs")
         .insert({
@@ -636,7 +600,6 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
       if (programError) throw programError;
 
-      // 2. Insert weeks and their days
       for (const week of program.weeks) {
         const weekId = `week-${programId}-${week.weekNumber}`;
         
@@ -652,7 +615,6 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
         if (weekError) throw weekError;
 
-        // 3. Insert workouts (days) and their exercises
         for (const day of week.days) {
           const workoutId = `workout-${weekId}-${day.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
           
@@ -669,7 +631,6 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
           if (workoutError) throw workoutError;
 
-          // 4. Insert exercises
           for (const exercise of day.exercises) {
             const exerciseId = `exercise-${workoutId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             const { error: exerciseError } = await supabase
@@ -705,285 +666,255 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-card">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold">Program & Workout Builder</h1>
-              {lastSaved && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Check className="h-4 w-4 text-ube-green" />
-                  <span>All changes saved</span>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={onCancel}>
-                Annuleren
-              </Button>
-              <Button 
-                onClick={handleSubmit} 
-                disabled={saving}
-                className="bg-ube-blue hover:bg-ube-blue/90 text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Save program
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+  const getTotalExercises = () => {
+    return program.weeks.reduce((total, week) => 
+      total + week.days.reduce((dayTotal, day) => dayTotal + day.exercises.length, 0), 0
+    );
+  };
 
-      {/* 3-Column Layout */}
-      <div className="container mx-auto px-6 py-6">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="grid grid-cols-12 gap-6">
-          {/* Left Column - Program & Days */}
-          <div className="col-span-3 space-y-4">
-            {/* Program Info */}
-            <Card className="p-5">
-              <div className="space-y-4">
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="min-h-screen bg-background">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" onClick={onCancel}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                    Program Name
-                  </label>
                   <Input
-                    placeholder="Indoor Strength Workout"
+                    placeholder="Programma naam..."
                     value={program.name}
                     onChange={(e) => setProgram({ ...program, name: e.target.value })}
+                    className="text-lg font-semibold border-0 px-0 h-auto focus-visible:ring-0 bg-transparent"
                   />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                      Goal
-                    </label>
-                    <Select 
-                      value={program.goal} 
-                      onValueChange={(val) => setProgram({ ...program, goal: val })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Strength">Strength</SelectItem>
-                        <SelectItem value="Hyrox">Hyrox</SelectItem>
-                        <SelectItem value="Run">Run</SelectItem>
-                        <SelectItem value="General">General</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                      Sessions
-                    </label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={program.sessionsPerWeek}
-                      onChange={(e) => setProgram({ ...program, sessionsPerWeek: parseInt(e.target.value) || 1 })}
-                    />
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{program.weeks.length} weken</span>
+                    <span>•</span>
+                    <span>{getTotalExercises()} oefeningen</span>
                   </div>
                 </div>
               </div>
-            </Card>
-
-            {/* Weeks & Days */}
-            <Card className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">Weeks & Days</h3>
-                <Button 
-                  size="icon" 
-                  variant="ghost"
-                  onClick={addWeek}
-                  className="h-8 w-8 hover:bg-ube-blue hover:text-white"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {program.weeks.map((week) => (
-                  <div key={week.id} className="space-y-1">
-                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 group">
-                      <Input
-                        value={week.name}
-                        onChange={(e) => updateWeekName(week.id, e.target.value)}
-                        onFocus={() => setSelectedWeekId(week.id)}
-                        className={`flex-1 text-sm font-medium border-0 px-2 h-7 focus-visible:ring-1 ${
-                          selectedWeekId === week.id 
-                            ? 'text-ube-blue focus-visible:ring-ube-blue' 
-                            : 'text-foreground'
-                        }`}
-                      />
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => duplicateWeek(week.id)}>
-                            <Copy className="h-4 w-4 mr-2" />
-                            Duplicate week
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => deleteWeek(week.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+              
+              <div className="flex items-center gap-2">
+                <Sheet open={libraryOpen} onOpenChange={setLibraryOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Library className="h-4 w-4 mr-2" />
+                      Bibliotheek
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                    <SheetHeader>
+                      <SheetTitle>Oefeningen Bibliotheek</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-4">
+                      <ExerciseLibrary />
                     </div>
-                    {selectedWeekId === week.id && (
-                      <div className="ml-4 space-y-1">
-                        {week.days.map((day) => (
-                          <div key={day.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 group">
-                            <Input
-                              value={day.name}
-                              onChange={(e) => updateDayName(day.id, e.target.value)}
-                              onFocus={() => setSelectedDayId(day.id)}
-                              className={`flex-1 text-sm border-0 px-2 h-7 focus-visible:ring-1 ${
-                                selectedDayId === day.id
-                                  ? 'text-ube-blue font-medium focus-visible:ring-ube-blue'
-                                  : 'text-muted-foreground'
-                              }`}
-                            />
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => duplicateDay(day.id)}>
-                                  <Copy className="h-4 w-4 mr-2" />
-                                  Duplicate day
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  onClick={() => deleteDay(day.id)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        ))}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={addDay}
-                          className="w-full justify-start text-muted-foreground h-8"
-                        >
-                          <Plus className="h-3 w-3 mr-2" />
-                          Add day
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-
-          {/* Middle Column - Workout Editor */}
-          <div className="col-span-6">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-bold">
-                    {selectedWeek?.name} - {selectedDay?.name}
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedDay?.exercises.length || 0} oefeningen
-                  </p>
-                </div>
+                  </SheetContent>
+                </Sheet>
+                
                 <Button 
-                  onClick={addExercise}
-                  className="bg-ube-blue hover:bg-ube-blue/90 text-white"
+                  onClick={handleSubmit} 
+                  disabled={saving}
+                  size="sm"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Voeg blok toe
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? "Opslaan..." : "Opslaan"}
                 </Button>
               </div>
-
-              <div 
-                ref={setDroppableRef}
-                className={`min-h-[400px] rounded-lg transition-colors ${
-                  isOver ? 'bg-ube-blue/5 ring-2 ring-ube-blue ring-inset' : ''
-                }`}
-              >
-                <SortableContext
-                  items={selectedDay?.exercises.map(ex => ex.id) || []}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-4">
-                    {selectedDay?.exercises.map((exercise) => (
-                      <SortableExerciseBlock
-                        key={exercise.id}
-                        exercise={exercise}
-                        onUpdate={updateExercise}
-                        onDelete={deleteExercise}
-                        onDuplicate={duplicateExercise}
-                      />
-                    ))}
-                    {selectedDay && selectedDay.exercises.length === 0 && (
-                      <div className={`text-center py-16 rounded-lg border-2 border-dashed transition-colors ${
-                        isOver ? 'border-ube-blue bg-ube-blue/5' : 'border-border'
-                      }`}>
-                        <Dumbbell className={`h-12 w-12 mx-auto mb-4 transition-colors ${
-                          isOver ? 'text-ube-blue' : 'text-muted-foreground'
-                        }`} />
-                        <p className="text-lg font-medium mb-2">
-                          {isOver ? 'Drop hier om toe te voegen' : 'Nog geen oefeningen'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Sleep oefeningen vanuit de bibliotheek →
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </SortableContext>
-              </div>
-            </Card>
-          </div>
-
-          {/* Right Column - Exercise Library */}
-          <div className="col-span-3">
-            <Card className="h-[calc(100vh-200px)] overflow-hidden">
-              <ExerciseLibrary />
-            </Card>
+            </div>
           </div>
         </div>
-        
-        <DragOverlay>
-          {activeId && activeId.toString().startsWith('library-') ? (
-            <Card className="p-3 shadow-lg rotate-3 opacity-80">
-              <p className="font-medium text-sm">Oefening</p>
-            </Card>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+
+        <div className="container mx-auto px-4 py-6 max-w-4xl">
+          {/* Program Settings */}
+          <Card className="p-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Doel</label>
+                <Select 
+                  value={program.goal} 
+                  onValueChange={(val) => setProgram({ ...program, goal: val })}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Strength">Strength</SelectItem>
+                    <SelectItem value="Hyrox">Hyrox</SelectItem>
+                    <SelectItem value="Run">Run</SelectItem>
+                    <SelectItem value="General">General</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Sessies/week</label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={program.sessionsPerWeek}
+                  onChange={(e) => setProgram({ ...program, sessionsPerWeek: parseInt(e.target.value) || 1 })}
+                  className="h-9"
+                />
+              </div>
+            </div>
+          </Card>
+
+          {/* Week Tabs */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-semibold">Weken</h2>
+              <Button variant="outline" size="sm" onClick={addWeek}>
+                <Plus className="h-3 w-3 mr-1" />
+                Week
+              </Button>
+            </div>
+            
+            <Tabs value={selectedWeekId} onValueChange={setSelectedWeekId}>
+              <TabsList className="w-full justify-start overflow-x-auto">
+                {program.weeks.map((week) => (
+                  <TabsTrigger key={week.id} value={week.id} className="relative group">
+                    {week.name}
+                    <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-4 w-4"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          duplicateWeek(week.id);
+                        }}
+                      >
+                        <Copy className="h-2 w-2" />
+                      </Button>
+                    </div>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {program.weeks.map((week) => (
+                <TabsContent key={week.id} value={week.id} className="mt-4">
+                  {/* Day Tabs inside Week */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {week.days.map((day) => (
+                        <Badge
+                          key={day.id}
+                          variant={selectedDayId === day.id ? "default" : "outline"}
+                          className="cursor-pointer"
+                          onClick={() => setSelectedDayId(day.id)}
+                        >
+                          {day.name}
+                          <span className="ml-1 text-xs opacity-70">
+                            ({day.exercises.length})
+                          </span>
+                        </Badge>
+                      ))}
+                      <Button variant="ghost" size="sm" onClick={addDay} className="h-6 px-2">
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    
+                    {program.weeks.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteWeek(week.id)}
+                        className="text-destructive hover:text-destructive h-6"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Day Content */}
+                  {selectedDay && selectedWeek?.id === week.id && (
+                    <div 
+                      ref={setDroppableRef}
+                      className={`min-h-[300px] rounded-lg transition-colors ${
+                        isOver ? 'bg-primary/5 ring-2 ring-primary ring-inset' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={selectedDay.name}
+                            onChange={(e) => {
+                              const updatedWeeks = program.weeks.map(w =>
+                                w.id === selectedWeekId
+                                  ? {
+                                      ...w,
+                                      days: w.days.map(d =>
+                                        d.id === selectedDayId ? { ...d, name: e.target.value } : d
+                                      ),
+                                    }
+                                  : w
+                              );
+                              setProgram({ ...program, weeks: updatedWeeks });
+                            }}
+                            className="text-lg font-medium border-0 px-0 h-auto focus-visible:ring-0 bg-transparent w-32"
+                          />
+                          {selectedWeek && selectedWeek.days.length > 1 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteDay(selectedDayId)}
+                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        <Button onClick={addExercise} size="sm">
+                          <Plus className="h-3 w-3 mr-1" />
+                          Oefening
+                        </Button>
+                      </div>
+
+                      <SortableContext
+                        items={selectedDay.exercises.map(ex => ex.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-3">
+                          {selectedDay.exercises.map((exercise) => (
+                            <SortableExerciseCard
+                              key={exercise.id}
+                              exercise={exercise}
+                              onUpdate={updateExercise}
+                              onDelete={deleteExercise}
+                              onDuplicate={duplicateExercise}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+
+                      {selectedDay.exercises.length === 0 && (
+                        <div className={`text-center py-12 rounded-lg border-2 border-dashed transition-colors ${
+                          isOver ? 'border-primary bg-primary/5' : 'border-border'
+                        }`}>
+                          <Dumbbell className={`h-10 w-10 mx-auto mb-3 ${
+                            isOver ? 'text-primary' : 'text-muted-foreground'
+                          }`} />
+                          <p className="text-sm text-muted-foreground">
+                            Sleep oefeningen uit de bibliotheek of klik op "Oefening"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+              ))}
+            </Tabs>
+          </div>
+        </div>
       </div>
-    </div>
+    </DndContext>
   );
 };
