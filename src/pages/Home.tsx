@@ -8,7 +8,7 @@ import { useUserProgress } from "@/hooks/useUserProgress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePrograms } from "@/hooks/usePrograms";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DailyCheckinCard } from "@/components/checkin/DailyCheckinCard";
 import { DailyTasksCard } from "@/components/tasks/DailyTasksCard";
@@ -16,19 +16,16 @@ import { WeeklyTaskProgress } from "@/components/tasks/WeeklyTaskProgress";
 import { useBranding } from "@/hooks/useBranding";
 import { StreakIndicator } from "@/components/StreakIndicator";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { programs as staticPrograms } from "@/data/programs";
+import { useQueryClient } from "@tanstack/react-query";
 const Home = () => {
-  const {
-    user
-  } = useAuth();
-  const {
-    data: branding
-  } = useBranding();
+  const { user } = useAuth();
+  const { data: branding } = useBranding();
   const [userProgramId, setUserProgramId] = useState<string | null>(null);
   const [coachAvatar, setCoachAvatar] = useState<string | null>(null);
-  const {
-    data: programs = []
-  } = usePrograms();
+  const { data: programs = [], refetch: refetchPrograms } = usePrograms();
+  const queryClient = useQueryClient();
 
   // Use database programs or fallback to static programs for display
   const displayPrograms = programs.length > 0 ? programs : staticPrograms;
@@ -37,11 +34,13 @@ const Home = () => {
   useEffect(() => {
     if (!user) return;
     const fetchUserProgram = async () => {
-      const {
-        data
-      } = await supabase.from("user_program_progress").select("program_id").eq("user_id", user.id).order("created_at", {
-        ascending: false
-      }).limit(1).maybeSingle();
+      const { data } = await supabase
+        .from("user_program_progress")
+        .select("program_id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
       setUserProgramId(data?.program_id || null);
     };
     fetchUserProgram();
@@ -51,42 +50,58 @@ const Home = () => {
   useEffect(() => {
     if (!user) return;
     const fetchCoachAvatar = async () => {
-      // Get user's profile to find their coach
-      const {
-        data: profile
-      } = await supabase.from("profiles").select("coach_id").eq("user_id", user.id).maybeSingle();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("coach_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
       if (profile?.coach_id) {
-        // Get coach's profile with avatar
-        const {
-          data: coachProfile
-        } = await supabase.from("profiles").select("avatar_url").eq("id", profile.coach_id).maybeSingle();
+        const { data: coachProfile } = await supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("id", profile.coach_id)
+          .maybeSingle();
         setCoachAvatar(coachProfile?.avatar_url || null);
       }
     };
     fetchCoachAvatar();
   }, [user]);
 
+  // Pull to refresh handler
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([
+      refetchPrograms(),
+      queryClient.invalidateQueries({ queryKey: ["branding"] }),
+      queryClient.invalidateQueries({ queryKey: ["userProgress"] }),
+    ]);
+  }, [refetchPrograms, queryClient]);
+
   // Use assigned program or fallback to first available
-  const currentProgram = displayPrograms.find(p => p.id === userProgramId) || displayPrograms[0];
-  const {
-    progress,
-    currentWeek,
-    loading
-  } = useUserProgress(currentProgram?.id);
+  const currentProgram = displayPrograms.find((p) => p.id === userProgramId) || displayPrograms[0];
+  const { progress, currentWeek, loading } = useUserProgress(currentProgram?.id);
 
   // Find the actual week from the program data based on progress
-  const thisWeek = currentProgram?.weeks.find(w => w.weekNumber === (progress?.current_week_number || 1)) || currentProgram?.weeks[0];
+  const thisWeek =
+    currentProgram?.weeks.find((w) => w.weekNumber === (progress?.current_week_number || 1)) ||
+    currentProgram?.weeks[0];
+
   if (!currentProgram) {
-    return <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
+    return (
+      <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
         <div className="text-center animate-fade-in">
           <p className="text-muted-foreground">Geen programma toegewezen</p>
         </div>
-      </div>;
+      </div>
+    );
   }
+
   const completedWorkouts = 3;
   const totalWorkouts = 5;
-  const progressPercentage = completedWorkouts / totalWorkouts * 100;
-  return <div className="min-h-screen pb-20 bg-background">
+  const progressPercentage = (completedWorkouts / totalWorkouts) * 100;
+
+  return (
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen pb-20 bg-background">
       {/* Header with centered logo */}
       <div className="relative flex items-center px-6 pt-6 pb-4">
         <div>
@@ -236,6 +251,9 @@ const Home = () => {
 
       {/* Push Notification Prompt */}
       <PushNotificationPrompt />
-    </div>;
+      </div>
+    </PullToRefresh>
+  );
 };
+
 export default Home;
