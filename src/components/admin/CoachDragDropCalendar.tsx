@@ -7,14 +7,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
   ChevronLeft, ChevronRight, Calendar, Dumbbell, CheckSquare, Star, 
-  GripVertical, Filter, X, Plus, Trash2, Edit2, Clock, Users
+  GripVertical, Filter, X, Plus, Trash2, Edit2, Clock, Users, 
+  Download, Repeat, Check
 } from "lucide-react";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, eachDayOfInterval, isToday, isSameMonth, parseISO } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, eachDayOfInterval, isToday, isSameMonth, parseISO, addWeeks } from "date-fns";
 import { nl } from "date-fns/locale";
 import { toast } from "sonner";
 import {
@@ -88,12 +91,16 @@ interface DraggableEventProps {
   event: ScheduledEvent;
   isDragging?: boolean;
   onClick: () => void;
+  isSelected?: boolean;
+  onSelect?: (id: string, selected: boolean) => void;
+  selectionMode?: boolean;
 }
 
-const DraggableEvent = ({ event, isDragging, onClick }: DraggableEventProps) => {
+const DraggableEvent = ({ event, isDragging, onClick, isSelected, onSelect, selectionMode }: DraggableEventProps) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: event.id,
     data: event,
+    disabled: selectionMode,
   });
 
   const Icon = eventTypeIcons[event.event_type as keyof typeof eventTypeIcons] || Star;
@@ -107,19 +114,32 @@ const DraggableEvent = ({ event, isDragging, onClick }: DraggableEventProps) => 
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-1 p-1.5 rounded text-xs bg-card border cursor-grab active:cursor-grabbing transition-opacity hover:bg-accent/10 ${
+      className={`flex items-center gap-1 p-1.5 rounded text-xs bg-card border transition-all ${
         isDragging ? "opacity-50" : ""
+      } ${selectionMode ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"} ${
+        isSelected ? "ring-2 ring-accent bg-accent/10" : "hover:bg-accent/10"
       }`}
       onClick={(e) => {
         if (!transform) {
           e.stopPropagation();
-          onClick();
+          if (selectionMode && onSelect) {
+            onSelect(event.id, !isSelected);
+          } else {
+            onClick();
+          }
         }
       }}
-      {...attributes}
-      {...listeners}
+      {...(selectionMode ? {} : { ...attributes, ...listeners })}
     >
-      <GripVertical className="h-3 w-3 text-muted-foreground shrink-0" />
+      {selectionMode && (
+        <Checkbox 
+          checked={isSelected} 
+          className="h-3 w-3"
+          onClick={(e) => e.stopPropagation()}
+          onCheckedChange={(checked) => onSelect?.(event.id, !!checked)}
+        />
+      )}
+      {!selectionMode && <GripVertical className="h-3 w-3 text-muted-foreground shrink-0" />}
       <Avatar className="h-5 w-5">
         <AvatarImage src={event.member?.avatar_url || undefined} />
         <AvatarFallback className="text-[10px]">
@@ -139,9 +159,15 @@ interface DroppableDayProps {
   activeId: string | null;
   onDayClick: (date: Date) => void;
   onEventClick: (event: ScheduledEvent) => void;
+  selectedIds: string[];
+  onSelectEvent: (id: string, selected: boolean) => void;
+  selectionMode: boolean;
 }
 
-const DroppableDay = ({ date, events, isCurrentMonth, activeId, onDayClick, onEventClick }: DroppableDayProps) => {
+const DroppableDay = ({ 
+  date, events, isCurrentMonth, activeId, onDayClick, onEventClick, 
+  selectedIds, onSelectEvent, selectionMode 
+}: DroppableDayProps) => {
   const dateKey = format(date, "yyyy-MM-dd");
   const { isOver, setNodeRef } = useDroppable({
     id: dateKey,
@@ -155,13 +181,13 @@ const DroppableDay = ({ date, events, isCurrentMonth, activeId, onDayClick, onEv
       className={`min-h-[100px] p-1 border-r border-b transition-colors cursor-pointer hover:bg-accent/5 ${
         isOver ? "bg-accent/20" : ""
       } ${!isCurrentMonth ? "bg-muted/30" : ""} ${isDayToday ? "bg-accent/10" : ""}`}
-      onClick={() => onDayClick(date)}
+      onClick={() => !selectionMode && onDayClick(date)}
     >
       <div className={`flex items-center justify-between text-xs font-medium mb-1 ${
         isDayToday ? "text-accent" : !isCurrentMonth ? "text-muted-foreground/50" : "text-muted-foreground"
       }`}>
         <span>{format(date, "d")}</span>
-        <Plus className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+        {!selectionMode && <Plus className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />}
       </div>
       <div className="space-y-1" onClick={(e) => e.stopPropagation()}>
         {events.map((event) => (
@@ -170,11 +196,65 @@ const DroppableDay = ({ date, events, isCurrentMonth, activeId, onDayClick, onEv
             event={event} 
             isDragging={activeId === event.id}
             onClick={() => onEventClick(event)}
+            isSelected={selectedIds.includes(event.id)}
+            onSelect={onSelectEvent}
+            selectionMode={selectionMode}
           />
         ))}
       </div>
     </div>
   );
+};
+
+// Generate iCal content
+const generateICalEvent = (event: ScheduledEvent): string => {
+  const startDate = event.scheduled_date.replace(/-/g, '');
+  let startDateTime = startDate;
+  let endDateTime = startDate;
+  
+  if (event.scheduled_time) {
+    const time = event.scheduled_time.replace(/:/g, '').slice(0, 4) + '00';
+    startDateTime = `${startDate}T${time}`;
+    
+    if (event.duration_minutes) {
+      const startHour = parseInt(event.scheduled_time.slice(0, 2));
+      const startMin = parseInt(event.scheduled_time.slice(3, 5));
+      const totalMinutes = startHour * 60 + startMin + event.duration_minutes;
+      const endHour = Math.floor(totalMinutes / 60) % 24;
+      const endMin = totalMinutes % 60;
+      endDateTime = `${startDate}T${String(endHour).padStart(2, '0')}${String(endMin).padStart(2, '0')}00`;
+    } else {
+      endDateTime = startDateTime;
+    }
+  }
+  
+  const uid = `${event.id}@ubeheath.app`;
+  const summary = event.title;
+  const description = event.description || '';
+  
+  return `BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${format(new Date(), "yyyyMMdd'T'HHmmss")}Z
+DTSTART:${startDateTime}
+DTEND:${endDateTime}
+SUMMARY:${summary}
+DESCRIPTION:${description}
+END:VEVENT`;
+};
+
+const generateICalFile = (events: ScheduledEvent[]): string => {
+  const header = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//UBE Health//Coach Calendar//NL
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:UBE Health Agenda`;
+
+  const footer = `END:VCALENDAR`;
+  
+  const eventStrings = events.map(generateICalEvent).join('\n');
+  
+  return `${header}\n${eventStrings}\n${footer}`;
 };
 
 const CoachDragDropCalendar = () => {
@@ -188,6 +268,11 @@ const CoachDragDropCalendar = () => {
   const [memberFilter, setMemberFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Selection mode for bulk delete
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
   
   // Dialogs
   const [selectedEvent, setSelectedEvent] = useState<ScheduledEvent | null>(null);
@@ -204,6 +289,10 @@ const CoachDragDropCalendar = () => {
   const [formDuration, setFormDuration] = useState("");
   const [formEventType, setFormEventType] = useState<string>("workout");
   const [formMemberId, setFormMemberId] = useState<string>("");
+  
+  // Recurring event options
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringWeeks, setRecurringWeeks] = useState("4");
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -369,7 +458,30 @@ const CoachDragDropCalendar = () => {
     },
   });
 
-  // Create event mutation
+  // Bulk delete mutation
+  const bulkDeleteEvents = useMutation({
+    mutationFn: async (eventIds: string[]) => {
+      const { error } = await supabase
+        .from("scheduled_events")
+        .delete()
+        .in("id", eventIds);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["coach-calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-week-events"] });
+      toast.success(`${selectedIds.length} activiteiten verwijderd`);
+      setIsBulkDeleteOpen(false);
+      setSelectedIds([]);
+      setSelectionMode(false);
+    },
+    onError: () => {
+      toast.error("Kon activiteiten niet verwijderen");
+    },
+  });
+
+  // Create event mutation (with recurring support)
   const createEvent = useMutation({
     mutationFn: async (event: {
       member_id: string;
@@ -380,20 +492,54 @@ const CoachDragDropCalendar = () => {
       scheduled_date: string;
       scheduled_time: string | null;
       duration_minutes: number | null;
+      recurring: boolean;
+      recurringWeeks: number;
     }) => {
-      const { error } = await supabase
-        .from("scheduled_events")
-        .insert({
-          ...event,
+      const events = [];
+      const baseDate = parseISO(event.scheduled_date);
+      
+      if (event.recurring && event.recurringWeeks > 1) {
+        for (let i = 0; i < event.recurringWeeks; i++) {
+          const eventDate = addWeeks(baseDate, i);
+          events.push({
+            member_id: event.member_id,
+            coach_id: event.coach_id,
+            title: event.title,
+            description: event.description,
+            event_type: event.event_type,
+            scheduled_date: format(eventDate, "yyyy-MM-dd"),
+            scheduled_time: event.scheduled_time,
+            duration_minutes: event.duration_minutes,
+            status: "scheduled",
+          });
+        }
+      } else {
+        events.push({
+          member_id: event.member_id,
+          coach_id: event.coach_id,
+          title: event.title,
+          description: event.description,
+          event_type: event.event_type,
+          scheduled_date: event.scheduled_date,
+          scheduled_time: event.scheduled_time,
+          duration_minutes: event.duration_minutes,
           status: "scheduled",
         });
+      }
+      
+      const { error } = await supabase
+        .from("scheduled_events")
+        .insert(events);
       
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["coach-calendar-events"] });
       queryClient.invalidateQueries({ queryKey: ["coach-week-events"] });
-      toast.success("Activiteit aangemaakt");
+      const message = isRecurring 
+        ? `${parseInt(recurringWeeks)} activiteiten aangemaakt` 
+        : "Activiteit aangemaakt";
+      toast.success(message);
       setIsCreateOpen(false);
       resetCreateForm();
     },
@@ -435,6 +581,7 @@ const CoachDragDropCalendar = () => {
   }, [monthEvents, updateEventDate]);
 
   const handleEventClick = (event: ScheduledEvent) => {
+    if (selectionMode) return;
     setSelectedEvent(event);
     setFormTitle(event.title);
     setFormDescription(event.description || "");
@@ -446,9 +593,16 @@ const CoachDragDropCalendar = () => {
   };
 
   const handleDayClick = (date: Date) => {
+    if (selectionMode) return;
     setCreateDate(date);
     resetCreateForm();
     setIsCreateOpen(true);
+  };
+
+  const handleSelectEvent = (id: string, selected: boolean) => {
+    setSelectedIds(prev => 
+      selected ? [...prev, id] : prev.filter(i => i !== id)
+    );
   };
 
   const resetCreateForm = () => {
@@ -458,6 +612,8 @@ const CoachDragDropCalendar = () => {
     setFormDuration("");
     setFormEventType("workout");
     setFormMemberId("");
+    setIsRecurring(false);
+    setRecurringWeeks("4");
   };
 
   const handleSaveEdit = () => {
@@ -483,7 +639,28 @@ const CoachDragDropCalendar = () => {
       scheduled_date: format(createDate, "yyyy-MM-dd"),
       scheduled_time: formTime || null,
       duration_minutes: formDuration ? parseInt(formDuration) : null,
+      recurring: isRecurring,
+      recurringWeeks: parseInt(recurringWeeks),
     });
+  };
+
+  const handleExportCalendar = () => {
+    if (!filteredEvents.length) {
+      toast.error("Geen activiteiten om te exporteren");
+      return;
+    }
+    
+    const icalContent = generateICalFile(filteredEvents);
+    const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ube-agenda-${format(currentMonth, "yyyy-MM")}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Agenda geëxporteerd als .ics bestand");
   };
 
   const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
@@ -506,13 +683,34 @@ const CoachDragDropCalendar = () => {
           </div>
           <div className="flex items-center gap-2">
             <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportCalendar}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Exporteer</span>
+            </Button>
+            <Button 
+              variant={selectionMode ? "secondary" : "outline"} 
+              size="sm" 
+              onClick={() => {
+                setSelectionMode(!selectionMode);
+                setSelectedIds([]);
+              }}
+              className="gap-2"
+            >
+              {selectionMode ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+              <span className="hidden sm:inline">{selectionMode ? "Annuleren" : "Selecteren"}</span>
+            </Button>
+            <Button 
               variant={showFilters ? "secondary" : "outline"} 
               size="sm" 
               onClick={() => setShowFilters(!showFilters)}
               className="gap-2"
             >
               <Filter className="h-4 w-4" />
-              Filters
+              <span className="hidden sm:inline">Filters</span>
               {activeFiltersCount > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center">
                   {activeFiltersCount}
@@ -530,6 +728,33 @@ const CoachDragDropCalendar = () => {
             </Button>
           </div>
         </div>
+
+        {/* Bulk delete bar */}
+        {selectionMode && selectedIds.length > 0 && (
+          <div className="flex items-center justify-between mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <span className="text-sm font-medium">
+              {selectedIds.length} activiteit{selectedIds.length !== 1 ? "en" : ""} geselecteerd
+            </span>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setSelectedIds([])}
+              >
+                Deselecteren
+              </Button>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={() => setIsBulkDeleteOpen(true)}
+                className="gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Verwijderen
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         {showFilters && (
@@ -581,7 +806,10 @@ const CoachDragDropCalendar = () => {
         )}
 
         <p className="text-sm text-muted-foreground mb-4">
-          Klik op een dag om een activiteit toe te voegen • Sleep activiteiten om te verplaatsen • Klik op een activiteit voor details
+          {selectionMode 
+            ? "Klik op activiteiten om ze te selecteren voor bulk verwijderen"
+            : "Klik op een dag om toe te voegen • Sleep om te verplaatsen • Klik voor details"
+          }
         </p>
 
         {isLoading ? (
@@ -621,6 +849,9 @@ const CoachDragDropCalendar = () => {
                       activeId={activeId}
                       onDayClick={handleDayClick}
                       onEventClick={handleEventClick}
+                      selectedIds={selectedIds}
+                      onSelectEvent={handleSelectEvent}
+                      selectionMode={selectionMode}
                     />
                   );
                 })}
@@ -813,6 +1044,27 @@ const CoachDragDropCalendar = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Activiteiten verwijderen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Weet je zeker dat je {selectedIds.length} activiteit{selectedIds.length !== 1 ? "en" : ""} wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => bulkDeleteEvents.mutate(selectedIds)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {bulkDeleteEvents.isPending ? "Verwijderen..." : `${selectedIds.length} verwijderen`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Create Event Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent>
@@ -888,6 +1140,36 @@ const CoachDragDropCalendar = () => {
                 rows={2}
               />
             </div>
+
+            {/* Recurring option */}
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Repeat className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Wekelijks herhalen</p>
+                  <p className="text-xs text-muted-foreground">Maak deze activiteit voor meerdere weken</p>
+                </div>
+              </div>
+              <Switch checked={isRecurring} onCheckedChange={setIsRecurring} />
+            </div>
+
+            {isRecurring && (
+              <div className="space-y-2">
+                <Label>Aantal weken</Label>
+                <Select value={recurringWeeks} onValueChange={setRecurringWeeks}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2">2 weken</SelectItem>
+                    <SelectItem value="4">4 weken</SelectItem>
+                    <SelectItem value="6">6 weken</SelectItem>
+                    <SelectItem value="8">8 weken</SelectItem>
+                    <SelectItem value="12">12 weken</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -898,7 +1180,12 @@ const CoachDragDropCalendar = () => {
               onClick={handleCreateEvent} 
               disabled={createEvent.isPending || !formMemberId || !formTitle}
             >
-              {createEvent.isPending ? "Aanmaken..." : "Aanmaken"}
+              {createEvent.isPending 
+                ? "Aanmaken..." 
+                : isRecurring 
+                  ? `${recurringWeeks}x Aanmaken`
+                  : "Aanmaken"
+              }
             </Button>
           </DialogFooter>
         </DialogContent>
