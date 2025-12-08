@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
-import { ArrowLeft, Calendar, TrendingUp, Check, Play, BarChart3, Timer, Trophy, Link2 } from "lucide-react";
+import { ArrowLeft, Calendar, TrendingUp, Check, Play, BarChart3, Timer, Trophy, Link2, Users } from "lucide-react";
 import { WorkoutCompleteButton } from "@/components/workouts/WorkoutCompleteButton";
 import { ExerciseVideoDialog } from "@/components/workouts/ExerciseVideoDialog";
 import { EMOMTimer } from "@/components/workouts/EMOMTimer";
@@ -16,6 +16,7 @@ import { RPEHistoryChart } from "@/components/workouts/RPEHistoryChart";
 import { RestTimer } from "@/components/workouts/RestTimer";
 import { OneRMCalculator } from "@/components/workouts/OneRMCalculator";
 import { WorkoutSummary } from "@/components/workouts/WorkoutSummary";
+import { ExerciseLeaderboard } from "@/components/workouts/ExerciseLeaderboard";
 import { useWorkoutSets } from "@/hooks/useWorkoutSets";
 import { toast } from "sonner";
 
@@ -37,6 +38,8 @@ const WorkoutDetail = () => {
   const [showSummary, setShowSummary] = useState(false);
   const [supersetMode, setSupersetMode] = useState<Record<number, boolean>>({});
   const [show1RMCalc, setShow1RMCalc] = useState<Record<number, Record<number, boolean>>>({});
+  // Leaderboard state
+  const [showLeaderboard, setShowLeaderboard] = useState<{ exerciseName: string } | null>(null);
   // RPE values: { liftIndex: { setIndex: rpeValue } }
   const [rpeValues, setRpeValues] = useState<Record<number, Record<number, number>>>({});
   // Weight values: { liftIndex: { setIndex: weight } }
@@ -415,8 +418,16 @@ const WorkoutDetail = () => {
                   <button
                     onClick={() => setShowRPEHistory({ exerciseName: lift.name, liftIndex })}
                     className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors"
+                    title="RPE Geschiedenis"
                   >
                     <BarChart3 className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setShowLeaderboard({ exerciseName: lift.name })}
+                    className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors"
+                    title="Leaderboard"
+                  >
+                    <Users className="h-5 w-5" />
                   </button>
                   <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
                     •••
@@ -615,6 +626,13 @@ const WorkoutDetail = () => {
         isOpen={showSummary}
         onClose={() => setShowSummary(false)}
         {...calculateWorkoutStats()}
+      />
+
+      {/* Exercise Leaderboard */}
+      <ExerciseLeaderboard
+        open={!!showLeaderboard}
+        onOpenChange={(open) => !open && setShowLeaderboard(null)}
+        exerciseName={showLeaderboard?.exerciseName || ""}
       />
     </div>
   );
