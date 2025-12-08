@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronRight, Dumbbell, Library, ArrowLeft, Save, Eye, Pencil, Play, Clock, Target, FileDown } from "lucide-react";
+import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronRight, Dumbbell, Library, ArrowLeft, Save, Eye, Pencil, Play, Clock, Target, FileDown, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ExerciseLeaderboard } from "@/components/workouts/ExerciseLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -333,6 +334,7 @@ const SortableExerciseCard = ({
   onDuplicate: (id: string) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const {
     attributes,
     listeners,
@@ -406,6 +408,15 @@ const SortableExerciseCard = ({
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setShowLeaderboard(true)}
+                  className="h-8 w-8"
+                  title="Leaderboard bekijken"
+                >
+                  <Users className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onDuplicate(exercise.id)}
                   className="h-8 w-8"
                 >
@@ -422,6 +433,13 @@ const SortableExerciseCard = ({
               </div>
             </div>
           </CollapsibleTrigger>
+
+          {/* Leaderboard Dialog */}
+          <ExerciseLeaderboard
+            open={showLeaderboard}
+            onOpenChange={setShowLeaderboard}
+            exerciseName={exercise.name}
+          />
 
           {/* Expanded Content */}
           <CollapsibleContent>
