@@ -42,6 +42,8 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Install = lazy(() => import("./pages/Install"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -118,6 +120,8 @@ const App = () => {
                         <Route path="/coach/chat/:memberId" element={<ProtectedRoute requiredRole="coach"><CoachChat /></ProtectedRoute>} />
                         <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                         <Route path="/install" element={<Install />} />
+                        <Route path="/privacy" element={<Privacy />} />
+                        <Route path="/terms" element={<Terms />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
