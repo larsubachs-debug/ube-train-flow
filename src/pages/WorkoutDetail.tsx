@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { programs as staticPrograms } from "@/data/programs";
 import { usePrograms } from "@/hooks/usePrograms";
-import { ArrowLeft, Calendar, TrendingUp, Check, Play, BarChart3, Timer, Trophy, Link2, Users } from "lucide-react";
+import { ArrowLeft, Calendar, TrendingUp, Check, Play, BarChart3, Timer, Trophy, Link2, Users, Video, Flame } from "lucide-react";
 import { WorkoutCompleteButton } from "@/components/workouts/WorkoutCompleteButton";
 import { ExerciseVideoDialog } from "@/components/workouts/ExerciseVideoDialog";
 import { EMOMTimer } from "@/components/workouts/EMOMTimer";
@@ -17,10 +17,16 @@ import { RestTimer } from "@/components/workouts/RestTimer";
 import { OneRMCalculator } from "@/components/workouts/OneRMCalculator";
 import { WorkoutSummary } from "@/components/workouts/WorkoutSummary";
 import { ExerciseLeaderboard } from "@/components/workouts/ExerciseLeaderboard";
+import { WorkoutTimer } from "@/components/workouts/WorkoutTimer";
+import { PlateCalculator } from "@/components/workouts/PlateCalculator";
+import { ExerciseVideoButton } from "@/components/workouts/ExerciseVideoButton";
+import { WarmupSetTracker } from "@/components/workouts/WarmupSetTracker";
+import { SupersetIndicator, SupersetWrapper } from "@/components/workouts/SupersetIndicator";
 import { useWorkoutSets } from "@/hooks/useWorkoutSets";
 import { toast } from "sonner";
 
 type Section = 'warmup' | 'main' | 'accessories' | 'conditioning' | 'complete';
+type GroupType = 'superset' | 'circuit' | 'dropset' | null;
 
 interface SetData {
   weight: number;
@@ -36,7 +42,6 @@ const WorkoutDetail = () => {
   const [showRestTimer, setShowRestTimer] = useState(false);
   const [restTimerDuration, setRestTimerDuration] = useState(90);
   const [showSummary, setShowSummary] = useState(false);
-  const [supersetMode, setSupersetMode] = useState<Record<number, boolean>>({});
   const [show1RMCalc, setShow1RMCalc] = useState<Record<number, Record<number, boolean>>>({});
   // Leaderboard state
   const [showLeaderboard, setShowLeaderboard] = useState<{ exerciseName: string } | null>(null);
@@ -50,6 +55,15 @@ const WorkoutDetail = () => {
   const [prStatus, setPrStatus] = useState<Record<number, Record<number, boolean>>>({});
   // Rest time per exercise: { liftIndex: restTime }
   const [restTimes, setRestTimes] = useState<Record<number, number>>({});
+  // Workout timer elapsed time
+  const [workoutElapsedTime, setWorkoutElapsedTime] = useState(0);
+  // Target weight for warmup sets: { liftIndex: weight }
+  const [targetWeights, setTargetWeights] = useState<Record<number, number>>({});
+  // Group types for exercises: { liftIndex: groupType }
+  const [exerciseGroupTypes, setExerciseGroupTypes] = useState<Record<number, GroupType>>({});
+  // Show warmup tracker per exercise
+  const [showWarmup, setShowWarmup] = useState<Record<number, boolean>>({});
+  
   const { data: programs = [], isLoading } = usePrograms();
   const { saveSet, checkIfPR, getPersonalRecord } = useWorkoutSets(workoutId || "");
   
@@ -194,14 +208,19 @@ const WorkoutDetail = () => {
         toast.success(`Set ${setIdx + 1} voltooid!`);
       }
 
-      // Start rest timer after set completion (unless in superset mode)
-      const isSuperset = supersetMode[liftIndex] || false;
-      if (!isSuperset) {
+      // Start rest timer after set completion (unless in grouped mode)
+      const groupType = exerciseGroupTypes[liftIndex];
+      if (!groupType) {
         const configuredRestTime = restTimes[liftIndex] || 90;
         setRestTimerDuration(configuredRestTime);
         setShowRestTimer(true);
       } else {
-        toast.info("Superset mode - Ga direct naar de volgende oefening! 💪");
+        const groupLabels: Record<string, string> = {
+          superset: "Superset",
+          circuit: "Circuit",
+          dropset: "Dropset",
+        };
+        toast.info(`${groupLabels[groupType] || "Groep"} - Ga direct naar de volgende oefening! 💪`);
       }
     }
   };
@@ -267,18 +286,17 @@ const WorkoutDetail = () => {
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="bg-background border-b border-border/10 px-6 pt-6 pb-4">
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex items-start justify-between mb-4">
           <div>
             <p className="text-sm text-muted-foreground mb-1">{program.name}</p>
             <h1 className="text-3xl font-bold text-foreground">{workout.name}</h1>
           </div>
-          <div className="flex gap-3">
-            <button className="w-12 h-12 rounded-full bg-foreground text-background flex items-center justify-center text-xl hover:bg-foreground/90 transition-colors">
-              ⏸
-            </button>
-            <button className="px-5 py-3 rounded-full bg-muted/60 text-sm font-medium hover:bg-muted/80 transition-colors">
-              End
-            </button>
+          <div className="flex flex-col items-end gap-2">
+            {/* Workout Timer */}
+            <WorkoutTimer 
+              autoStart={true} 
+              onTimeUpdate={setWorkoutElapsedTime} 
+            />
           </div>
         </div>
 
@@ -356,34 +374,87 @@ const WorkoutDetail = () => {
 
         {/* Detailed Lift Tracking */}
         {workout.mainLifts.map((lift, liftIndex) => {
-          const isSuperset = supersetMode[liftIndex] || false;
+          const groupType = exerciseGroupTypes[liftIndex];
           const repsNum = parseInt(lift.reps || "0");
+          const targetWeight = targetWeights[liftIndex] || 0;
+          const showWarmupTracker = showWarmup[liftIndex] || false;
           
-          return (
-            <div key={`detail-${lift.id}`} className={`space-y-4 border-b border-border/10 pb-8 last:border-0 ${isSuperset ? 'bg-blue-50/50 dark:bg-blue-950/10 p-4 rounded-lg border-l-4 border-blue-500' : ''}`}>
+          const exerciseContent = (
+            <div key={`detail-${lift.id}`} className={`space-y-4 ${!groupType ? 'border-b border-border/10 pb-8 last:border-0' : ''}`}>
+              {/* Exercise Header with Controls */}
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm text-muted-foreground">Barbell</p>
-                    {isSuperset && (
-                      <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-700 dark:text-blue-300">
-                        <Link2 className="h-3 w-3 mr-1" />
-                        Superset
-                      </Badge>
-                    )}
+                    <SupersetIndicator 
+                      groupType={groupType} 
+                      isActive={!!groupType}
+                    />
                   </div>
                   <h3 className="text-xl font-bold">{lift.name}</h3>
+                  
+                  {/* Video button - prominent placement */}
+                  {(lift.videoUrl || lift.name) && (
+                    <div className="mt-2">
+                      <ExerciseVideoButton
+                        exerciseName={lift.name}
+                        videoUrl={lift.videoUrl}
+                        onVideoClick={(name, url) => setSelectedExercise({ name, videoUrl: url })}
+                        variant="prominent"
+                      />
+                    </div>
+                  )}
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-wrap justify-end">
+                  {/* Warmup toggle */}
                   <button
-                    onClick={() => setSupersetMode((prev) => ({ ...prev, [liftIndex]: !prev[liftIndex] }))}
+                    onClick={() => setShowWarmup((prev) => ({ ...prev, [liftIndex]: !prev[liftIndex] }))}
                     className={`p-2.5 rounded-lg transition-colors ${
-                      isSuperset ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-muted/20'
+                      showWarmupTracker ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700' : 'hover:bg-muted/20'
                     }`}
-                    title="Toggle superset mode"
+                    title="Warm-up sets"
                   >
-                    <Link2 className="h-5 w-5" />
+                    <Flame className="h-5 w-5" />
                   </button>
+                  {/* Plate calculator */}
+                  <PlateCalculator targetWeight={targetWeight} />
+                  {/* Group type selector */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button 
+                        className={`p-2.5 rounded-lg transition-colors ${
+                          groupType ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-muted/20'
+                        }`}
+                        title="Groepering"
+                      >
+                        <Link2 className="h-5 w-5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48">
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-sm mb-2">Groepering</h4>
+                        {[
+                          { type: null, label: 'Geen' },
+                          { type: 'superset' as GroupType, label: 'Superset' },
+                          { type: 'circuit' as GroupType, label: 'Circuit' },
+                          { type: 'dropset' as GroupType, label: 'Dropset' },
+                        ].map((option) => (
+                          <button
+                            key={option.label}
+                            onClick={() => setExerciseGroupTypes((prev) => ({ ...prev, [liftIndex]: option.type }))}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                              exerciseGroupTypes[liftIndex] === option.type
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted/20"
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {/* Rest timer config */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
@@ -429,11 +500,23 @@ const WorkoutDetail = () => {
                   >
                     <Users className="h-5 w-5" />
                   </button>
-                  <button className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors">
-                    •••
-                  </button>
+                  <ExerciseVideoButton
+                    exerciseName={lift.name}
+                    videoUrl={lift.videoUrl}
+                    onVideoClick={(name, url) => setSelectedExercise({ name, videoUrl: url })}
+                    variant="icon"
+                  />
                 </div>
               </div>
+
+              {/* Warmup Set Tracker */}
+              {showWarmupTracker && (
+                <WarmupSetTracker
+                  exerciseName={lift.name}
+                  targetWeight={targetWeight}
+                  onWarmupComplete={() => setShowWarmup((prev) => ({ ...prev, [liftIndex]: false }))}
+                />
+              )}
 
             {/* Sets Table */}
             <div className="space-y-2.5">
@@ -460,6 +543,10 @@ const WorkoutDetail = () => {
                               [setIdx]: value,
                             },
                           }));
+                          // Update target weight for warmup calculator
+                          if (setIdx === 0 && value > 0) {
+                            setTargetWeights((prev) => ({ ...prev, [liftIndex]: value }));
+                          }
                           // Check for PR when weight changes
                           if (value > 0) {
                             checkForPR(liftIndex, setIdx, lift.name, value);
@@ -554,9 +641,16 @@ const WorkoutDetail = () => {
                     >
                       ✓
                     </button>
-                  </div>
-                );
-              })}
+          </div>
+          );
+
+          // Wrap in SupersetWrapper if grouped
+          return groupType ? (
+            <SupersetWrapper key={`wrapper-${lift.id}`} groupType={groupType}>
+              {exerciseContent}
+            </SupersetWrapper>
+          ) : exerciseContent;
+        })}
             </div>
 
             {/* 1RM Calculator */}
