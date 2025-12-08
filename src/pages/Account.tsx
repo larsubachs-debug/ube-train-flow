@@ -1,13 +1,15 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronRight, Crown, Settings, BookOpen, LogOut, Image, Users, Dumbbell, MessageCircle, ClipboardList, ListTodo, Palette } from "lucide-react";
+import { ChevronRight, Crown, Settings, BookOpen, LogOut, Image, Users, Dumbbell, MessageCircle, ClipboardList, ListTodo, Palette, Moon, Sun } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ubeLogo from "@/assets/ube-logo.png";
 import { AvatarUpload } from "@/components/admin/AvatarUpload";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTheme } from "@/components/ThemeProvider";
 
 const Account = () => {
   const { user, signOut, userRole, hasRole } = useAuth();
@@ -284,6 +286,22 @@ const Account = () => {
               </div>
             </Card>
           </Link>
+
+          <Card className="p-4 hover:bg-muted/50 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-muted p-2 rounded-lg">
+                  <Sun className="w-5 h-5 text-foreground dark:hidden" />
+                  <Moon className="w-5 h-5 text-foreground hidden dark:block" />
+                </div>
+                <div>
+                  <p className="font-medium">Thema</p>
+                  <p className="text-sm text-muted-foreground">Wissel tussen licht en donker</p>
+                </div>
+              </div>
+              <ThemeToggle />
+            </div>
+          </Card>
 
           <Card className="p-4 hover:bg-muted/50 transition-colors cursor-pointer">
             <div className="flex items-center justify-between">

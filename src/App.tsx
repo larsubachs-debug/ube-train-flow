@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "./components/ThemeProvider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { SplashScreen } from "./components/SplashScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -59,50 +60,52 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-          {showSplash && !hasShownSplash && (
-            <SplashScreen onComplete={handleSplashComplete} />
-          )}
-          <div className={showSplash ? 'invisible' : 'visible'}>
-            <BrowserRouter>
-              <TopNav />
-              <Routes>
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/pending-approval" element={<PendingApproval />} />
-                <Route path="/onboarding" element={<Onboarding />} />
-                <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                <Route path="/programs" element={<ProtectedRoute><Programs /></ProtectedRoute>} />
-                <Route path="/program/:programId" element={<ProtectedRoute><ProgramDetail /></ProtectedRoute>} />
-                <Route path="/workout/:workoutId" element={<ProtectedRoute><WorkoutDetail /></ProtectedRoute>} />
-                <Route path="/check-in" element={<ProtectedRoute><CheckIn /></ProtectedRoute>} />
-                <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
-                <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-                <Route path="/education" element={<ProtectedRoute><Education /></ProtectedRoute>} />
-                <Route path="/education/:id" element={<ProtectedRoute><EducationDetail /></ProtectedRoute>} />
-                <Route path="/membership" element={<ProtectedRoute><Membership /></ProtectedRoute>} />
-                <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
-                <Route path="/achievements" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
-                <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/admin/programs" element={<ProtectedRoute requiredRole="coach"><AdminPrograms /></ProtectedRoute>} />
-                <Route path="/admin/members" element={<ProtectedRoute requiredRole="coach"><AdminMembers /></ProtectedRoute>} />
-                <Route path="/admin/checkins" element={<ProtectedRoute requiredRole="coach"><AdminCheckins /></ProtectedRoute>} />
-                <Route path="/admin/tasks" element={<ProtectedRoute requiredRole="coach"><AdminTasks /></ProtectedRoute>} />
-                <Route path="/admin/branding" element={<ProtectedRoute requiredRole="coach"><AdminBranding /></ProtectedRoute>} />
-                <Route path="/coach/dashboard" element={<ProtectedRoute requiredRole="coach"><CoachDashboard /></ProtectedRoute>} />
-                <Route path="/coach/chat/:memberId" element={<ProtectedRoute requiredRole="coach"><CoachChat /></ProtectedRoute>} />
-                <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </div>
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+      <ThemeProvider defaultTheme="system" storageKey="ube-theme">
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+            {showSplash && !hasShownSplash && (
+              <SplashScreen onComplete={handleSplashComplete} />
+            )}
+            <div className={showSplash ? 'invisible' : 'visible'}>
+              <BrowserRouter>
+                <TopNav />
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/pending-approval" element={<PendingApproval />} />
+                  <Route path="/onboarding" element={<Onboarding />} />
+                  <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                  <Route path="/programs" element={<ProtectedRoute><Programs /></ProtectedRoute>} />
+                  <Route path="/program/:programId" element={<ProtectedRoute><ProgramDetail /></ProtectedRoute>} />
+                  <Route path="/workout/:workoutId" element={<ProtectedRoute><WorkoutDetail /></ProtectedRoute>} />
+                  <Route path="/check-in" element={<ProtectedRoute><CheckIn /></ProtectedRoute>} />
+                  <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
+                  <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+                  <Route path="/education" element={<ProtectedRoute><Education /></ProtectedRoute>} />
+                  <Route path="/education/:id" element={<ProtectedRoute><EducationDetail /></ProtectedRoute>} />
+                  <Route path="/membership" element={<ProtectedRoute><Membership /></ProtectedRoute>} />
+                  <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
+                  <Route path="/achievements" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
+                  <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/admin/programs" element={<ProtectedRoute requiredRole="coach"><AdminPrograms /></ProtectedRoute>} />
+                  <Route path="/admin/members" element={<ProtectedRoute requiredRole="coach"><AdminMembers /></ProtectedRoute>} />
+                  <Route path="/admin/checkins" element={<ProtectedRoute requiredRole="coach"><AdminCheckins /></ProtectedRoute>} />
+                  <Route path="/admin/tasks" element={<ProtectedRoute requiredRole="coach"><AdminTasks /></ProtectedRoute>} />
+                  <Route path="/admin/branding" element={<ProtectedRoute requiredRole="coach"><AdminBranding /></ProtectedRoute>} />
+                  <Route path="/coach/dashboard" element={<ProtectedRoute requiredRole="coach"><CoachDashboard /></ProtectedRoute>} />
+                  <Route path="/coach/chat/:memberId" element={<ProtectedRoute requiredRole="coach"><CoachChat /></ProtectedRoute>} />
+                  <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </div>
+            </TooltipProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 };
