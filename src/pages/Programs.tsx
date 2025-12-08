@@ -6,8 +6,11 @@ import { ProgramProgressOverview } from "@/components/programs/ProgramProgressOv
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
+import { ProgramDetailSkeleton } from "@/components/skeletons/ProgramSkeleton";
 
 const Programs = () => {
+  const { t } = useTranslation();
   const { data: programs = [], isLoading } = usePrograms();
   const { hasRole } = useAuth();
   const [programImages, setProgramImages] = useState<Record<string, string>>({});
@@ -47,17 +50,13 @@ const Programs = () => {
   }, [displayPrograms.length]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center pb-20">
-        <p className="text-muted-foreground">Loading programs...</p>
-      </div>
-    );
+    return <ProgramDetailSkeleton />;
   }
 
   if (displayPrograms.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pb-20">
-        <p className="text-muted-foreground">No programs available</p>
+        <p className="text-muted-foreground">{t('programs.noPrograms')}</p>
       </div>
     );
   }
@@ -76,13 +75,13 @@ const Programs = () => {
           <div className="px-6 space-y-2 pb-6">
             <Link to={`/program/${program.id}`}>
               <Button variant="outline" className="w-full py-6 text-lg">
-                Bekijk Volledig Programma
+                {t('programs.viewFullProgram')}
               </Button>
             </Link>
             {isCoachOrAdmin && (
               <Link to="/admin/programs">
                 <Button variant="ghost" className="w-full">
-                  Edit Program
+                  {t('programs.editProgram')}
                 </Button>
               </Link>
             )}

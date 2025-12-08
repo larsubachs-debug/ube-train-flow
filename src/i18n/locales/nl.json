@@ -23,7 +23,9 @@
     "online": "Je bent weer online",
     "error": "Er is een fout opgetreden",
     "success": "Succes",
-    "noData": "Geen gegevens beschikbaar"
+    "noData": "Geen gegevens beschikbaar",
+    "retry": "Opnieuw proberen",
+    "viewAll": "Bekijk alles"
   },
   "nav": {
     "home": "Home",
@@ -31,7 +33,7 @@
     "programs": "Programma's",
     "workouts": "Workouts",
     "education": "Educatie",
-    "community": "Community",
+    "community": "Kleedkamer",
     "chat": "Chat",
     "profile": "Profiel",
     "account": "Account",
@@ -62,15 +64,39 @@
     "emailRequired": "E-mailadres is verplicht",
     "passwordRequired": "Wachtwoord is verplicht",
     "passwordTooShort": "Wachtwoord moet minimaal 8 tekens zijn",
-    "passwordsDoNotMatch": "Wachtwoorden komen niet overeen"
+    "passwordsDoNotMatch": "Wachtwoorden komen niet overeen",
+    "signOut": "Uitloggen"
+  },
+  "home": {
+    "today": "Vandaag",
+    "welcome": "Welkom",
+    "weeklyProgress": "Wekelijkse voortgang",
+    "sessions": "sessies",
+    "guides": "Guides",
+    "kpi": "KPI",
+    "programDetails": "Programma details",
+    "yourTrainingPlan": "Jouw trainingsplan",
+    "nextWeekDrops": "Volgende week's workouts verschijnen zondag",
+    "viewAllWorkouts": "Bekijk alle workouts",
+    "noProgram": "Geen programma toegewezen",
+    "time": "Tijd",
+    "weight": "Gewicht",
+    "sets": "Sets",
+    "pb": "PR"
   },
   "dashboard": {
-    "title": "Dashboard",
+    "title": "KPI Dashboard",
+    "subtitle": "Jouw training statistieken en voortgang",
     "welcome": "Welkom terug",
     "todayWorkout": "Vandaag's workout",
     "weeklyProgress": "Wekelijkse voortgang",
     "streak": "Streak",
     "totalWorkouts": "Totaal workouts",
+    "thisWeek": "Deze week",
+    "thisMonth": "Deze maand",
+    "totalVolume": "Totaal volume",
+    "currentStreak": "Huidige streak",
+    "personalRecords": "Personal records",
     "currentWeek": "Huidige week",
     "upcomingWorkouts": "Komende workouts",
     "recentActivity": "Recente activiteit",
@@ -79,7 +105,11 @@
     "bodyFat": "Vetpercentage",
     "muscleMass": "Spiermassa",
     "goals": "Doelen",
-    "progressPhotos": "Voortgangsfoto's"
+    "progressPhotos": "Voortgangsfoto's",
+    "volumePerWeek": "Volume per week (kg)",
+    "workoutsPerMonth": "Workouts per maand",
+    "recentPRs": "Recente personal records",
+    "days": "dagen"
   },
   "programs": {
     "title": "Programma's",
@@ -87,6 +117,8 @@
     "allPrograms": "Alle programma's",
     "startProgram": "Start programma",
     "continueProgram": "Ga verder",
+    "viewFullProgram": "Bekijk volledig programma",
+    "editProgram": "Programma bewerken",
     "weeks": "weken",
     "week": "Week",
     "day": "Dag",
@@ -99,7 +131,8 @@
     "weight": "Gewicht",
     "rest": "Rust",
     "duration": "Duur",
-    "noPrograms": "Geen programma's gevonden"
+    "noPrograms": "Geen programma's gevonden",
+    "loadingPrograms": "Programma's laden..."
   },
   "workouts": {
     "title": "Workouts",
@@ -124,7 +157,10 @@
     "greatJob": "Goed gedaan!",
     "totalVolume": "Totaal volume",
     "totalSets": "Totaal sets",
-    "duration": "Duur"
+    "duration": "Duur",
+    "coachNotes": "Coach notities",
+    "loading": "Workout laden...",
+    "notFound": "Workout niet gevonden"
   },
   "education": {
     "title": "Educatie",
@@ -136,10 +172,11 @@
     "watchVideo": "Bekijk video",
     "addToFavorites": "Toevoegen aan favorieten",
     "removeFromFavorites": "Verwijderen uit favorieten",
-    "noContent": "Geen content beschikbaar"
+    "noContent": "Geen content beschikbaar",
+    "guidesAvailable": "guides beschikbaar"
   },
   "community": {
-    "title": "Community",
+    "title": "Kleedkamer",
     "feed": "Feed",
     "challenges": "Uitdagingen",
     "buddies": "Trainingsmaatjes",
@@ -160,7 +197,9 @@
     "coach": "Coach",
     "you": "Jij",
     "delivered": "Bezorgd",
-    "read": "Gelezen"
+    "read": "Gelezen",
+    "chatWithCoach": "Chat met coach",
+    "askQuestions": "Stel vragen aan je coach"
   },
   "account": {
     "title": "Account",
@@ -173,6 +212,7 @@
     "emailNotifications": "E-mail meldingen",
     "language": "Taal",
     "theme": "Thema",
+    "themeDescription": "Wissel tussen licht en donker",
     "darkMode": "Donkere modus",
     "lightMode": "Lichte modus",
     "systemMode": "Systeeminstelling",
@@ -182,7 +222,29 @@
     "about": "Over",
     "version": "Versie",
     "deleteAccount": "Account verwijderen",
-    "saveChanges": "Wijzigingen opslaan"
+    "saveChanges": "Wijzigingen opslaan",
+    "editProfile": "Profiel bewerken",
+    "freeTrial": "Gratis proefperiode",
+    "daysRemaining": "dagen resterend",
+    "expires": "Verloopt",
+    "choosePlan": "Kies je plan",
+    "adminTools": "Admin tools",
+    "myAccount": "Mijn account",
+    "memberManagement": "Ledenbeheer",
+    "approveCreate": "Goedkeuren & aanmaken",
+    "myMembers": "Mijn leden",
+    "viewMemberProgress": "Bekijk voortgang leden",
+    "programManagement": "Programmabeheer",
+    "createEditPrograms": "Creëer & bewerk programma's",
+    "checkinManagement": "Check-in beheer",
+    "manageQuestions": "Beheer vragen & toewijzingen",
+    "taskManagement": "Takenbeheer",
+    "manageTasks": "Beheer taken & toewijzingen",
+    "brandingStyling": "Branding & styling",
+    "customizeColors": "Pas kleuren, logo en teksten aan",
+    "mediaManagement": "Mediabeheer",
+    "uploadManage": "Upload & beheer foto's en video's",
+    "trainingGuides": "Training guides"
   },
   "achievements": {
     "title": "Prestaties",
@@ -244,5 +306,21 @@
     "minLength": "Minimaal {{min}} tekens vereist",
     "maxLength": "Maximaal {{max}} tekens toegestaan",
     "passwordMismatch": "Wachtwoorden komen niet overeen"
+  },
+  "errors": {
+    "loadingFailed": "Laden mislukt",
+    "savingFailed": "Opslaan mislukt",
+    "networkError": "Netwerkfout",
+    "tryAgain": "Probeer opnieuw",
+    "somethingWentWrong": "Er ging iets mis"
+  },
+  "pwa": {
+    "updateAvailable": "Update beschikbaar",
+    "updateDescription": "Een nieuwe versie is beschikbaar. Herstart om de nieuwste versie te gebruiken.",
+    "updateNow": "Nu updaten",
+    "later": "Later",
+    "installApp": "Installeer app",
+    "installDescription": "Installeer deze app op je apparaat voor snellere toegang en offline gebruik.",
+    "install": "Installeren"
   }
 }

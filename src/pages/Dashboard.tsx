@@ -3,7 +3,6 @@ import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Activity, TrendingUp, Flame, Trophy, Calendar, Dumbbell } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { BodyMetricsCard } from "@/components/dashboard/BodyMetricsCard";
 import { OneRMCard } from "@/components/dashboard/OneRMCard";
@@ -13,57 +12,51 @@ import { ProgressPhotosComparison } from "@/components/dashboard/ProgressPhotosC
 import { BodyMetricsTimeline } from "@/components/dashboard/BodyMetricsTimeline";
 import MemberAgenda from "@/components/agenda/MemberAgenda";
 import MemberCalendar from "@/components/agenda/MemberCalendar";
+import { useTranslation } from "react-i18next";
+import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data: stats, isLoading } = useDashboardStats(user?.id);
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto p-4 space-y-6">
-        <Skeleton className="h-12 w-64" />
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const statCards = [
     {
-      title: "Totaal Workouts",
+      titleKey: "dashboard.totalWorkouts",
       value: stats?.totalStats.total_workouts || 0,
       icon: Dumbbell,
       color: "text-primary",
     },
     {
-      title: "Deze Week",
+      titleKey: "dashboard.thisWeek",
       value: stats?.thisWeekWorkouts || 0,
       icon: Calendar,
       color: "text-accent",
     },
     {
-      title: "Deze Maand",
+      titleKey: "dashboard.thisMonth",
       value: stats?.thisMonthWorkouts || 0,
       icon: Activity,
       color: "text-secondary",
     },
     {
-      title: "Totaal Volume",
+      titleKey: "dashboard.totalVolume",
       value: `${(stats?.totalStats.total_volume_kg || 0).toLocaleString()} kg`,
       icon: TrendingUp,
       color: "text-primary",
     },
     {
-      title: "Huidige Streak",
-      value: `${stats?.totalStats.current_streak || 0} dagen`,
+      titleKey: "dashboard.currentStreak",
+      value: `${stats?.totalStats.current_streak || 0} ${t('dashboard.days')}`,
       icon: Flame,
       color: "text-accent",
     },
     {
-      title: "Personal Records",
+      titleKey: "dashboard.personalRecords",
       value: stats?.totalStats.total_prs || 0,
       icon: Trophy,
       color: "text-secondary",
@@ -73,8 +66,8 @@ const Dashboard = () => {
   return (
     <div className="container mx-auto p-4 pb-24 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">KPI Dashboard</h1>
-        <p className="text-muted-foreground">Jouw training statistieken en voortgang</p>
+        <h1 className="text-3xl font-bold mb-2">{t('dashboard.title')}</h1>
+        <p className="text-muted-foreground">{t('dashboard.subtitle')}</p>
       </div>
 
       {/* Stats Grid */}
@@ -82,10 +75,10 @@ const Dashboard = () => {
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.title}>
+            <Card key={stat.titleKey}>
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
+                  {t(stat.titleKey)}
                 </CardTitle>
                 <Icon className={`w-4 h-4 ${stat.color}`} />
               </CardHeader>
@@ -123,7 +116,7 @@ const Dashboard = () => {
       {stats?.weeklyVolumeData && stats.weeklyVolumeData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Volume per Week (kg)</CardTitle>
+            <CardTitle>{t('dashboard.volumePerWeek')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -160,7 +153,7 @@ const Dashboard = () => {
       {stats?.monthlyWorkoutData && stats.monthlyWorkoutData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Workouts per Maand</CardTitle>
+            <CardTitle>{t('dashboard.workoutsPerMonth')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -199,7 +192,7 @@ const Dashboard = () => {
       {stats?.recentPRs && stats.recentPRs.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Recente Personal Records</CardTitle>
+            <CardTitle>{t('dashboard.recentPRs')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">

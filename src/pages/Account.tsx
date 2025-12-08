@@ -10,11 +10,15 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "@/components/ThemeProvider";
+import { useTranslation } from "react-i18next";
+import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
 
 const Account = () => {
+  const { t } = useTranslation();
   const { user, signOut, userRole, hasRole } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -23,6 +27,7 @@ const Account = () => {
   }, [user]);
 
   const fetchProfile = async () => {
+    setLoading(true);
     const { data } = await supabase
       .from("profiles")
       .select("*")
@@ -30,6 +35,7 @@ const Account = () => {
       .maybeSingle();
     
     setProfile(data);
+    setLoading(false);
   };
 
   const handleSignOut = async () => {
@@ -38,6 +44,10 @@ const Account = () => {
   };
 
   const isCoachOrAdmin = hasRole("coach");
+
+  if (loading) {
+    return <ProfileSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -88,7 +98,7 @@ const Account = () => {
                 </div>
               </div>
               <Button variant="outline" className="w-full">
-                Edit Profile
+                {t('account.editProfile')}
               </Button>
             </>
           )}
@@ -101,13 +111,13 @@ const Account = () => {
               <Crown className="w-5 h-5 text-accent" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold mb-1">Free Trial</h3>
+              <h3 className="font-semibold mb-1">{t('account.freeTrial')}</h3>
               <p className="text-sm text-muted-foreground mb-3">
-                5 days remaining • Expires May 5, 2024
+                5 {t('account.daysRemaining')} • {t('account.expires')} May 5, 2024
               </p>
               <Link to="/membership">
                 <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                  Choose Your Plan
+                  {t('account.choosePlan')}
                 </Button>
               </Link>
             </div>
@@ -120,7 +130,7 @@ const Account = () => {
             <>
               <div className="mb-4 mt-6">
                 <h3 className="text-sm font-semibold text-muted-foreground px-4 mb-2">
-                  ADMIN TOOLS
+                  {t('account.adminTools').toUpperCase()}
                 </h3>
               </div>
               
@@ -132,8 +142,8 @@ const Account = () => {
                         <Users className="w-5 h-5 text-accent" />
                       </div>
                       <div>
-                        <p className="font-medium">Member Management</p>
-                        <p className="text-sm text-muted-foreground">Approve & create members</p>
+                        <p className="font-medium">{t('account.memberManagement')}</p>
+                        <p className="text-sm text-muted-foreground">{t('account.approveCreate')}</p>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -149,8 +159,8 @@ const Account = () => {
                         <Users className="w-5 h-5 text-accent" />
                       </div>
                       <div>
-                        <p className="font-medium">Mijn Members</p>
-                        <p className="text-sm text-muted-foreground">Bekijk voortgang members</p>
+                        <p className="font-medium">{t('account.myMembers')}</p>
+                        <p className="text-sm text-muted-foreground">{t('account.viewMemberProgress')}</p>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -166,8 +176,8 @@ const Account = () => {
                         <Dumbbell className="w-5 h-5 text-accent" />
                       </div>
                       <div>
-                        <p className="font-medium">Program Management</p>
-                        <p className="text-sm text-muted-foreground">Create & edit programs</p>
+                        <p className="font-medium">{t('account.programManagement')}</p>
+                        <p className="text-sm text-muted-foreground">{t('account.createEditPrograms')}</p>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -183,8 +193,8 @@ const Account = () => {
                         <ClipboardList className="w-5 h-5 text-accent" />
                       </div>
                       <div>
-                        <p className="font-medium">Check-in Beheer</p>
-                        <p className="text-sm text-muted-foreground">Beheer vragen & toewijzingen</p>
+                        <p className="font-medium">{t('account.checkinManagement')}</p>
+                        <p className="text-sm text-muted-foreground">{t('account.manageQuestions')}</p>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -200,8 +210,8 @@ const Account = () => {
                         <ListTodo className="w-5 h-5 text-accent" />
                       </div>
                       <div>
-                        <p className="font-medium">Taken Beheer</p>
-                        <p className="text-sm text-muted-foreground">Beheer taken & toewijzingen</p>
+                        <p className="font-medium">{t('account.taskManagement')}</p>
+                        <p className="text-sm text-muted-foreground">{t('account.manageTasks')}</p>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -217,8 +227,8 @@ const Account = () => {
                         <Palette className="w-5 h-5 text-accent" />
                       </div>
                       <div>
-                        <p className="font-medium">Branding & Styling</p>
-                        <p className="text-sm text-muted-foreground">Pas kleuren, logo en teksten aan</p>
+                        <p className="font-medium">{t('account.brandingStyling')}</p>
+                        <p className="text-sm text-muted-foreground">{t('account.customizeColors')}</p>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -228,7 +238,7 @@ const Account = () => {
 
               <div className="mb-4 mt-6">
                 <h3 className="text-sm font-semibold text-muted-foreground px-4 mb-2">
-                  MY ACCOUNT
+                  {t('account.myAccount').toUpperCase()}
                 </h3>
               </div>
             </>
@@ -243,8 +253,8 @@ const Account = () => {
                       <MessageCircle className="w-5 h-5 text-accent" />
                     </div>
                     <div>
-                      <p className="font-medium">Chat met Coach</p>
-                      <p className="text-sm text-muted-foreground">Stel vragen aan je coach</p>
+                      <p className="font-medium">{t('chat.chatWithCoach')}</p>
+                      <p className="text-sm text-muted-foreground">{t('chat.askQuestions')}</p>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -261,8 +271,8 @@ const Account = () => {
                     <Image className="w-5 h-5 text-accent" />
                   </div>
                   <div>
-                    <p className="font-medium">Media Management</p>
-                    <p className="text-sm text-muted-foreground">Upload & manage photos and videos</p>
+                    <p className="font-medium">{t('account.mediaManagement')}</p>
+                    <p className="text-sm text-muted-foreground">{t('account.uploadManage')}</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -278,8 +288,8 @@ const Account = () => {
                     <BookOpen className="w-5 h-5 text-accent" />
                   </div>
                   <div>
-                    <p className="font-medium">Training Guides</p>
-                    <p className="text-sm text-muted-foreground">16 guides beschikbaar</p>
+                    <p className="font-medium">{t('account.trainingGuides')}</p>
+                    <p className="text-sm text-muted-foreground">16 {t('education.guidesAvailable')}</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -295,8 +305,8 @@ const Account = () => {
                   <Moon className="w-5 h-5 text-foreground hidden dark:block" />
                 </div>
                 <div>
-                  <p className="font-medium">Thema</p>
-                  <p className="text-sm text-muted-foreground">Wissel tussen licht en donker</p>
+                  <p className="font-medium">{t('account.theme')}</p>
+                  <p className="text-sm text-muted-foreground">{t('account.themeDescription')}</p>
                 </div>
               </div>
               <ThemeToggle />
@@ -309,7 +319,7 @@ const Account = () => {
                 <div className="bg-muted p-2 rounded-lg">
                   <Settings className="w-5 h-5 text-foreground" />
                 </div>
-                <p className="font-medium">Settings</p>
+                <p className="font-medium">{t('nav.settings')}</p>
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </div>
@@ -320,7 +330,7 @@ const Account = () => {
         <div className="grid grid-cols-3 gap-4 mb-6">
           <Card className="p-4 text-center">
             <p className="text-2xl font-bold text-accent">12</p>
-            <p className="text-xs text-muted-foreground">Workouts</p>
+            <p className="text-xs text-muted-foreground">{t('nav.workouts')}</p>
           </Card>
           <Card className="p-4 text-center">
             <p className="text-2xl font-bold text-accent">5</p>
@@ -328,7 +338,7 @@ const Account = () => {
           </Card>
           <Card className="p-4 text-center">
             <p className="text-2xl font-bold text-accent">28</p>
-            <p className="text-xs text-muted-foreground">Days Active</p>
+            <p className="text-xs text-muted-foreground">{t('time.days')}</p>
           </Card>
         </div>
 
@@ -339,7 +349,7 @@ const Account = () => {
           onClick={handleSignOut}
         >
           <LogOut className="w-4 h-4" />
-          Sign Out
+          {t('auth.signOut')}
         </Button>
       </div>
     </div>

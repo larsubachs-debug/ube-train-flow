@@ -1,13 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
 import { Calendar, Dumbbell, User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const BottomNav = () => {
   const location = useLocation();
+  const { t } = useTranslation();
 
   const navItems = [
-    { path: "/", icon: Calendar, label: "Today" },
-    { path: "/programs", icon: Dumbbell, label: "Programs" },
-    { path: "/account", icon: User, label: "Account" },
+    { path: "/", icon: Calendar, labelKey: "time.today" },
+    { path: "/programs", icon: Dumbbell, labelKey: "nav.programs" },
+    { path: "/account", icon: User, labelKey: "nav.account" },
   ];
 
   return (
@@ -28,7 +30,7 @@ const BottomNav = () => {
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-xs font-medium">{item.label}</span>
+              <span className="text-xs font-medium">{t(item.labelKey)}</span>
             </Link>
           );
         })}

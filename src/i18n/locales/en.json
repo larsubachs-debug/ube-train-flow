@@ -23,7 +23,9 @@
     "online": "You are back online",
     "error": "An error occurred",
     "success": "Success",
-    "noData": "No data available"
+    "noData": "No data available",
+    "retry": "Try again",
+    "viewAll": "View all"
   },
   "nav": {
     "home": "Home",
@@ -31,7 +33,7 @@
     "programs": "Programs",
     "workouts": "Workouts",
     "education": "Education",
-    "community": "Community",
+    "community": "Locker Room",
     "chat": "Chat",
     "profile": "Profile",
     "account": "Account",
@@ -62,15 +64,39 @@
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
     "passwordTooShort": "Password must be at least 8 characters",
-    "passwordsDoNotMatch": "Passwords do not match"
+    "passwordsDoNotMatch": "Passwords do not match",
+    "signOut": "Sign out"
+  },
+  "home": {
+    "today": "Today",
+    "welcome": "Welcome",
+    "weeklyProgress": "Weekly progress",
+    "sessions": "sessions",
+    "guides": "Guides",
+    "kpi": "KPI",
+    "programDetails": "Program details",
+    "yourTrainingPlan": "Your training plan",
+    "nextWeekDrops": "Next week's workouts drop Sunday",
+    "viewAllWorkouts": "View all workouts",
+    "noProgram": "No program assigned",
+    "time": "Time",
+    "weight": "Weight",
+    "sets": "Sets",
+    "pb": "PB"
   },
   "dashboard": {
-    "title": "Dashboard",
+    "title": "KPI Dashboard",
+    "subtitle": "Your training statistics and progress",
     "welcome": "Welcome back",
     "todayWorkout": "Today's workout",
     "weeklyProgress": "Weekly progress",
     "streak": "Streak",
     "totalWorkouts": "Total workouts",
+    "thisWeek": "This week",
+    "thisMonth": "This month",
+    "totalVolume": "Total volume",
+    "currentStreak": "Current streak",
+    "personalRecords": "Personal records",
     "currentWeek": "Current week",
     "upcomingWorkouts": "Upcoming workouts",
     "recentActivity": "Recent activity",
@@ -79,7 +105,11 @@
     "bodyFat": "Body fat",
     "muscleMass": "Muscle mass",
     "goals": "Goals",
-    "progressPhotos": "Progress photos"
+    "progressPhotos": "Progress photos",
+    "volumePerWeek": "Volume per week (kg)",
+    "workoutsPerMonth": "Workouts per month",
+    "recentPRs": "Recent personal records",
+    "days": "days"
   },
   "programs": {
     "title": "Programs",
@@ -87,6 +117,8 @@
     "allPrograms": "All programs",
     "startProgram": "Start program",
     "continueProgram": "Continue",
+    "viewFullProgram": "View full program",
+    "editProgram": "Edit program",
     "weeks": "weeks",
     "week": "Week",
     "day": "Day",
@@ -99,7 +131,8 @@
     "weight": "Weight",
     "rest": "Rest",
     "duration": "Duration",
-    "noPrograms": "No programs found"
+    "noPrograms": "No programs found",
+    "loadingPrograms": "Loading programs..."
   },
   "workouts": {
     "title": "Workouts",
@@ -124,7 +157,10 @@
     "greatJob": "Great job!",
     "totalVolume": "Total volume",
     "totalSets": "Total sets",
-    "duration": "Duration"
+    "duration": "Duration",
+    "coachNotes": "Coach notes",
+    "loading": "Loading workout...",
+    "notFound": "Workout not found"
   },
   "education": {
     "title": "Education",
@@ -136,10 +172,11 @@
     "watchVideo": "Watch video",
     "addToFavorites": "Add to favorites",
     "removeFromFavorites": "Remove from favorites",
-    "noContent": "No content available"
+    "noContent": "No content available",
+    "guidesAvailable": "guides available"
   },
   "community": {
-    "title": "Community",
+    "title": "Locker Room",
     "feed": "Feed",
     "challenges": "Challenges",
     "buddies": "Training buddies",
@@ -160,7 +197,9 @@
     "coach": "Coach",
     "you": "You",
     "delivered": "Delivered",
-    "read": "Read"
+    "read": "Read",
+    "chatWithCoach": "Chat with coach",
+    "askQuestions": "Ask your coach questions"
   },
   "account": {
     "title": "Account",
@@ -173,6 +212,7 @@
     "emailNotifications": "Email notifications",
     "language": "Language",
     "theme": "Theme",
+    "themeDescription": "Toggle between light and dark",
     "darkMode": "Dark mode",
     "lightMode": "Light mode",
     "systemMode": "System setting",
@@ -182,7 +222,29 @@
     "about": "About",
     "version": "Version",
     "deleteAccount": "Delete account",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "editProfile": "Edit profile",
+    "freeTrial": "Free Trial",
+    "daysRemaining": "days remaining",
+    "expires": "Expires",
+    "choosePlan": "Choose Your Plan",
+    "adminTools": "Admin tools",
+    "myAccount": "My account",
+    "memberManagement": "Member Management",
+    "approveCreate": "Approve & create members",
+    "myMembers": "My Members",
+    "viewMemberProgress": "View member progress",
+    "programManagement": "Program Management",
+    "createEditPrograms": "Create & edit programs",
+    "checkinManagement": "Check-in Management",
+    "manageQuestions": "Manage questions & assignments",
+    "taskManagement": "Task Management",
+    "manageTasks": "Manage tasks & assignments",
+    "brandingStyling": "Branding & Styling",
+    "customizeColors": "Customize colors, logo and text",
+    "mediaManagement": "Media Management",
+    "uploadManage": "Upload & manage photos and videos",
+    "trainingGuides": "Training Guides"
   },
   "achievements": {
     "title": "Achievements",
@@ -244,5 +306,21 @@
     "minLength": "Minimum {{min}} characters required",
     "maxLength": "Maximum {{max}} characters allowed",
     "passwordMismatch": "Passwords do not match"
+  },
+  "errors": {
+    "loadingFailed": "Loading failed",
+    "savingFailed": "Saving failed",
+    "networkError": "Network error",
+    "tryAgain": "Try again",
+    "somethingWentWrong": "Something went wrong"
+  },
+  "pwa": {
+    "updateAvailable": "Update available",
+    "updateDescription": "A new version is available. Restart to use the latest version.",
+    "updateNow": "Update now",
+    "later": "Later",
+    "installApp": "Install app",
+    "installDescription": "Install this app on your device for faster access and offline use.",
+    "install": "Install"
   }
 }
