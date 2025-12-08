@@ -8,12 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
-import { Users, TrendingUp, Calendar, Award, MessageCircle, UserPlus } from "lucide-react";
+import { Users, TrendingUp, Calendar, Award, MessageCircle, UserPlus, Send, BarChart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { ProgramAssigner } from "@/components/admin/ProgramAssigner";
 import { BulkActionToolbar } from "@/components/admin/BulkActionToolbar";
 import { Checkbox } from "@/components/ui/checkbox";
+import { BulkMessagingDialog } from "@/components/admin/BulkMessagingDialog";
+import { MemberComparison } from "@/components/admin/MemberComparison";
+import { PeriodizationPlanner } from "@/components/admin/PeriodizationPlanner";
+import { ProgressAlertsCard } from "@/components/admin/ProgressAlertsCard";
 
 interface Member {
   member_id: string;
@@ -47,6 +51,7 @@ const CoachDashboard = () => {
   const [statsLoading, setStatsLoading] = useState(false);
   const [assigningMember, setAssigningMember] = useState<Member | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [showBulkMessage, setShowBulkMessage] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -187,9 +192,11 @@ const CoachDashboard = () => {
         <h1 className="text-2xl font-bold mb-6">Mijn Members</h1>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overzicht</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="planning">Planning</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -377,6 +384,25 @@ const CoachDashboard = () => {
               </>
             )}
           </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-4">
+            <ProgressAlertsCard members={members} />
+            <MemberComparison members={members} />
+          </TabsContent>
+
+          {/* Planning Tab */}
+          <TabsContent value="planning" className="space-y-4">
+            <PeriodizationPlanner />
+            <Button 
+              className="w-full gap-2" 
+              variant="outline"
+              onClick={() => setShowBulkMessage(true)}
+            >
+              <Send className="w-4 h-4" />
+              Bulk Bericht Versturen
+            </Button>
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -389,6 +415,13 @@ const CoachDashboard = () => {
           memberUserId={assigningMember.member_user_id}
         />
       )}
+
+      <BulkMessagingDialog
+        open={showBulkMessage}
+        onOpenChange={setShowBulkMessage}
+        members={members}
+        preSelectedMembers={selectedMembers}
+      />
     </div>
   );
 };
