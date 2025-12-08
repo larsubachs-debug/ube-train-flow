@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronRight, Dumbbell, Library, ArrowLeft, Save } from "lucide-react";
+import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronRight, Dumbbell, Library, ArrowLeft, Save, Eye, Pencil, Play, Clock, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DndContext,
   closestCenter,
@@ -280,10 +283,199 @@ const SortableExerciseCard = ({
   );
 };
 
+// Preview Component - Shows how members see the program
+const ProgramPreview = ({ program, onClose }: { program: Program; onClose: () => void }) => {
+  const [previewWeekIndex, setPreviewWeekIndex] = useState(0);
+  const [previewDayIndex, setPreviewDayIndex] = useState(0);
+  
+  const currentWeek = program.weeks[previewWeekIndex];
+  const currentDay = currentWeek?.days[previewDayIndex];
+  const progressPercentage = ((previewWeekIndex + 1) / program.weeks.length) * 100;
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Preview Header */}
+      <div className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="gap-1">
+                <Eye className="h-3 w-3" />
+                Preview Mode
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                Zo zien members dit programma
+              </span>
+            </div>
+            <Button variant="outline" size="sm" onClick={onClose}>
+              <Pencil className="h-3 w-3 mr-2" />
+              Terug naar bewerken
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Hero Section */}
+      <div className="relative h-[40vh] min-h-[300px] overflow-hidden bg-gradient-to-br from-primary/20 via-primary/10 to-background">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
+        <div className="absolute bottom-0 left-0 right-0 px-6 pb-8">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            {program.name || "Nieuw Programma"}
+          </h1>
+          <p className="text-muted-foreground">
+            {program.goal} • {program.weeks.length} weken • {program.sessionsPerWeek} sessies/week
+          </p>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 -mt-6 relative z-10 space-y-6 pb-20">
+        {/* Progress Card */}
+        <Card className="p-5 bg-card/95 backdrop-blur-sm">
+          <h2 className="text-lg font-semibold mb-4">Training block progress</h2>
+          
+          <div className="mb-4">
+            <p className="text-base font-medium mb-3">
+              {currentWeek?.name || `Week ${previewWeekIndex + 1}`}
+            </p>
+            <Progress value={progressPercentage} className="h-2" />
+            <div className="flex justify-between mt-2 text-sm text-muted-foreground">
+              <span>Total: {program.weeks.length} weeks</span>
+              <span className="font-medium text-foreground">
+                Week {previewWeekIndex + 1}/{program.weeks.length}
+              </span>
+            </div>
+          </div>
+
+          {/* Week Selector for Preview */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            {program.weeks.map((week, index) => (
+              <Button
+                key={week.id}
+                variant={previewWeekIndex === index ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setPreviewWeekIndex(index);
+                  setPreviewDayIndex(0);
+                }}
+              >
+                Week {index + 1}
+              </Button>
+            ))}
+          </div>
+        </Card>
+
+        {/* Week Workouts */}
+        <div>
+          <h3 className="text-lg font-semibold mb-3">
+            {currentWeek?.name} - Workouts
+          </h3>
+          
+          <div className="grid gap-3">
+            {currentWeek?.days.map((day, dayIndex) => (
+              <Card 
+                key={day.id} 
+                className={`p-4 cursor-pointer transition-all ${
+                  previewDayIndex === dayIndex 
+                    ? 'ring-2 ring-primary bg-primary/5' 
+                    : 'hover:bg-muted/50'
+                }`}
+                onClick={() => setPreviewDayIndex(dayIndex)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Dumbbell className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{day.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {day.exercises.length} oefeningen
+                      </p>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="ghost">
+                    <Play className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Selected Day Detail */}
+        {currentDay && currentDay.exercises.length > 0 && (
+          <div>
+            <h3 className="text-lg font-semibold mb-3">
+              {currentDay.name} - Oefeningen
+            </h3>
+            
+            <div className="space-y-3">
+              {currentDay.exercises.map((exercise, exIndex) => (
+                <Card key={exercise.id} className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center text-sm font-medium">
+                      {exIndex + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{exercise.name || "Oefening"}</p>
+                      <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Target className="h-3 w-3" />
+                          {exercise.sets.length} sets
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {exercise.restTimer} rust
+                        </span>
+                      </div>
+                      
+                      {/* Sets Preview */}
+                      <div className="mt-3 space-y-1">
+                        {exercise.sets.map((set, setIndex) => (
+                          <div key={set.id} className="flex items-center gap-4 text-sm py-1 px-2 rounded bg-muted/50">
+                            <span className="text-muted-foreground w-12">Set {setIndex + 1}</span>
+                            <span>{set.weight}kg</span>
+                            <span>×</span>
+                            <span>{set.reps} reps</span>
+                            {set.targetRPE && (
+                              <span className="text-muted-foreground">@ RPE {set.targetRPE}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {exercise.notes && (
+                        <p className="mt-2 text-sm text-muted-foreground italic">
+                          {exercise.notes}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {currentDay && currentDay.exercises.length === 0 && (
+          <Card className="p-8 text-center">
+            <Dumbbell className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+            <p className="text-muted-foreground">
+              Nog geen oefeningen voor {currentDay.name}
+            </p>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBuilderProps) => {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   
   const [program, setProgram] = useState<Program>({
     name: initialData?.name || "",
@@ -305,6 +497,11 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
   const [selectedWeekId, setSelectedWeekId] = useState<string>("week-1");
   const [selectedDayId, setSelectedDayId] = useState<string>("day-1");
+
+  // Show preview mode
+  if (isPreviewMode) {
+    return <ProgramPreview program={program} onClose={() => setIsPreviewMode(false)} />;
+  }
 
   const selectedWeek = program.weeks.find(w => w.id === selectedWeekId);
   const selectedDay = selectedWeek?.days.find(d => d.id === selectedDayId);
@@ -703,6 +900,15 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
               </div>
               
               <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsPreviewMode(true)}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview
+                </Button>
+                
                 <Sheet open={libraryOpen} onOpenChange={setLibraryOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="sm">
