@@ -350,5 +350,19 @@
     "installApp": "Installeer app",
     "installDescription": "Installeer deze app op je apparaat voor snellere toegang en offline gebruik.",
     "install": "Installeren"
+  },
+  "onboarding": {
+    "streakTitle": "Je Streak",
+    "streakContent": "Hier zie je hoeveel dagen achter elkaar je hebt getraind. Houd je streak vast voor extra motivatie!",
+    "activityTitle": "Spontane Activiteit",
+    "activityContent": "Heb je buiten je schema om gesport? Log het hier om je voortgang bij te houden.",
+    "checkinTitle": "Dagelijkse Check-in",
+    "checkinContent": "Laat je coach weten hoe het met je gaat. Dit helpt bij het aanpassen van je programma.",
+    "tasksTitle": "Dagelijkse Taken",
+    "tasksContent": "Dit zijn je dagelijkse taken van je coach. Vink ze af wanneer je ze hebt voltooid.",
+    "workoutsTitle": "Je Trainingsplan",
+    "workoutsContent": "Hier vind je je workouts. Tik op een workout om te beginnen!",
+    "navigationTitle": "Navigatie",
+    "navigationContent": "Gebruik de navigatiebalk onderaan om door de app te navigeren."
   }
 }
