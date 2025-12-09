@@ -14,6 +14,7 @@ import { PageLoading } from "./components/ui/LoadingSpinner";
 import { PWAUpdatePrompt } from "./components/pwa/PWAUpdatePrompt";
 import { PWAInstallBanner } from "./components/pwa/PWAInstallBanner";
 import TopNav from "./components/TopNav";
+import { UbyFeedbackWidget } from "./components/beta/UbyFeedbackWidget";
 
 // Lazy load all pages for better bundle splitting
 const Onboarding = lazy(() => import("./pages/Onboarding"));
@@ -155,6 +156,7 @@ const App = () => {
                 <RouterProvider router={router} />
                 <PWAUpdatePrompt />
                 <PWAInstallBanner />
+                <UbyFeedbackWidget />
               </div>
             </TooltipProvider>
           </AuthProvider>
