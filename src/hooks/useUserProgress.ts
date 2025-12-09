@@ -39,7 +39,7 @@ export const useUserProgress = (programId?: string) => {
           .select("*")
           .eq("user_id", user.id)
           .eq("program_id", programId)
-          .single();
+          .maybeSingle();
 
         if (progressError && progressError.code !== "PGRST116") {
           console.error("Error fetching progress:", progressError);
@@ -79,11 +79,11 @@ export const useUserProgress = (programId?: string) => {
           .select("id, name, week_number, description, phase_name")
           .eq("program_id", programId)
           .eq("week_number", userProgress.current_week_number)
-          .single();
+          .maybeSingle();
 
-        if (weekError) {
+        if (weekError && weekError.code !== "PGRST116") {
           console.error("Error fetching week:", weekError);
-        } else {
+        } else if (weekData) {
           setCurrentWeek(weekData);
         }
       } catch (error) {
@@ -125,7 +125,7 @@ export const useUserProgress = (programId?: string) => {
         .select("id, name, week_number, description, phase_name")
         .eq("program_id", programId)
         .eq("week_number", weekNumber)
-        .single();
+        .maybeSingle();
 
       if (weekData) {
         setCurrentWeek(weekData);

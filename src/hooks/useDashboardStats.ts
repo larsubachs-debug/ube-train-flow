@@ -13,7 +13,7 @@ export const useDashboardStats = (userId: string | undefined) => {
         .from('user_stats')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       // Get workout completions for the last 6 months
       const sixMonthsAgo = subMonths(new Date(), 6);
