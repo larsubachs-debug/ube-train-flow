@@ -62,34 +62,35 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="container mx-auto p-4 pb-24 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">{t('dashboard.title')}</h1>
-        <p className="text-muted-foreground">{t('dashboard.subtitle')}</p>
+    <div className="container mx-auto px-3 sm:px-4 pb-24 pt-2 space-y-4 sm:space-y-6">
+      {/* Header - meer compact op mobiel */}
+      <div className="pt-2">
+        <h1 className="text-xl sm:text-3xl font-bold mb-1">{t('dashboard.title')}</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">{t('dashboard.subtitle')}</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {/* Stats Grid - 2 kolommen op mobiel, compacter */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.titleKey}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+            <Card key={stat.titleKey} className="overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between p-3 sm:pb-2 sm:pt-4 sm:px-6 space-y-0">
+                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground line-clamp-1">
                   {t(stat.titleKey)}
                 </CardTitle>
-                <Icon className={`w-4 h-4 ${stat.color}`} />
+                <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${stat.color} flex-shrink-0`} />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+              <CardContent className="p-3 pt-0 sm:px-6 sm:pb-4">
+                <div className="text-lg sm:text-2xl font-bold truncate">{stat.value}</div>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Body Metrics & 1RM Section */}
-      <div className="grid md:grid-cols-2 gap-6">
+      {/* Body Metrics & 1RM Section - stack op mobiel */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <BodyMetricsCard userId={user?.id || ''} />
         <OneRMCard userId={user?.id || ''} />
       </div>
@@ -104,36 +105,40 @@ const Dashboard = () => {
       {/* Timeline Section */}
       <BodyMetricsTimeline userId={user?.id || ''} />
 
-      {/* Weekly Volume Chart */}
+      {/* Weekly Volume Chart - kortere hoogte op mobiel */}
       {stats?.weeklyVolumeData && stats.weeklyVolumeData.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>{t('dashboard.volumePerWeek')}</CardTitle>
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">{t('dashboard.volumePerWeek')}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={stats.weeklyVolumeData}>
+          <CardContent className="p-2 sm:p-6 pt-0">
+            <ResponsiveContainer width="100%" height={200} className="sm:!h-[300px]">
+              <BarChart data={stats.weeklyVolumeData} margin={{ left: -20, right: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis 
                   dataKey="week" 
-                  className="text-xs"
+                  className="text-[10px] sm:text-xs"
                   stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 10 }}
                 />
                 <YAxis 
-                  className="text-xs"
+                  className="text-[10px] sm:text-xs"
                   stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 10 }}
+                  width={40}
                 />
                 <Tooltip 
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
+                    fontSize: "12px",
                   }}
                 />
                 <Bar 
                   dataKey="volume" 
                   fill="hsl(var(--primary))" 
-                  radius={[8, 8, 0, 0]}
+                  radius={[4, 4, 0, 0]}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -141,38 +146,42 @@ const Dashboard = () => {
         </Card>
       )}
 
-      {/* Monthly Workouts Chart */}
+      {/* Monthly Workouts Chart - kortere hoogte op mobiel */}
       {stats?.monthlyWorkoutData && stats.monthlyWorkoutData.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>{t('dashboard.workoutsPerMonth')}</CardTitle>
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">{t('dashboard.workoutsPerMonth')}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={stats.monthlyWorkoutData}>
+          <CardContent className="p-2 sm:p-6 pt-0">
+            <ResponsiveContainer width="100%" height={200} className="sm:!h-[300px]">
+              <LineChart data={stats.monthlyWorkoutData} margin={{ left: -20, right: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis 
                   dataKey="month" 
-                  className="text-xs"
+                  className="text-[10px] sm:text-xs"
                   stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 10 }}
                 />
                 <YAxis 
-                  className="text-xs"
+                  className="text-[10px] sm:text-xs"
                   stroke="hsl(var(--muted-foreground))"
+                  tick={{ fontSize: 10 }}
+                  width={30}
                 />
                 <Tooltip 
                   contentStyle={{
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
+                    fontSize: "12px",
                   }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="workouts" 
                   stroke="hsl(var(--accent))" 
-                  strokeWidth={3}
-                  dot={{ fill: "hsl(var(--accent))", r: 4 }}
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--accent))", r: 3 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -180,31 +189,31 @@ const Dashboard = () => {
         </Card>
       )}
 
-      {/* Recent PRs */}
+      {/* Recent PRs - compacter op mobiel */}
       {stats?.recentPRs && stats.recentPRs.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>{t('dashboard.recentPRs')}</CardTitle>
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">{t('dashboard.recentPRs')}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+            <div className="space-y-2 sm:space-y-3">
               {stats.recentPRs.slice(0, 5).map((pr, index) => (
                 <div 
                   key={index} 
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                  className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-muted/50"
                 >
-                  <div className="flex items-center gap-3">
-                    <Trophy className="w-5 h-5 text-accent" />
-                    <div>
-                      <p className="font-medium">{pr.exercise_name}</p>
-                      <p className="text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-accent flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base truncate">{pr.exercise_name}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {format(new Date(pr.completed_at), 'dd MMM yyyy')}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold">{pr.weight} kg</p>
-                    <p className="text-sm text-muted-foreground">{pr.reps} reps</p>
+                  <div className="text-right flex-shrink-0 ml-2">
+                    <p className="font-bold text-sm sm:text-base">{pr.weight} kg</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{pr.reps} reps</p>
                   </div>
                 </div>
               ))}
