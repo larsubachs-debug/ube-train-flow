@@ -59,13 +59,21 @@
     "hasAccount": "Already have an account?",
     "loginSuccess": "Successfully logged in",
     "logoutSuccess": "Successfully logged out",
-    "signupSuccess": "Account created",
+    "signupSuccess": "Account successfully created. You can now sign in.",
     "invalidCredentials": "Invalid credentials",
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
     "passwordTooShort": "Password must be at least 8 characters",
     "passwordsDoNotMatch": "Passwords do not match",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "signInOrCreate": "Sign in to your account or create a new one",
+    "fullName": "Full Name",
+    "minCharacters": "Min. 6 characters",
+    "repeatPassword": "Repeat password",
+    "createAccount": "Create Account",
+    "validationError": "Validation Error",
+    "signInFailed": "Sign In Failed",
+    "signUpFailed": "Sign Up Failed"
   },
   "home": {
     "today": "Today",
@@ -137,7 +145,9 @@
     "rest": "Rest",
     "duration": "Duration",
     "noPrograms": "No programs found",
-    "loadingPrograms": "Loading programs..."
+    "loadingPrograms": "Loading programs...",
+    "startDescription": "Start a program to begin your training journey",
+    "viewPrograms": "View Programs"
   },
   "workouts": {
     "title": "Workouts",
@@ -318,6 +328,18 @@
     "networkError": "Network error",
     "tryAgain": "Try again",
     "somethingWentWrong": "Something went wrong"
+  },
+  "password": {
+    "strength": "Password strength",
+    "weak": "Weak",
+    "fair": "Fair",
+    "good": "Good",
+    "strong": "Strong",
+    "minChars": "At least 8 characters",
+    "uppercase": "Contains an uppercase letter",
+    "lowercase": "Contains a lowercase letter",
+    "number": "Contains a number",
+    "special": "Contains a special character"
   },
   "pwa": {
     "updateAvailable": "Update available",

@@ -22,6 +22,9 @@ import { programs as staticPrograms } from "@/data/programs";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
+import { ComponentErrorBoundary } from "@/components/ComponentErrorBoundary";
+import { NoProgramState } from "@/components/programs/NoProgramState";
+import BottomNav from "@/components/BottomNav";
 
 const Home = () => {
   const { t } = useTranslation();
@@ -92,10 +95,12 @@ const Home = () => {
 
   if (!currentProgram) {
     return (
-      <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
-        <div className="text-center animate-fade-in">
-          <p className="text-muted-foreground">{t('home.noProgram')}</p>
+      <div className="min-h-screen bg-background pb-20">
+        <div className="px-6 pt-6">
+          <h1 className="text-2xl font-bold text-foreground mb-6">{t('home.today')}</h1>
+          <NoProgramState />
         </div>
+        <BottomNav />
       </div>
     );
   }
@@ -191,19 +196,27 @@ const Home = () => {
           </Card>}
 
         {/* Streak Indicator */}
-        <StreakIndicator />
+        <ComponentErrorBoundary componentName="StreakIndicator">
+          <StreakIndicator />
+        </ComponentErrorBoundary>
 
         {/* Spontaneous Activity */}
         <SpontaneousActivityDialog />
 
         {/* Daily Check-in */}
-        <DailyCheckinCard />
+        <ComponentErrorBoundary componentName="DailyCheckinCard">
+          <DailyCheckinCard />
+        </ComponentErrorBoundary>
 
         {/* Weekly Task Progress */}
-        <WeeklyTaskProgress />
+        <ComponentErrorBoundary componentName="WeeklyTaskProgress">
+          <WeeklyTaskProgress />
+        </ComponentErrorBoundary>
 
         {/* Daily Tasks */}
-        <DailyTasksCard />
+        <ComponentErrorBoundary componentName="DailyTasksCard">
+          <DailyTasksCard />
+        </ComponentErrorBoundary>
 
         {/* Your Training Plan */}
         <div className="space-y-4">

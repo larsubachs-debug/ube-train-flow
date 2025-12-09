@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, Dumbbell, User } from "lucide-react";
+import { Calendar, Dumbbell, User, MessageCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const BottomNav = () => {
@@ -9,6 +9,7 @@ const BottomNav = () => {
   const navItems = [
     { path: "/", icon: Calendar, labelKey: "time.today" },
     { path: "/programs", icon: Dumbbell, labelKey: "nav.programs" },
+    { path: "/chat", icon: MessageCircle, labelKey: "nav.chat" },
     { path: "/account", icon: User, labelKey: "nav.account" },
   ];
 
