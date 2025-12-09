@@ -1,8 +1,6 @@
 import { Dumbbell } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 
 export const NoProgramState = () => {
   const { t } = useTranslation();
@@ -14,16 +12,11 @@ export const NoProgramState = () => {
           <Dumbbell className="w-6 h-6 text-muted-foreground" />
         </div>
         <h3 className="font-medium text-foreground mb-1">
-          {t('home.noProgram', 'No program assigned')}
+          {t('home.noProgram', 'No program assigned yet')}
         </h3>
-        <p className="text-sm text-muted-foreground mb-4 max-w-xs">
-          {t('programs.startDescription', 'Start a program to begin your training journey')}
+        <p className="text-sm text-muted-foreground max-w-xs">
+          {t('home.noProgramDescription', 'Your coach will assign a program for you soon')}
         </p>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/programs">
-            {t('programs.viewPrograms', 'View Programs')}
-          </Link>
-        </Button>
       </CardContent>
     </Card>
   );

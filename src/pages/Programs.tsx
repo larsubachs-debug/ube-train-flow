@@ -3,6 +3,7 @@ import { usePrograms } from "@/hooks/usePrograms";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProgramProgressOverview } from "@/components/programs/ProgramProgressOverview";
+import { NoProgramState } from "@/components/programs/NoProgramState";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,8 +56,11 @@ const Programs = () => {
 
   if (displayPrograms.length === 0) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center pb-20">
-        <p className="text-muted-foreground">{t('programs.noPrograms')}</p>
+      <div className="min-h-screen bg-background pb-20">
+        <div className="px-6 pt-6">
+          <h1 className="text-2xl font-bold text-foreground mb-6">{t('programs.title')}</h1>
+          <NoProgramState />
+        </div>
       </div>
     );
   }

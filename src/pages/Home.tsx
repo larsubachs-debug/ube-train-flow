@@ -225,52 +225,64 @@ const Home = () => {
             <p className="text-sm text-muted-foreground mt-1">{t('home.nextWeekDrops')}</p>
           </div>
 
-          <div className="space-y-3">
-            {thisWeek?.workouts.slice(0, 3).map((workout, index) => {
-            const totalExercises = (workout.warmUp?.length || 0) + (workout.mainLifts?.length || 0) + (workout.accessories?.length || 0);
-            return <Link key={workout.id} to={`/programs/${currentProgram.id}/workout/${workout.id}`} className="block">
-                  <Card className="p-4 hover:shadow-md transition-shadow bg-card border border-border">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <p className="text-xs text-muted-foreground mb-1">Thurs 7th</p>
-                        <h3 className="text-lg font-bold text-foreground">{workout.name}</h3>
-                      </div>
-                      {workout.completed ? <div className="w-10 h-10 rounded-full border-2 border-foreground flex items-center justify-center flex-shrink-0">
-                          <CheckCircle2 className="w-6 h-6 text-foreground" />
-                        </div> : <div className="w-10 h-10 rounded-full border-2 border-muted flex items-center justify-center flex-shrink-0">
-                          <Play className="w-5 h-5 text-muted-foreground" />
-                        </div>}
-                    </div>
+          {!userProgramId ? (
+            <NoProgramState />
+          ) : (
+            <>
+              <div className="space-y-3">
+                {thisWeek?.workouts.slice(0, 3).map((workout, index) => {
+                  const totalExercises = (workout.warmUp?.length || 0) + (workout.mainLifts?.length || 0) + (workout.accessories?.length || 0);
+                  return (
+                    <Link key={workout.id} to={`/programs/${currentProgram.id}/workout/${workout.id}`} className="block">
+                      <Card className="p-4 hover:shadow-md transition-shadow bg-card border border-border">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <p className="text-xs text-muted-foreground mb-1">Thurs 7th</p>
+                            <h3 className="text-lg font-bold text-foreground">{workout.name}</h3>
+                          </div>
+                          {workout.completed ? (
+                            <div className="w-10 h-10 rounded-full border-2 border-foreground flex items-center justify-center flex-shrink-0">
+                              <CheckCircle2 className="w-6 h-6 text-foreground" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 rounded-full border-2 border-muted flex items-center justify-center flex-shrink-0">
+                              <Play className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
 
-                    <div className="grid grid-cols-4 gap-3">
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">{t('home.time')}</p>
-                        <p className="text-sm font-bold text-foreground">{workout.duration}:00</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">{t('home.weight')}</p>
-                        <p className="text-sm font-bold text-foreground">-</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">{t('home.sets')}</p>
-                        <p className="text-sm font-bold text-foreground">{totalExercises}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">{t('home.pb')}</p>
-                        <p className="text-sm font-bold text-foreground">-</p>
-                      </div>
-                    </div>
-                  </Card>
-                </Link>;
-          })}
-          </div>
+                        <div className="grid grid-cols-4 gap-3">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">{t('home.time')}</p>
+                            <p className="text-sm font-bold text-foreground">{workout.duration}:00</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">{t('home.weight')}</p>
+                            <p className="text-sm font-bold text-foreground">-</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">{t('home.sets')}</p>
+                            <p className="text-sm font-bold text-foreground">{totalExercises}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">{t('home.pb')}</p>
+                            <p className="text-sm font-bold text-foreground">-</p>
+                          </div>
+                        </div>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
 
-          <Link to={`/programs/${currentProgram.id}`}>
-            <Button variant="outline" className="w-full">
-              {t('home.viewAllWorkouts')}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+              <Link to={`/programs/${currentProgram.id}`}>
+                <Button variant="outline" className="w-full">
+                  {t('home.viewAllWorkouts')}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
