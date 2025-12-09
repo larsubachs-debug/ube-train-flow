@@ -350,5 +350,19 @@
     "installApp": "Install app",
     "installDescription": "Install this app on your device for faster access and offline use.",
     "install": "Install"
+  },
+  "onboarding": {
+    "streakTitle": "Your Streak",
+    "streakContent": "See how many days in a row you have trained. Keep your streak going for extra motivation!",
+    "activityTitle": "Spontaneous Activity",
+    "activityContent": "Did you exercise outside your schedule? Log it here to track your progress.",
+    "checkinTitle": "Daily Check-in",
+    "checkinContent": "Let your coach know how you are doing. This helps adjust your program.",
+    "tasksTitle": "Daily Tasks",
+    "tasksContent": "These are your daily tasks from your coach. Check them off when completed.",
+    "workoutsTitle": "Your Training Plan",
+    "workoutsContent": "Find your workouts here. Tap on a workout to start!",
+    "navigationTitle": "Navigation",
+    "navigationContent": "Use the navigation bar at the bottom to navigate through the app."
   }
 }

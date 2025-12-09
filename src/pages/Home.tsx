@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import { ComponentErrorBoundary } from "@/components/ComponentErrorBoundary";
 import { NoProgramState } from "@/components/programs/NoProgramState";
+import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import BottomNav from "@/components/BottomNav";
 
 const Home = () => {
@@ -196,17 +197,23 @@ const Home = () => {
           </Card>}
 
         {/* Streak Indicator */}
-        <ComponentErrorBoundary componentName="StreakIndicator">
-          <StreakIndicator />
-        </ComponentErrorBoundary>
+        <div data-tour="streak">
+          <ComponentErrorBoundary componentName="StreakIndicator">
+            <StreakIndicator />
+          </ComponentErrorBoundary>
+        </div>
 
         {/* Spontaneous Activity */}
-        <SpontaneousActivityDialog />
+        <div data-tour="activity">
+          <SpontaneousActivityDialog />
+        </div>
 
         {/* Daily Check-in */}
-        <ComponentErrorBoundary componentName="DailyCheckinCard">
-          <DailyCheckinCard />
-        </ComponentErrorBoundary>
+        <div data-tour="checkin">
+          <ComponentErrorBoundary componentName="DailyCheckinCard">
+            <DailyCheckinCard />
+          </ComponentErrorBoundary>
+        </div>
 
         {/* Weekly Task Progress */}
         <ComponentErrorBoundary componentName="WeeklyTaskProgress">
@@ -214,12 +221,14 @@ const Home = () => {
         </ComponentErrorBoundary>
 
         {/* Daily Tasks */}
-        <ComponentErrorBoundary componentName="DailyTasksCard">
-          <DailyTasksCard />
-        </ComponentErrorBoundary>
+        <div data-tour="tasks">
+          <ComponentErrorBoundary componentName="DailyTasksCard">
+            <DailyTasksCard />
+          </ComponentErrorBoundary>
+        </div>
 
         {/* Your Training Plan */}
-        <div className="space-y-4">
+        <div className="space-y-4" data-tour="workouts">
           <div>
             <h2 className="text-xl font-bold text-foreground">{t('home.yourTrainingPlan')}</h2>
             <p className="text-sm text-muted-foreground mt-1">{t('home.nextWeekDrops')}</p>
@@ -288,6 +297,49 @@ const Home = () => {
 
       {/* Push Notification Prompt */}
       <PushNotificationPrompt />
+
+      {/* Onboarding Tour */}
+      <OnboardingTour 
+        tourId="home-tour"
+        steps={[
+          {
+            target: '[data-tour="streak"]',
+            title: t('onboarding.streakTitle', 'Je Streak'),
+            content: t('onboarding.streakContent', 'Hier zie je hoeveel dagen achter elkaar je hebt getraind. Houd je streak vast voor extra motivatie!'),
+            placement: 'bottom',
+          },
+          {
+            target: '[data-tour="activity"]',
+            title: t('onboarding.activityTitle', 'Spontane Activiteit'),
+            content: t('onboarding.activityContent', 'Heb je buiten je schema om gesport? Log het hier om je voortgang bij te houden.'),
+            placement: 'bottom',
+          },
+          {
+            target: '[data-tour="checkin"]',
+            title: t('onboarding.checkinTitle', 'Dagelijkse Check-in'),
+            content: t('onboarding.checkinContent', 'Laat je coach weten hoe het met je gaat. Dit helpt bij het aanpassen van je programma.'),
+            placement: 'bottom',
+          },
+          {
+            target: '[data-tour="tasks"]',
+            title: t('onboarding.tasksTitle', 'Dagelijkse Taken'),
+            content: t('onboarding.tasksContent', 'Dit zijn je dagelijkse taken van je coach. Vink ze af wanneer je ze hebt voltooid.'),
+            placement: 'bottom',
+          },
+          {
+            target: '[data-tour="workouts"]',
+            title: t('onboarding.workoutsTitle', 'Je Trainingsplan'),
+            content: t('onboarding.workoutsContent', 'Hier vind je je workouts. Tik op een workout om te beginnen!'),
+            placement: 'top',
+          },
+          {
+            target: '[data-tour="navigation"]',
+            title: t('onboarding.navigationTitle', 'Navigatie'),
+            content: t('onboarding.navigationContent', 'Gebruik de navigatiebalk onderaan om door de app te navigeren.'),
+            placement: 'top',
+          },
+        ]}
+      />
       </div>
     </PullToRefresh>
   );
