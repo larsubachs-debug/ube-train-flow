@@ -12,6 +12,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DailyCheckinCard } from "@/components/checkin/DailyCheckinCard";
 import { DailyTasksCard } from "@/components/tasks/DailyTasksCard";
+import { SpontaneousActivityDialog } from "@/components/workouts/SpontaneousActivityDialog";
 import { WeeklyTaskProgress } from "@/components/tasks/WeeklyTaskProgress";
 import { useBranding } from "@/hooks/useBranding";
 import { StreakIndicator } from "@/components/StreakIndicator";
@@ -191,6 +192,9 @@ const Home = () => {
 
         {/* Streak Indicator */}
         <StreakIndicator />
+
+        {/* Spontaneous Activity */}
+        <SpontaneousActivityDialog />
 
         {/* Daily Check-in */}
         <DailyCheckinCard />
