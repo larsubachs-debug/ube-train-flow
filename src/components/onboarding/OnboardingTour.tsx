@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -30,7 +30,7 @@ export function OnboardingTour({ steps, tourId, onComplete }: OnboardingTourProp
       // Delay to allow page to render
       const timer = setTimeout(() => {
         setIsVisible(true);
-      }, 1000);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [hasCompleted, steps.length]);
@@ -45,16 +45,19 @@ export function OnboardingTour({ steps, tourId, onComplete }: OnboardingTourProp
       const target = document.querySelector(step.target);
       if (target) {
         setTargetRect(target.getBoundingClientRect());
-        // Scroll target into view
+        // Scroll target into view with padding for mobile
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     };
 
-    updateTargetRect();
+    // Small delay to allow scroll to complete
+    const scrollTimer = setTimeout(updateTargetRect, 100);
+    
     window.addEventListener('resize', updateTargetRect);
     window.addEventListener('scroll', updateTargetRect);
 
     return () => {
+      clearTimeout(scrollTimer);
       window.removeEventListener('resize', updateTargetRect);
       window.removeEventListener('scroll', updateTargetRect);
     };
@@ -89,77 +92,135 @@ export function OnboardingTour({ steps, tourId, onComplete }: OnboardingTourProp
 
   const step = steps[currentStep];
   const placement = step.placement || 'bottom';
+  
+  // Calculate safe tooltip position for mobile
+  const padding = 16;
+  const tooltipWidth = Math.min(320, window.innerWidth - padding * 2);
+  const isMobile = window.innerWidth < 640;
+  
+  // Determine best placement based on available space
+  const spaceAbove = targetRect.top;
+  const spaceBelow = window.innerHeight - targetRect.bottom;
+  const effectivePlacement = placement === 'bottom' && spaceBelow < 200 ? 'top' : 
+                             placement === 'top' && spaceAbove < 200 ? 'bottom' : placement;
+
+  // Calculate centered horizontal position, constrained to screen
+  const centerX = targetRect.left + targetRect.width / 2;
+  const tooltipLeft = Math.max(padding, Math.min(centerX - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding));
 
   const tooltipStyle: React.CSSProperties = {
     position: 'fixed',
     zIndex: 10001,
-    ...(placement === 'bottom' && {
-      top: targetRect.bottom + 12,
-      left: targetRect.left + targetRect.width / 2,
-      transform: 'translateX(-50%)',
+    width: tooltipWidth,
+    maxWidth: `calc(100vw - ${padding * 2}px)`,
+    left: tooltipLeft,
+    ...(effectivePlacement === 'bottom' && {
+      top: Math.min(targetRect.bottom + 16, window.innerHeight - 200),
     }),
-    ...(placement === 'top' && {
-      bottom: window.innerHeight - targetRect.top + 12,
-      left: targetRect.left + targetRect.width / 2,
-      transform: 'translateX(-50%)',
-    }),
-    ...(placement === 'left' && {
-      top: targetRect.top + targetRect.height / 2,
-      right: window.innerWidth - targetRect.left + 12,
-      transform: 'translateY(-50%)',
-    }),
-    ...(placement === 'right' && {
-      top: targetRect.top + targetRect.height / 2,
-      left: targetRect.right + 12,
-      transform: 'translateY(-50%)',
+    ...(effectivePlacement === 'top' && {
+      bottom: window.innerHeight - targetRect.top + 16,
     }),
   };
+
+  // Progress dots for mobile
+  const progressDots = (
+    <div className="flex items-center justify-center gap-1.5 mb-3">
+      {steps.map((_, index) => (
+        <div
+          key={index}
+          className={cn(
+            "w-2 h-2 rounded-full transition-all",
+            index === currentStep ? "bg-primary w-4" : "bg-muted"
+          )}
+        />
+      ))}
+    </div>
+  );
 
   return createPortal(
     <>
       {/* Overlay */}
       <div 
-        className="fixed inset-0 z-[10000] bg-black/50 transition-opacity"
+        className="fixed inset-0 z-[10000] bg-black/60 transition-opacity"
         onClick={handleSkip}
       />
 
       {/* Spotlight */}
       <div
-        className="fixed z-[10000] rounded-lg ring-4 ring-primary transition-all duration-300"
+        className="fixed z-[10000] rounded-xl ring-4 ring-primary/80 transition-all duration-300 pointer-events-none"
         style={{
-          top: targetRect.top - 4,
-          left: targetRect.left - 4,
-          width: targetRect.width + 8,
-          height: targetRect.height + 8,
-          boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+          top: targetRect.top - 8,
+          left: targetRect.left - 8,
+          width: targetRect.width + 16,
+          height: targetRect.height + 16,
+          boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.6)',
         }}
       />
 
-      {/* Tooltip */}
-      <Card className="w-80 p-4 shadow-xl animate-fade-in" style={tooltipStyle}>
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h4 className="font-semibold">{step.title}</h4>
-          <Button variant="ghost" size="icon" className="h-6 w-6 -mr-2 -mt-1" onClick={handleSkip}>
+      {/* Tooltip Card */}
+      <Card 
+        className="p-4 shadow-2xl animate-fade-in border-primary/20" 
+        style={tooltipStyle}
+      >
+        {/* Progress dots on mobile */}
+        {isMobile && progressDots}
+        
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex-1">
+            <h4 className="font-semibold text-base sm:text-lg leading-tight">{step.title}</h4>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 -mr-2 -mt-1 flex-shrink-0 touch-manipulation" 
+            onClick={handleSkip}
+          >
             <X className="w-4 h-4" />
           </Button>
         </div>
         
-        <p className="text-sm text-muted-foreground mb-4">{step.content}</p>
+        {/* Content */}
+        <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{step.content}</p>
         
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
+        {/* Footer */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Step counter - hidden on mobile (using dots instead) */}
+          <span className="text-xs text-muted-foreground hidden sm:block">
             {currentStep + 1} / {steps.length}
           </span>
           
-          <div className="flex gap-2">
+          {/* Skip on mobile */}
+          {isMobile && currentStep === 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleSkip}
+              className="text-muted-foreground touch-manipulation"
+            >
+              Overslaan
+            </Button>
+          )}
+          
+          {/* Navigation buttons */}
+          <div className="flex gap-2 ml-auto">
             {currentStep > 0 && (
-              <Button variant="outline" size="sm" onClick={handlePrev}>
+              <Button 
+                variant="outline" 
+                size={isMobile ? "default" : "sm"} 
+                onClick={handlePrev}
+                className="touch-manipulation min-h-[44px] sm:min-h-0"
+              >
                 <ChevronLeft className="w-4 h-4 mr-1" />
-                Vorige
+                {!isMobile && "Vorige"}
               </Button>
             )}
-            <Button size="sm" onClick={handleNext}>
-              {currentStep === steps.length - 1 ? 'Klaar' : 'Volgende'}
+            <Button 
+              size={isMobile ? "default" : "sm"} 
+              onClick={handleNext}
+              className="touch-manipulation min-h-[44px] sm:min-h-0"
+            >
+              {currentStep === steps.length - 1 ? 'Klaar!' : 'Volgende'}
               {currentStep < steps.length - 1 && <ChevronRight className="w-4 h-4 ml-1" />}
             </Button>
           </div>
