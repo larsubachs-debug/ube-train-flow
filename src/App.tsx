@@ -36,6 +36,7 @@ const AdminMembers = lazy(() => import("./pages/AdminMembers"));
 const AdminCheckins = lazy(() => import("./pages/AdminCheckins"));
 const AdminTasks = lazy(() => import("./pages/AdminTasks"));
 const AdminBranding = lazy(() => import("./pages/AdminBranding"));
+const AdminFeedback = lazy(() => import("./pages/AdminFeedback"));
 const CoachDashboard = lazy(() => import("./pages/CoachDashboard"));
 const Chat = lazy(() => import("./pages/Chat"));
 const CoachChat = lazy(() => import("./pages/CoachChat"));
@@ -104,6 +105,7 @@ const router = createBrowserRouter(
         { path: "/admin/checkins", element: <ProtectedRoute requiredRole="coach"><AdminCheckins /></ProtectedRoute> },
         { path: "/admin/tasks", element: <ProtectedRoute requiredRole="coach"><AdminTasks /></ProtectedRoute> },
         { path: "/admin/branding", element: <ProtectedRoute requiredRole="coach"><AdminBranding /></ProtectedRoute> },
+        { path: "/admin/feedback", element: <ProtectedRoute requiredRole="coach"><AdminFeedback /></ProtectedRoute> },
         { path: "/coach/dashboard", element: <ProtectedRoute requiredRole="coach"><CoachDashboard /></ProtectedRoute> },
         { path: "/coach/chat/:memberId", element: <ProtectedRoute requiredRole="coach"><CoachChat /></ProtectedRoute> },
         { path: "/chat", element: <ProtectedRoute><Chat /></ProtectedRoute> },
