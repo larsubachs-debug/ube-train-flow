@@ -10,8 +10,6 @@ import { BodyCompositionChart } from "@/components/dashboard/BodyCompositionChar
 import { WeightProgressChart } from "@/components/dashboard/WeightProgressChart";
 import { ProgressPhotosComparison } from "@/components/dashboard/ProgressPhotosComparison";
 import { BodyMetricsTimeline } from "@/components/dashboard/BodyMetricsTimeline";
-import MemberAgenda from "@/components/agenda/MemberAgenda";
-import MemberCalendar from "@/components/agenda/MemberCalendar";
 import { useTranslation } from "react-i18next";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 
@@ -88,12 +86,6 @@ const Dashboard = () => {
             </Card>
           );
         })}
-      </div>
-
-      {/* Member Agenda & Calendar */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <MemberAgenda />
-        <MemberCalendar />
       </div>
 
       {/* Body Metrics & 1RM Section */}

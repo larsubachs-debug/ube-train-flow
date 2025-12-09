@@ -44,6 +44,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Install = lazy(() => import("./pages/Install"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
+const Agenda = lazy(() => import("./pages/Agenda"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,6 +92,7 @@ const router = createBrowserRouter(
         { path: "/achievements", element: <ProtectedRoute><Achievements /></ProtectedRoute> },
         { path: "/leaderboard", element: <ProtectedRoute><Leaderboard /></ProtectedRoute> },
         { path: "/dashboard", element: <ProtectedRoute><Dashboard /></ProtectedRoute> },
+        { path: "/agenda", element: <ProtectedRoute><Agenda /></ProtectedRoute> },
         { path: "/analytics", element: <ProtectedRoute><Analytics /></ProtectedRoute> },
         { path: "/admin/programs", element: <ProtectedRoute requiredRole="coach"><AdminPrograms /></ProtectedRoute> },
         { path: "/admin/members", element: <ProtectedRoute requiredRole="coach"><AdminMembers /></ProtectedRoute> },
