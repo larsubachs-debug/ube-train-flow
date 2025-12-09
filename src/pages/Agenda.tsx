@@ -1,4 +1,3 @@
-import TopNav from "@/components/TopNav";
 import BottomNav from "@/components/BottomNav";
 import MemberAgenda from "@/components/agenda/MemberAgenda";
 import MemberCalendar from "@/components/agenda/MemberCalendar";
@@ -9,7 +8,6 @@ const Agenda = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <TopNav />
       
       <div className="container mx-auto p-4 space-y-6">
         <div>
