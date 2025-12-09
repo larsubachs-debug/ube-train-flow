@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -56,6 +56,64 @@ const queryClient = new QueryClient({
   },
 });
 
+// Layout component with TopNav
+const AppLayout = () => (
+  <>
+    <TopNav />
+    <main id="main-content" tabIndex={-1}>
+      <Suspense fallback={<PageLoading />}>
+        <Outlet />
+      </Suspense>
+    </main>
+  </>
+);
+
+// Create router with future flags to eliminate warnings
+const router = createBrowserRouter(
+  [
+    {
+      element: <AppLayout />,
+      children: [
+        { path: "/auth", element: <Auth /> },
+        { path: "/pending-approval", element: <PendingApproval /> },
+        { path: "/onboarding", element: <Onboarding /> },
+        { path: "/", element: <ProtectedRoute><Home /></ProtectedRoute> },
+        { path: "/programs", element: <ProtectedRoute><Programs /></ProtectedRoute> },
+        { path: "/program/:programId", element: <ProtectedRoute><ProgramDetail /></ProtectedRoute> },
+        { path: "/workout/:workoutId", element: <ProtectedRoute><WorkoutDetail /></ProtectedRoute> },
+        { path: "/check-in", element: <ProtectedRoute><CheckIn /></ProtectedRoute> },
+        { path: "/community", element: <ProtectedRoute><Community /></ProtectedRoute> },
+        { path: "/account", element: <ProtectedRoute><Account /></ProtectedRoute> },
+        { path: "/education", element: <ProtectedRoute><Education /></ProtectedRoute> },
+        { path: "/education/:id", element: <ProtectedRoute><EducationDetail /></ProtectedRoute> },
+        { path: "/membership", element: <ProtectedRoute><Membership /></ProtectedRoute> },
+        { path: "/media", element: <ProtectedRoute><Media /></ProtectedRoute> },
+        { path: "/achievements", element: <ProtectedRoute><Achievements /></ProtectedRoute> },
+        { path: "/leaderboard", element: <ProtectedRoute><Leaderboard /></ProtectedRoute> },
+        { path: "/dashboard", element: <ProtectedRoute><Dashboard /></ProtectedRoute> },
+        { path: "/analytics", element: <ProtectedRoute><Analytics /></ProtectedRoute> },
+        { path: "/admin/programs", element: <ProtectedRoute requiredRole="coach"><AdminPrograms /></ProtectedRoute> },
+        { path: "/admin/members", element: <ProtectedRoute requiredRole="coach"><AdminMembers /></ProtectedRoute> },
+        { path: "/admin/checkins", element: <ProtectedRoute requiredRole="coach"><AdminCheckins /></ProtectedRoute> },
+        { path: "/admin/tasks", element: <ProtectedRoute requiredRole="coach"><AdminTasks /></ProtectedRoute> },
+        { path: "/admin/branding", element: <ProtectedRoute requiredRole="coach"><AdminBranding /></ProtectedRoute> },
+        { path: "/coach/dashboard", element: <ProtectedRoute requiredRole="coach"><CoachDashboard /></ProtectedRoute> },
+        { path: "/coach/chat/:memberId", element: <ProtectedRoute requiredRole="coach"><CoachChat /></ProtectedRoute> },
+        { path: "/chat", element: <ProtectedRoute><Chat /></ProtectedRoute> },
+        { path: "/install", element: <Install /> },
+        { path: "/privacy", element: <Privacy /> },
+        { path: "/terms", element: <Terms /> },
+        { path: "*", element: <NotFound /> },
+      ],
+    },
+  ],
+  {
+    future: {
+      v7_relativeSplatPath: true,
+    },
+  }
+);
+
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [hasShownSplash, setHasShownSplash] = useState(false);
@@ -88,45 +146,7 @@ const App = () => {
                 <SplashScreen onComplete={handleSplashComplete} />
               )}
               <div className={showSplash ? 'invisible' : 'visible'}>
-                <BrowserRouter>
-                  <TopNav />
-                  <main id="main-content" tabIndex={-1}>
-                    <Suspense fallback={<PageLoading />}>
-                      <Routes>
-                        <Route path="/auth" element={<Auth />} />
-                        <Route path="/pending-approval" element={<PendingApproval />} />
-                        <Route path="/onboarding" element={<Onboarding />} />
-                        <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                        <Route path="/programs" element={<ProtectedRoute><Programs /></ProtectedRoute>} />
-                        <Route path="/program/:programId" element={<ProtectedRoute><ProgramDetail /></ProtectedRoute>} />
-                        <Route path="/workout/:workoutId" element={<ProtectedRoute><WorkoutDetail /></ProtectedRoute>} />
-                        <Route path="/check-in" element={<ProtectedRoute><CheckIn /></ProtectedRoute>} />
-                        <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
-                        <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-                        <Route path="/education" element={<ProtectedRoute><Education /></ProtectedRoute>} />
-                        <Route path="/education/:id" element={<ProtectedRoute><EducationDetail /></ProtectedRoute>} />
-                        <Route path="/membership" element={<ProtectedRoute><Membership /></ProtectedRoute>} />
-                        <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
-                        <Route path="/achievements" element={<ProtectedRoute><Achievements /></ProtectedRoute>} />
-                        <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
-                        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                        <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-                        <Route path="/admin/programs" element={<ProtectedRoute requiredRole="coach"><AdminPrograms /></ProtectedRoute>} />
-                        <Route path="/admin/members" element={<ProtectedRoute requiredRole="coach"><AdminMembers /></ProtectedRoute>} />
-                        <Route path="/admin/checkins" element={<ProtectedRoute requiredRole="coach"><AdminCheckins /></ProtectedRoute>} />
-                        <Route path="/admin/tasks" element={<ProtectedRoute requiredRole="coach"><AdminTasks /></ProtectedRoute>} />
-                        <Route path="/admin/branding" element={<ProtectedRoute requiredRole="coach"><AdminBranding /></ProtectedRoute>} />
-                        <Route path="/coach/dashboard" element={<ProtectedRoute requiredRole="coach"><CoachDashboard /></ProtectedRoute>} />
-                        <Route path="/coach/chat/:memberId" element={<ProtectedRoute requiredRole="coach"><CoachChat /></ProtectedRoute>} />
-                        <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-                        <Route path="/install" element={<Install />} />
-                        <Route path="/privacy" element={<Privacy />} />
-                        <Route path="/terms" element={<Terms />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </Suspense>
-                  </main>
-                </BrowserRouter>
+                <RouterProvider router={router} />
               </div>
             </TooltipProvider>
           </AuthProvider>
