@@ -82,7 +82,12 @@
     "time": "Time",
     "weight": "Weight",
     "sets": "Sets",
-    "pb": "PB"
+    "pb": "PB",
+    "agenda": "Agenda"
+  },
+  "agenda": {
+    "title": "Agenda",
+    "subtitle": "View your scheduled workouts and tasks"
   },
   "dashboard": {
     "title": "KPI Dashboard",
