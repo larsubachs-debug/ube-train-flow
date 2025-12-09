@@ -11,6 +11,8 @@ import { SplashScreen } from "./components/SplashScreen";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SkipLink } from "./components/ui/SkipLink";
 import { PageLoading } from "./components/ui/LoadingSpinner";
+import { PWAUpdatePrompt } from "./components/pwa/PWAUpdatePrompt";
+import { PWAInstallBanner } from "./components/pwa/PWAInstallBanner";
 import TopNav from "./components/TopNav";
 
 // Lazy load all pages for better bundle splitting
@@ -151,6 +153,8 @@ const App = () => {
               )}
               <div className={showSplash ? 'invisible' : 'visible'}>
                 <RouterProvider router={router} />
+                <PWAUpdatePrompt />
+                <PWAInstallBanner />
               </div>
             </TooltipProvider>
           </AuthProvider>

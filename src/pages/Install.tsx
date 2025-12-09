@@ -127,8 +127,8 @@ export default function Install() {
     <div className="min-h-screen bg-background pb-24">
       {/* Hero */}
       <div className="bg-gradient-to-b from-primary/10 to-background px-4 pt-12 pb-8 text-center">
-        <div className="w-20 h-20 mx-auto mb-4 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-          <img src="/ube-logo.png" alt="U.be" className="w-12 h-12" />
+        <div className="w-20 h-20 mx-auto mb-4 bg-foreground rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+          <img src="/app-icon-1024.png" alt="U.be" className="w-full h-full object-cover" />
         </div>
         <h1 className="text-2xl font-bold mb-2">Installeer U.be</h1>
         <p className="text-muted-foreground max-w-sm mx-auto">

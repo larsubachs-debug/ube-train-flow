@@ -15,13 +15,13 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['ube-logo.png', 'favicon.ico'],
+      includeAssets: ['app-icon-1024.png', 'ube-logo.png', 'favicon.ico'],
       manifest: {
-        name: 'U.be Health Member App',
+        name: 'U.be Training - Personal Fitness Coaching',
         short_name: 'U.be',
-        description: 'Accountability en coaching tool voor U.be Health members',
-        theme_color: '#1a1a1a',
-        background_color: '#1a1a1a',
+        description: 'Professional personal training app with customized workout programs, daily check-ins, and direct coach communication.',
+        theme_color: '#212121',
+        background_color: '#212121',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
@@ -29,22 +29,28 @@ export default defineConfig(({ mode }) => ({
         categories: ['fitness', 'health', 'lifestyle'],
         icons: [
           {
-            src: '/ube-logo.png',
+            src: '/app-icon-1024.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/ube-logo.png',
+            src: '/app-icon-1024.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/ube-logo.png',
+            src: '/app-icon-1024.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
+          },
+          {
+            src: '/app-icon-1024.png',
+            sizes: '1024x1024',
+            type: 'image/png',
+            purpose: 'any'
           }
         ],
         shortcuts: [
@@ -53,14 +59,14 @@ export default defineConfig(({ mode }) => ({
             short_name: 'Workout',
             description: 'Start je volgende workout',
             url: '/programs',
-            icons: [{ src: '/ube-logo.png', sizes: '192x192' }]
+            icons: [{ src: '/app-icon-1024.png', sizes: '192x192' }]
           },
           {
             name: 'Dashboard',
             short_name: 'Dashboard',
             description: 'Bekijk je voortgang',
             url: '/dashboard',
-            icons: [{ src: '/ube-logo.png', sizes: '192x192' }]
+            icons: [{ src: '/app-icon-1024.png', sizes: '192x192' }]
           }
         ]
       },
