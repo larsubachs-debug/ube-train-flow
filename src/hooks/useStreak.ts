@@ -55,7 +55,7 @@ export const useStreak = () => {
         .from("profiles")
         .select("id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (!profile) return;
 
@@ -71,7 +71,18 @@ export const useStreak = () => {
           )
         `)
         .eq("id", userProgress.program_id)
-        .single();
+        .maybeSingle();
+
+      if (!program) {
+        setStreak({
+          currentStreak: 0,
+          longestStreak: 0,
+          lastActivityDate: null,
+          isActiveToday: false,
+          todayProgress: { completed: 0, total: 0 },
+        });
+        return;
+      }
 
       // Get member's assigned tasks
       const { data: memberTasks } = await supabase

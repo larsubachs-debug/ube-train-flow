@@ -45,6 +45,7 @@ const Install = lazy(() => import("./pages/Install"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Agenda = lazy(() => import("./pages/Agenda"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +77,7 @@ const router = createBrowserRouter(
       element: <AppLayout />,
       children: [
         { path: "/auth", element: <Auth /> },
+        { path: "/reset-password", element: <ResetPassword /> },
         { path: "/pending-approval", element: <PendingApproval /> },
         { path: "/onboarding", element: <Onboarding /> },
         { path: "/", element: <ProtectedRoute><Home /></ProtectedRoute> },
