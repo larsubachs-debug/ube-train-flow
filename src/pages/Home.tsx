@@ -12,9 +12,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DailyCheckinCard } from "@/components/checkin/DailyCheckinCard";
 import { DailyTasksCard } from "@/components/tasks/DailyTasksCard";
-import { SpontaneousActivityDialog } from "@/components/workouts/SpontaneousActivityDialog";
-import { CardioActivityDialog } from "@/components/workouts/CardioActivityDialog";
-import { LiveCardioTracker } from "@/components/cardio/LiveCardioTracker";
+import { UnplannedWorkoutDialog } from "@/components/workouts/UnplannedWorkoutDialog";
 import { WeeklyTaskProgress } from "@/components/tasks/WeeklyTaskProgress";
 import { useBranding } from "@/hooks/useBranding";
 import { StreakIndicator } from "@/components/StreakIndicator";
@@ -205,11 +203,9 @@ const Home = () => {
           </ComponentErrorBoundary>
         </div>
 
-        {/* Spontaneous Activity */}
-        <div data-tour="activity" className="space-y-2">
-          <LiveCardioTracker />
-          <SpontaneousActivityDialog />
-          <CardioActivityDialog />
+        {/* Niet geplande workout */}
+        <div data-tour="activity">
+          <UnplannedWorkoutDialog />
         </div>
 
         {/* Daily Check-in */}

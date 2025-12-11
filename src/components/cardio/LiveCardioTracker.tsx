@@ -39,10 +39,15 @@ interface Coordinate {
   lng: number;
 }
 
-export const LiveCardioTracker = () => {
+interface LiveCardioTrackerProps {
+  autoStart?: boolean;
+  onClose?: () => void;
+}
+
+export const LiveCardioTracker = ({ autoStart = false, onClose }: LiveCardioTrackerProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoStart);
   const [isTracking, setIsTracking] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
@@ -258,21 +263,35 @@ export const LiveCardioTracker = () => {
 
   const selectedType = CARDIO_TYPES.find((t) => t.value === activityType);
 
+  const handleOpenChange = (o: boolean) => {
+    if (!o && isTracking) {
+      toast.error("Stop eerst de tracking voordat je sluit");
+      return;
+    }
+    setOpen(o);
+    if (!o) {
+      resetAll();
+      onClose?.();
+    }
+  };
+
+  // Auto-start when opened via autoStart prop
+  useEffect(() => {
+    if (autoStart && open && !isTracking && !isStopping) {
+      handleStart();
+    }
+  }, [autoStart, open]);
+
   return (
-    <Dialog open={open} onOpenChange={(o) => {
-      if (!o && isTracking) {
-        toast.error("Stop eerst de tracking voordat je sluit");
-        return;
-      }
-      setOpen(o);
-      if (!o) resetAll();
-    }}>
-      <DialogTrigger asChild>
-        <Button className="w-full gap-2 bg-accent hover:bg-accent/90">
-          <Play className="w-4 h-4" />
-          Live Cardio Starten
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {!autoStart && (
+        <DialogTrigger asChild>
+          <Button className="w-full gap-2 bg-accent hover:bg-accent/90">
+            <Play className="w-4 h-4" />
+            Live Cardio Starten
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
