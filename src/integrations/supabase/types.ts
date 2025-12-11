@@ -921,6 +921,51 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          coach_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          status: string
+          token: string
+        }
+        Insert: {
+          coach_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          status?: string
+          token?: string
+        }
+        Update: {
+          coach_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "invitations_coach_id_fkey"
+            columns: ["coach_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kudos: {
         Row: {
           created_at: string

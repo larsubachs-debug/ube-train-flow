@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Check, X, UserPlus, Loader2, Mail, Shield, Settings, Calendar, GripVertical } from "lucide-react";
+import { InviteMemberDialog } from "@/components/admin/InviteMemberDialog";
 import { MemberManagementDialog } from "@/components/admin/MemberManagementDialog";
 import { BulkActionToolbar } from "@/components/admin/BulkActionToolbar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -301,13 +302,15 @@ const AdminMembers = () => {
             <h1 className="text-3xl font-bold text-foreground">Member Management</h1>
             <p className="text-muted-foreground">Approve or reject member requests</p>
           </div>
-          <Dialog open={isCreating} onOpenChange={setIsCreating}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Create Member
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <InviteMemberDialog />
+            <Dialog open={isCreating} onOpenChange={setIsCreating}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Direct Account
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Member</DialogTitle>
@@ -356,6 +359,7 @@ const AdminMembers = () => {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
