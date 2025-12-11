@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,10 +30,15 @@ const signupSchema = loginSchema.extend({
 const Auth = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [signupPassword, setSignupPassword] = useState("");
+  
+  // Check if user came from an invite link
+  const inviteToken = searchParams.get("invite");
+  const defaultTab = inviteToken ? "signup" : "login";
 
   // Redirect if already logged in
   if (user) {
@@ -126,15 +131,22 @@ const Auth = () => {
             </div>
             <div>
               <CardTitle className="text-2xl font-medium text-foreground">
-                All About <span className="font-bold text-accent">U</span>
+                {inviteToken ? (
+                  <>Welkom bij <span className="font-bold text-accent">U.be</span></>
+                ) : (
+                  <>All About <span className="font-bold text-accent">U</span></>
+                )}
               </CardTitle>
               <CardDescription className="text-base mt-2">
-                {t('auth.signInOrCreate', 'Sign in to your account or create a new one')}
+                {inviteToken 
+                  ? "Je bent uitgenodigd! Maak een account aan om te starten."
+                  : t('auth.signInOrCreate', 'Sign in to your account or create a new one')
+                }
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent className="pb-8">
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6 h-12">
                 <TabsTrigger value="login" className="text-base">{t('auth.login', 'Sign In')}</TabsTrigger>
                 <TabsTrigger value="signup" className="text-base">{t('auth.signup', 'Sign Up')}</TabsTrigger>
