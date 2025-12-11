@@ -12,6 +12,15 @@ const PendingApproval = () => {
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(false);
   const [checkAttempts, setCheckAttempts] = useState(0);
+  const [forceShowContent, setForceShowContent] = useState(false);
+
+  // Force show content after 3 seconds to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setForceShowContent(true);
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, []);
 
   // Auto-check approval status and redirect if approved
   useEffect(() => {
@@ -76,7 +85,7 @@ const PendingApproval = () => {
   };
 
   // Show loading only briefly
-  if (loading) {
+  if (loading && !forceShowContent) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md p-8 text-center">
