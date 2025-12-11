@@ -251,6 +251,66 @@ export type Database = {
         }
         Relationships: []
       }
+      cardio_activities: {
+        Row: {
+          activity_type: string
+          average_pace_seconds_per_km: number | null
+          average_speed_kmh: number | null
+          calories_burned: number | null
+          completed_at: string
+          created_at: string
+          distance_meters: number | null
+          duration_seconds: number | null
+          elevation_gain_meters: number | null
+          end_location: Json | null
+          id: string
+          name: string | null
+          notes: string | null
+          route_coordinates: Json | null
+          start_location: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          average_pace_seconds_per_km?: number | null
+          average_speed_kmh?: number | null
+          calories_burned?: number | null
+          completed_at?: string
+          created_at?: string
+          distance_meters?: number | null
+          duration_seconds?: number | null
+          elevation_gain_meters?: number | null
+          end_location?: Json | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          route_coordinates?: Json | null
+          start_location?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          average_pace_seconds_per_km?: number | null
+          average_speed_kmh?: number | null
+          calories_burned?: number | null
+          completed_at?: string
+          created_at?: string
+          distance_meters?: number | null
+          duration_seconds?: number | null
+          elevation_gain_meters?: number | null
+          end_location?: Json | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          route_coordinates?: Json | null
+          start_location?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       challenge_participants: {
         Row: {
           challenge_id: string
