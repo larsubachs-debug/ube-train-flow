@@ -59,7 +59,14 @@ export const InviteMemberDialog = () => {
   });
 
   const handleInvite = async () => {
-    if (!user || !profile?.id) return;
+    if (!user) {
+      toast.error("Je moet ingelogd zijn om een uitnodiging te versturen");
+      return;
+    }
+    if (!profile?.id) {
+      toast.error("Je profiel kon niet worden geladen. Probeer de pagina te vernieuwen.");
+      return;
+    }
     if (!email.trim() || !email.includes("@")) {
       toast.error("Vul een geldig e-mailadres in");
       return;
