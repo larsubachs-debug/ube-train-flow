@@ -264,6 +264,7 @@ export type Database = {
           elevation_gain_meters: number | null
           end_location: Json | null
           id: string
+          is_public: boolean | null
           name: string | null
           notes: string | null
           route_coordinates: Json | null
@@ -283,6 +284,7 @@ export type Database = {
           elevation_gain_meters?: number | null
           end_location?: Json | null
           id?: string
+          is_public?: boolean | null
           name?: string | null
           notes?: string | null
           route_coordinates?: Json | null
@@ -302,10 +304,47 @@ export type Database = {
           elevation_gain_meters?: number | null
           end_location?: Json | null
           id?: string
+          is_public?: boolean | null
           name?: string | null
           notes?: string | null
           route_coordinates?: Json | null
           start_location?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cardio_goals: {
+        Row: {
+          activity_type: string | null
+          created_at: string
+          goal_type: string
+          id: string
+          is_active: boolean
+          period: string
+          target_value: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_type?: string | null
+          created_at?: string
+          goal_type: string
+          id?: string
+          is_active?: boolean
+          period?: string
+          target_value: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string | null
+          created_at?: string
+          goal_type?: string
+          id?: string
+          is_active?: boolean
+          period?: string
+          target_value?: number
           updated_at?: string
           user_id?: string
         }

@@ -11,6 +11,8 @@ import { WeightProgressChart } from "@/components/dashboard/WeightProgressChart"
 import { ProgressPhotosComparison } from "@/components/dashboard/ProgressPhotosComparison";
 import { BodyMetricsTimeline } from "@/components/dashboard/BodyMetricsTimeline";
 import { RecentCardioSection } from "@/components/cardio/RecentCardioSection";
+import { CardioGoalsCard } from "@/components/cardio/CardioGoalsCard";
+import { CardioLeaderboard } from "@/components/cardio/CardioLeaderboard";
 import { useTranslation } from "react-i18next";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 
@@ -192,6 +194,12 @@ const Dashboard = () => {
 
       {/* Cardio Activities */}
       <RecentCardioSection />
+
+      {/* Cardio Goals */}
+      <CardioGoalsCard />
+
+      {/* Cardio Leaderboard */}
+      <CardioLeaderboard />
 
       {/* Recent PRs - compacter op mobiel */}
       {stats?.recentPRs && stats.recentPRs.length > 0 && (
