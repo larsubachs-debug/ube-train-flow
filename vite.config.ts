@@ -29,25 +29,25 @@ export default defineConfig(({ mode }) => ({
         categories: ['fitness', 'health', 'lifestyle'],
         icons: [
           {
-            src: '/ube-logo.png',
+            src: '/ube-app-icon.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/ube-logo.png',
+            src: '/ube-app-icon.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/ube-logo.png',
+            src: '/ube-app-icon.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
           },
           {
-            src: '/ube-logo.png',
+            src: '/ube-app-icon.png',
             sizes: '1024x1024',
             type: 'image/png',
             purpose: 'any'
