@@ -13,6 +13,7 @@ import ubeLogo from "@/assets/ube-logo.png";
 import { LuxuryBackground } from "@/components/auth/LuxuryBackground";
 import { useTranslation } from "react-i18next";
 import { PasswordStrength } from "@/components/ui/PasswordStrength";
+import { supabase } from "@/integrations/supabase/client";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Invalid email address"),
@@ -45,6 +46,83 @@ const Auth = () => {
     navigate("/", { replace: true });
     return null;
   }
+
+  const processInvitation = async (userId: string, userEmail: string) => {
+    if (!inviteToken) return;
+
+    try {
+      // Find the invitation by token
+      const { data: invitation, error: inviteError } = await supabase
+        .from("invitations")
+        .select("*")
+        .eq("token", inviteToken)
+        .eq("status", "pending")
+        .single();
+
+      if (inviteError || !invitation) {
+        console.error("Invalid or expired invitation:", inviteError);
+        return;
+      }
+
+      // Check if invitation email matches (case insensitive)
+      if (invitation.email.toLowerCase() !== userEmail.toLowerCase()) {
+        console.error("Email mismatch for invitation");
+        return;
+      }
+
+      // Check if invitation is expired
+      if (new Date(invitation.expires_at) < new Date()) {
+        console.error("Invitation expired");
+        return;
+      }
+
+      // Wait for profile to be created by trigger, with retry
+      let profileExists = false;
+      for (let i = 0; i < 5; i++) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle();
+        
+        if (profile) {
+          profileExists = true;
+          break;
+        }
+        // Wait 500ms before retry
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      if (!profileExists) {
+        console.error("Profile not created in time");
+        return;
+      }
+
+      // Update the user's profile to approved and link to coach
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          approval_status: "approved",
+          coach_id: invitation.coach_id,
+        })
+        .eq("user_id", userId);
+
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+        return;
+      }
+
+      // Mark invitation as accepted
+      await supabase
+        .from("invitations")
+        .update({ status: "accepted" })
+        .eq("id", invitation.id);
+
+      console.log("Invitation processed successfully");
+    } catch (error) {
+      console.error("Error processing invitation:", error);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -115,7 +193,21 @@ const Auth = () => {
         description: t('auth.signupSuccess', 'Your account has been created. You can now sign in.'),
       });
       // Auto sign in after successful signup
-      await signIn(email, password);
+      const signInResult = await signIn(email, password);
+      
+      if (!signInResult.error) {
+        // Get the current user after sign in
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        
+        // Process invitation if there's a token
+        if (currentUser && inviteToken) {
+          await processInvitation(currentUser.id, email);
+          // Force full reload to refresh auth state after invitation processing
+          window.location.href = "/";
+          return;
+        }
+      }
+      
       navigate("/");
     }
   };
