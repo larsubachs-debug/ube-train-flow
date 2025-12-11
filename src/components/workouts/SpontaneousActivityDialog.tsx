@@ -18,9 +18,14 @@ interface Exercise {
   notes: string;
 }
 
-export const SpontaneousActivityDialog = () => {
+interface SpontaneousActivityDialogProps {
+  autoOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const SpontaneousActivityDialog = ({ autoOpen = false, onClose }: SpontaneousActivityDialogProps) => {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workoutName, setWorkoutName] = useState("");
   const [notes, setNotes] = useState("");
@@ -105,14 +110,21 @@ export const SpontaneousActivityDialog = () => {
     }
   };
 
+  const handleOpenChange = (o: boolean) => {
+    setOpen(o);
+    if (!o) onClose?.();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full gap-2" variant="outline">
-          <Zap className="w-4 h-4" />
-          Spontane activiteit loggen
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {!autoOpen && (
+        <DialogTrigger asChild>
+          <Button className="w-full gap-2" variant="outline">
+            <Zap className="w-4 h-4" />
+            Spontane activiteit loggen
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
