@@ -14,6 +14,7 @@ import { DailyCheckinCard } from "@/components/checkin/DailyCheckinCard";
 import { DailyTasksCard } from "@/components/tasks/DailyTasksCard";
 import { SpontaneousActivityDialog } from "@/components/workouts/SpontaneousActivityDialog";
 import { CardioActivityDialog } from "@/components/workouts/CardioActivityDialog";
+import { LiveCardioTracker } from "@/components/cardio/LiveCardioTracker";
 import { WeeklyTaskProgress } from "@/components/tasks/WeeklyTaskProgress";
 import { useBranding } from "@/hooks/useBranding";
 import { StreakIndicator } from "@/components/StreakIndicator";
@@ -206,6 +207,7 @@ const Home = () => {
 
         {/* Spontaneous Activity */}
         <div data-tour="activity" className="space-y-2">
+          <LiveCardioTracker />
           <SpontaneousActivityDialog />
           <CardioActivityDialog />
         </div>
