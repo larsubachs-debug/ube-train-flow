@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DailyCheckinCard } from "@/components/checkin/DailyCheckinCard";
 import { DailyTasksCard } from "@/components/tasks/DailyTasksCard";
 import { SpontaneousActivityDialog } from "@/components/workouts/SpontaneousActivityDialog";
+import { CardioActivityDialog } from "@/components/workouts/CardioActivityDialog";
 import { WeeklyTaskProgress } from "@/components/tasks/WeeklyTaskProgress";
 import { useBranding } from "@/hooks/useBranding";
 import { StreakIndicator } from "@/components/StreakIndicator";
@@ -204,8 +205,9 @@ const Home = () => {
         </div>
 
         {/* Spontaneous Activity */}
-        <div data-tour="activity">
+        <div data-tour="activity" className="space-y-2">
           <SpontaneousActivityDialog />
+          <CardioActivityDialog />
         </div>
 
         {/* Daily Check-in */}
