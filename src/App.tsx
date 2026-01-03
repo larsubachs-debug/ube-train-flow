@@ -50,6 +50,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Agenda = lazy(() => import("./pages/Agenda"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Nutrition = lazy(() => import("./pages/Nutrition"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -100,6 +101,7 @@ const router = createBrowserRouter(
         { path: "/dashboard", element: <ProtectedRoute><Dashboard /></ProtectedRoute> },
         { path: "/agenda", element: <ProtectedRoute><Agenda /></ProtectedRoute> },
         { path: "/analytics", element: <ProtectedRoute><Analytics /></ProtectedRoute> },
+        { path: "/nutrition", element: <ProtectedRoute><Nutrition /></ProtectedRoute> },
         { path: "/admin/programs", element: <ProtectedRoute requiredRole="coach"><AdminPrograms /></ProtectedRoute> },
         { path: "/admin/members", element: <ProtectedRoute requiredRole="coach"><AdminMembers /></ProtectedRoute> },
         { path: "/admin/checkins", element: <ProtectedRoute requiredRole="coach"><AdminCheckins /></ProtectedRoute> },
