@@ -1,24 +1,37 @@
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, Dumbbell, User, MessageCircle } from "lucide-react";
+import { Calendar, Dumbbell, User, MessageCircle, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
 
 const BottomNav = () => {
   const location = useLocation();
   const { t } = useTranslation();
+  const { hasRole } = useAuth();
+  
+  const isCoach = hasRole("coach");
 
-  const navItems = [
-    { path: "/", icon: Calendar, labelKey: "time.today" },
-    { path: "/programs", icon: Dumbbell, labelKey: "nav.programs" },
-    { path: "/chat", icon: MessageCircle, labelKey: "nav.chat" },
-    { path: "/account", icon: User, labelKey: "nav.account" },
-  ];
+  // Coach sees "Members" instead of "Chat" - direct access to their core task
+  const navItems = isCoach
+    ? [
+        { path: "/coach/dashboard", icon: Users, labelKey: "coach.members" },
+        { path: "/admin/programs", icon: Dumbbell, labelKey: "nav.programs" },
+        { path: "/admin/checkins", icon: Calendar, labelKey: "coach.checkins" },
+        { path: "/account", icon: User, labelKey: "nav.account" },
+      ]
+    : [
+        { path: "/", icon: Calendar, labelKey: "time.today" },
+        { path: "/programs", icon: Dumbbell, labelKey: "nav.programs" },
+        { path: "/chat", icon: MessageCircle, labelKey: "nav.chat" },
+        { path: "/account", icon: User, labelKey: "nav.account" },
+      ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path || 
+            (item.path === "/coach/dashboard" && location.pathname.startsWith("/coach"));
           
           return (
             <Link
