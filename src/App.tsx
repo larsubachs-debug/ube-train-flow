@@ -38,6 +38,8 @@ const AdminTasks = lazy(() => import("./pages/AdminTasks"));
 const AdminBranding = lazy(() => import("./pages/AdminBranding"));
 const AdminFeedback = lazy(() => import("./pages/AdminFeedback"));
 const CoachDashboard = lazy(() => import("./pages/CoachDashboard"));
+const CoachClients = lazy(() => import("./pages/CoachClients"));
+const CoachNotifications = lazy(() => import("./pages/CoachNotifications"));
 const Chat = lazy(() => import("./pages/Chat"));
 const CoachChat = lazy(() => import("./pages/CoachChat"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -109,6 +111,8 @@ const router = createBrowserRouter(
         { path: "/admin/branding", element: <ProtectedRoute requiredRole="coach"><AdminBranding /></ProtectedRoute> },
         { path: "/admin/feedback", element: <ProtectedRoute requiredRole="coach"><AdminFeedback /></ProtectedRoute> },
         { path: "/coach/dashboard", element: <ProtectedRoute requiredRole="coach"><CoachDashboard /></ProtectedRoute> },
+        { path: "/coach/clients", element: <ProtectedRoute requiredRole="coach"><CoachClients /></ProtectedRoute> },
+        { path: "/coach/notifications", element: <ProtectedRoute requiredRole="coach"><CoachNotifications /></ProtectedRoute> },
         { path: "/coach/chat/:memberId", element: <ProtectedRoute requiredRole="coach"><CoachChat /></ProtectedRoute> },
         { path: "/chat", element: <ProtectedRoute><Chat /></ProtectedRoute> },
         { path: "/install", element: <Install /> },

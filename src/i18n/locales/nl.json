@@ -44,7 +44,8 @@
     "analytics": "Statistieken",
     "media": "Media",
     "checkIn": "Check-in",
-    "membership": "Lidmaatschap"
+    "membership": "Lidmaatschap",
+    "notifications": "Meldingen"
   },
   "auth": {
     "login": "Inloggen",
@@ -295,6 +296,7 @@
   "coach": {
     "dashboard": "Coach Dashboard",
     "members": "Leden",
+    "clients": "Cliënten",
     "myMembers": "Mijn Leden",
     "noMembersTitle": "Nog geen leden",
     "noMembersDescription": "Leden verschijnen hier zodra ze aan jou zijn toegewezen.",
