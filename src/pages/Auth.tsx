@@ -172,7 +172,7 @@ const Auth = () => {
         
         // Redirect based on actual role
         if (hasAdminOrCoach) {
-          navigate("/coach-dashboard");
+          navigate("/coach/dashboard");
         } else {
           navigate("/dashboard");
         }
