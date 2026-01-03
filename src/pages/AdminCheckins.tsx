@@ -1,21 +1,23 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Trash2, Users } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { AdminCheckinAssignment } from "@/components/checkin/AdminCheckinAssignment";
+import { useTranslation } from "react-i18next";
+import BottomNav from "@/components/BottomNav";
 
 export default function AdminCheckins() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [newQuestion, setNewQuestion] = useState({
     question_text: "",
@@ -41,8 +43,8 @@ export default function AdminCheckins() {
   const handleCreateQuestion = async () => {
     if (!newQuestion.question_text) {
       toast({
-        title: "Fout",
-        description: "Vraag tekst is verplicht",
+        title: t('errors.somethingWentWrong'),
+        description: t('coach.questionRequired'),
         variant: "destructive"
       });
       return;
@@ -61,16 +63,16 @@ export default function AdminCheckins() {
 
     if (error) {
       toast({
-        title: "Fout",
-        description: "Kon vraag niet aanmaken",
+        title: t('errors.savingFailed'),
+        description: t('errors.tryAgain'),
         variant: "destructive"
       });
       return;
     }
 
     toast({
-      title: "Succesvol",
-      description: "Vraag is toegevoegd aan de bibliotheek"
+      title: t('common.success'),
+      description: t('coach.questionAdded')
     });
 
     setNewQuestion({
@@ -83,7 +85,7 @@ export default function AdminCheckins() {
   };
 
   const handleDeleteQuestion = async (id: string) => {
-    if (!confirm('Weet je zeker dat je deze vraag wilt verwijderen?')) return;
+    if (!confirm(t('coach.confirmDeleteQuestion'))) return;
 
     const { error } = await supabase
       .from('checkin_questions')
@@ -92,16 +94,16 @@ export default function AdminCheckins() {
 
     if (error) {
       toast({
-        title: "Fout",
-        description: "Kon vraag niet verwijderen",
+        title: t('errors.somethingWentWrong'),
+        description: t('errors.tryAgain'),
         variant: "destructive"
       });
       return;
     }
 
     toast({
-      title: "Succesvol",
-      description: "Vraag is verwijderd"
+      title: t('common.success'),
+      description: t('coach.questionDeleted')
     });
 
     queryClient.invalidateQueries({ queryKey: ['checkin-questions'] });
@@ -115,8 +117,8 @@ export default function AdminCheckins() {
 
     if (error) {
       toast({
-        title: "Fout",
-        description: "Kon standaard status niet wijzigen",
+        title: t('errors.somethingWentWrong'),
+        description: t('errors.tryAgain'),
         variant: "destructive"
       });
       return;
@@ -126,19 +128,20 @@ export default function AdminCheckins() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       <div className="p-6 max-w-6xl mx-auto">
+        {/* Coach-specific header with clear context */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Check-in Beheer</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">{t('coach.checkinsTitle')}</h1>
           <p className="text-muted-foreground">
-            Beheer vragen en wijs ze toe aan members
+            {t('coach.checkinsDescription')}
           </p>
         </div>
 
         <Tabs defaultValue="questions" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="questions">Vragenbibliotheek</TabsTrigger>
-            <TabsTrigger value="assign">Toewijzen aan Members</TabsTrigger>
+            <TabsTrigger value="questions">{t('coach.questionsLibrary')}</TabsTrigger>
+            <TabsTrigger value="assign">{t('coach.assignToMembers')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="questions" className="space-y-6">
@@ -249,6 +252,7 @@ export default function AdminCheckins() {
           </TabsContent>
         </Tabs>
       </div>
+      <BottomNav />
     </div>
   );
 }

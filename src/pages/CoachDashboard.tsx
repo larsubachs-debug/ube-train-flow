@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
-import { Users, TrendingUp, Calendar, Award, MessageCircle, UserPlus, Send, BarChart } from "lucide-react";
+import { Users, TrendingUp, Calendar, Award, MessageCircle, UserPlus, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { ProgramAssigner } from "@/components/admin/ProgramAssigner";
@@ -18,6 +18,8 @@ import { BulkMessagingDialog } from "@/components/admin/BulkMessagingDialog";
 import { MemberComparison } from "@/components/admin/MemberComparison";
 import { PeriodizationPlanner } from "@/components/admin/PeriodizationPlanner";
 import { ProgressAlertsCard } from "@/components/admin/ProgressAlertsCard";
+import { useTranslation } from "react-i18next";
+import BottomNav from "@/components/BottomNav";
 
 interface Member {
   member_id: string;
@@ -43,6 +45,7 @@ interface CheckIn {
 const CoachDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [memberStats, setMemberStats] = useState<MemberStats | null>(null);
@@ -160,40 +163,42 @@ const CoachDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background p-6 pb-20">
+      <div className="min-h-screen bg-background p-6 pb-24">
         <Skeleton className="h-8 w-48 mb-6" />
         <div className="grid gap-4">
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
         </div>
+        <BottomNav />
       </div>
     );
   }
 
   if (members.length === 0) {
     return (
-      <div className="min-h-screen bg-background p-6 pb-20">
-        <h1 className="text-2xl font-bold mb-6">Mijn Members</h1>
+      <div className="min-h-screen bg-background p-6 pb-24">
+        <h1 className="text-2xl font-bold tracking-tight mb-6">{t('coach.myMembers')}</h1>
         <Card className="p-8 text-center">
           <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-xl font-semibold mb-2">Nog geen members</h2>
+          <h2 className="text-xl font-semibold mb-2">{t('coach.noMembersTitle')}</h2>
           <p className="text-muted-foreground">
-            Er zijn nog geen members aan jou toegewezen.
+            {t('coach.noMembersDescription')}
           </p>
         </Card>
+        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6">Mijn Members</h1>
+        <h1 className="text-2xl font-bold tracking-tight mb-6">{t('coach.myMembers')}</h1>
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overzicht</TabsTrigger>
+            <TabsTrigger value="overview">{t('common.all')}</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="planning">Planning</TabsTrigger>
@@ -358,10 +363,10 @@ const CoachDashboard = () => {
                 </Card>
 
                 <Card className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">Recent Check-ins</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('coach.recentCheckins')}</h3>
                   {memberCheckIns.length === 0 ? (
                     <p className="text-muted-foreground text-center py-8">
-                      Nog geen check-ins
+                      {t('coach.noCheckinsYet')}
                     </p>
                   ) : (
                     <div className="space-y-3">
@@ -400,7 +405,7 @@ const CoachDashboard = () => {
               onClick={() => setShowBulkMessage(true)}
             >
               <Send className="w-4 h-4" />
-              Bulk Bericht Versturen
+              {t('coach.sendMessage')}
             </Button>
           </TabsContent>
         </Tabs>
@@ -422,6 +427,8 @@ const CoachDashboard = () => {
         members={members}
         preSelectedMembers={selectedMembers}
       />
+      
+      <BottomNav />
     </div>
   );
 };
