@@ -177,10 +177,10 @@ const Auth = () => {
         if (hasAdminOrCoach && userType === "coach") {
           navigate("/coach/dashboard");
         } else {
-          navigate("/dashboard");
+          navigate("/");
         }
       } else {
-        navigate("/dashboard");
+        navigate("/");
       }
     }
   };
