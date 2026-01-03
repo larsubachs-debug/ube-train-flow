@@ -161,15 +161,17 @@ const Auth = () => {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       
       if (currentUser) {
-        // Fetch the user's role from the database
-        const { data: roleData } = await supabase
+        // Fetch the user's highest role from the database (admin > coach > member)
+        const { data: roles } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", currentUser.id)
-          .maybeSingle();
+          .eq("user_id", currentUser.id);
+        
+        // Check if user has admin or coach role
+        const hasAdminOrCoach = roles?.some(r => r.role === "admin" || r.role === "coach");
         
         // Redirect based on actual role
-        if (roleData?.role === "coach" || roleData?.role === "admin") {
+        if (hasAdminOrCoach) {
           navigate("/coach-dashboard");
         } else {
           navigate("/dashboard");
