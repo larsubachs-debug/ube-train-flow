@@ -157,7 +157,26 @@ const Auth = () => {
       });
       setIsLoading(false);
     } else {
-      navigate("/");
+      // Get the current user and check their role
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      if (currentUser) {
+        // Fetch the user's role from the database
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", currentUser.id)
+          .maybeSingle();
+        
+        // Redirect based on actual role
+        if (roleData?.role === "coach" || roleData?.role === "admin") {
+          navigate("/coach-dashboard");
+        } else {
+          navigate("/dashboard");
+        }
+      } else {
+        navigate("/dashboard");
+      }
     }
   };
 
