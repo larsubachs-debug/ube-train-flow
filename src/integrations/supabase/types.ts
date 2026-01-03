@@ -1162,6 +1162,48 @@ export type Database = {
           },
         ]
       }
+      nutrition_goals: {
+        Row: {
+          calories_target: number | null
+          carbs_target: number | null
+          created_at: string
+          fat_target: number | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          protein_target: number | null
+          set_by: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calories_target?: number | null
+          carbs_target?: number | null
+          created_at?: string
+          fat_target?: number | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          protein_target?: number | null
+          set_by?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calories_target?: number | null
+          carbs_target?: number | null
+          created_at?: string
+          fat_target?: number | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          protein_target?: number | null
+          set_by?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
