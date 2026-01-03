@@ -1,257 +1,251 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Trash2 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { AdminCheckinAssignment } from "@/components/checkin/AdminCheckinAssignment";
-import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDistanceToNow, startOfWeek, startOfDay, subDays, isWithinInterval } from "date-fns";
+import { nl } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
+import { Check, ChevronRight } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 
-export default function AdminCheckins() {
-  const { toast } = useToast();
-  const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const [newQuestion, setNewQuestion] = useState({
-    question_text: "",
-    question_type: "text",
-    is_default: false
-  });
-  const [isCreating, setIsCreating] = useState(false);
+type TimeFilter = "week" | "today" | "yesterday";
 
-  // Fetch all questions
-  const { data: questions = [], isLoading } = useQuery({
-    queryKey: ['checkin-questions'],
+export default function AdminCheckins() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("week");
+
+  // Get coach profile
+  const { data: coachProfile } = useQuery({
+    queryKey: ["coach-profile", user?.id],
     queryFn: async () => {
+      if (!user?.id) return null;
       const { data, error } = await supabase
-        .from('checkin_questions')
-        .select('*')
-        .order('display_order');
-      
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Get members assigned to this coach
+  const { data: members = [] } = useQuery({
+    queryKey: ["coach-members", coachProfile?.id],
+    queryFn: async () => {
+      if (!coachProfile?.id) return [];
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, user_id, display_name, avatar_url")
+        .eq("coach_id", coachProfile.id)
+        .eq("approval_status", "approved");
       if (error) throw error;
       return data || [];
-    }
+    },
+    enabled: !!coachProfile?.id,
   });
 
-  const handleCreateQuestion = async () => {
-    if (!newQuestion.question_text) {
-      toast({
-        title: t('errors.somethingWentWrong'),
-        description: t('coach.questionRequired'),
-        variant: "destructive"
-      });
-      return;
-    }
+  // Get all check-ins for these members
+  const { data: checkins = [], isLoading } = useQuery({
+    queryKey: ["coach-checkins", members.map(m => m.user_id)],
+    queryFn: async () => {
+      if (members.length === 0) return [];
+      const userIds = members.map(m => m.user_id);
+      const { data, error } = await supabase
+        .from("daily_checkins")
+        .select("*")
+        .in("user_id", userIds)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: members.length > 0,
+  });
 
-    setIsCreating(true);
+  // Filter check-ins based on time filter
+  const filteredCheckins = useMemo(() => {
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const yesterdayStart = startOfDay(subDays(now, 1));
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
 
-    const { error } = await supabase
-      .from('checkin_questions')
-      .insert({
-        ...newQuestion,
-        display_order: questions.length
-      });
-
-    setIsCreating(false);
-
-    if (error) {
-      toast({
-        title: t('errors.savingFailed'),
-        description: t('errors.tryAgain'),
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: t('common.success'),
-      description: t('coach.questionAdded')
+    return checkins.filter((checkin) => {
+      const checkinDate = new Date(checkin.created_at);
+      
+      switch (timeFilter) {
+        case "today":
+          return isWithinInterval(checkinDate, { start: todayStart, end: now });
+        case "yesterday":
+          return isWithinInterval(checkinDate, { start: yesterdayStart, end: todayStart });
+        case "week":
+        default:
+          return isWithinInterval(checkinDate, { start: weekStart, end: now });
+      }
     });
+  }, [checkins, timeFilter]);
 
-    setNewQuestion({
-      question_text: "",
-      question_type: "text",
-      is_default: false
-    });
+  // Calculate stats
+  const stats = useMemo(() => {
+    const pending = filteredCheckins.filter(c => !c.completed_at).length;
+    const reviewed = filteredCheckins.filter(c => c.completed_at).length;
+    const total = pending + reviewed;
+    const percentage = total > 0 ? Math.round((reviewed / total) * 100) : 0;
+    
+    return { pending, reviewed, total, percentage };
+  }, [filteredCheckins]);
 
-    queryClient.invalidateQueries({ queryKey: ['checkin-questions'] });
+  // Get member info for a check-in
+  const getMember = (userId: string) => {
+    return members.find(m => m.user_id === userId);
   };
 
-  const handleDeleteQuestion = async (id: string) => {
-    if (!confirm(t('coach.confirmDeleteQuestion'))) return;
+  // Circular progress component
+  const CircularProgress = ({ percentage }: { percentage: number }) => {
+    const radius = 60;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-    const { error } = await supabase
-      .from('checkin_questions')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        title: t('errors.somethingWentWrong'),
-        description: t('errors.tryAgain'),
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: t('common.success'),
-      description: t('coach.questionDeleted')
-    });
-
-    queryClient.invalidateQueries({ queryKey: ['checkin-questions'] });
-  };
-
-  const handleToggleDefault = async (id: string, currentDefault: boolean) => {
-    const { error } = await supabase
-      .from('checkin_questions')
-      .update({ is_default: !currentDefault })
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        title: t('errors.somethingWentWrong'),
-        description: t('errors.tryAgain'),
-        variant: "destructive"
-      });
-      return;
-    }
-
-    queryClient.invalidateQueries({ queryKey: ['checkin-questions'] });
+    return (
+      <div className="relative w-40 h-40 mx-auto">
+        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 140 140">
+          {/* Background circle */}
+          <circle
+            cx="70"
+            cy="70"
+            r={radius}
+            fill="none"
+            stroke="hsl(var(--muted))"
+            strokeWidth="12"
+          />
+          {/* Progress circle */}
+          <circle
+            cx="70"
+            cy="70"
+            r={radius}
+            fill="none"
+            stroke="hsl(var(--foreground))"
+            strokeWidth="12"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            className="transition-all duration-500 ease-out"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-3xl font-bold">{percentage}%</span>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="p-6 max-w-6xl mx-auto">
-        {/* Coach-specific header with clear context */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">{t('coach.checkinsTitle')}</h1>
-          <p className="text-muted-foreground">
-            {t('coach.checkinsDescription')}
-          </p>
+    <div className="min-h-screen bg-background pb-20">
+      <div className="p-4 space-y-6">
+        {/* Header */}
+        <h1 className="text-2xl font-bold">Check Ins</h1>
+
+        {/* Time filter tabs */}
+        <div className="flex gap-4 border-b border-border">
+          {(["week", "today", "yesterday"] as TimeFilter[]).map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setTimeFilter(filter)}
+              className={`pb-2 text-sm font-medium transition-colors capitalize ${
+                timeFilter === filter
+                  ? "text-foreground border-b-2 border-foreground"
+                  : "text-muted-foreground"
+              }`}
+            >
+              {filter === "week" ? "Week" : filter === "today" ? "Today" : "Yesterday"}
+            </button>
+          ))}
         </div>
 
-        <Tabs defaultValue="questions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="questions">{t('coach.questionsLibrary')}</TabsTrigger>
-            <TabsTrigger value="assign">{t('coach.assignToMembers')}</TabsTrigger>
-          </TabsList>
+        {/* Progress Card */}
+        <Card className="p-6 bg-muted/30">
+          <CircularProgress percentage={stats.percentage} />
+          
+          <div className="flex items-center justify-center gap-6 mt-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-accent" />
+              <span className="text-sm text-muted-foreground">
+                {stats.pending} Pending
+              </span>
+            </div>
+            <div className="text-muted-foreground">|</div>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-foreground" />
+              <span className="text-sm text-muted-foreground">
+                {stats.reviewed} Reviewed
+              </span>
+            </div>
+          </div>
+        </Card>
 
-          <TabsContent value="questions" className="space-y-6">
-            {/* Create New Question */}
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Plus className="h-5 w-5" />
-                Nieuwe Vraag Toevoegen
-              </h2>
+        {/* Check-ins list */}
+        <div className="space-y-3">
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+          ) : filteredCheckins.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No check-ins for this period
+            </div>
+          ) : (
+            filteredCheckins.map((checkin) => {
+              const member = getMember(checkin.user_id);
+              const isReviewed = !!checkin.completed_at;
               
-              <div className="space-y-4">
-                <div>
-                  <Label>Vraag</Label>
-                  <Textarea
-                    value={newQuestion.question_text}
-                    onChange={(e) => setNewQuestion({ ...newQuestion, question_text: e.target.value })}
-                    placeholder="Bijvoorbeeld: Hoe voel je je vandaag?"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <Label>Type</Label>
-                  <Select
-                    value={newQuestion.question_type}
-                    onValueChange={(value) => setNewQuestion({ ...newQuestion, question_type: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text">Tekst</SelectItem>
-                      <SelectItem value="scale">Schaal (1-10)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={newQuestion.is_default}
-                    onCheckedChange={(checked) => setNewQuestion({ ...newQuestion, is_default: checked })}
-                  />
-                  <Label>Standaard vraag (voor alle nieuwe members)</Label>
-                </div>
-
-                <Button onClick={handleCreateQuestion} disabled={isCreating} className="w-full">
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Toevoegen...
-                    </>
-                  ) : (
-                    'Vraag Toevoegen'
-                  )}
-                </Button>
-              </div>
-            </Card>
-
-            {/* Questions List */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Alle Vragen</h2>
-              
-              {isLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : questions.length === 0 ? (
-                <Card className="p-8 text-center text-muted-foreground">
-                  Nog geen vragen toegevoegd
-                </Card>
-              ) : (
-                questions.map((question: any) => (
-                  <Card key={question.id} className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant={question.question_type === 'scale' ? 'default' : 'secondary'}>
-                            {question.question_type === 'scale' ? 'Schaal' : 'Tekst'}
-                          </Badge>
-                          {question.is_default && (
-                            <Badge variant="outline">Standaard</Badge>
-                          )}
-                        </div>
-                        <p className="text-foreground font-medium">{question.question_text}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={question.is_default}
-                          onCheckedChange={() => handleToggleDefault(question.id, question.is_default)}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteQuestion(question.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+              return (
+                <Card key={checkin.id} className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={member?.avatar_url || undefined} />
+                        <AvatarFallback className="bg-accent/20 text-accent">
+                          {member?.display_name?.charAt(0).toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{member?.display_name || "Unknown"}</p>
+                        <p className="text-sm text-muted-foreground">Weekly Check-In</p>
                       </div>
                     </div>
-                  </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="assign">
-            <AdminCheckinAssignment questions={questions} />
-          </TabsContent>
-        </Tabs>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(checkin.created_at), { 
+                        addSuffix: true,
+                        locale: nl 
+                      })}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-sm text-muted-foreground">Weekly Check-In</span>
+                    {isReviewed ? (
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <span>Reviewed</span>
+                        <Check className="h-4 w-4" />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => navigate(`/coach/checkin/${checkin.id}`)}
+                        className="flex items-center gap-1 text-sm font-medium text-accent hover:text-accent/80 transition-colors"
+                      >
+                        <span>Review Now</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </Card>
+              );
+            })
+          )}
+        </div>
       </div>
+
       <BottomNav />
     </div>
   );
