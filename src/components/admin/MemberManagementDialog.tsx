@@ -13,11 +13,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { 
   User, Dumbbell, CheckSquare, Activity, TrendingUp, 
-  Calendar, Award, Save, UserPlus, MessageCircle 
+  Calendar, Award, Save, UserPlus, MessageCircle, Apple 
 } from "lucide-react";
 import { ProgramAssigner } from "./ProgramAssigner";
 import { TaskAssignment } from "@/components/tasks/TaskAssignment";
 import { AdminCheckinAssignment } from "@/components/checkin/AdminCheckinAssignment";
+import { NutritionGoalsAssignment } from "./NutritionGoalsAssignment";
 import { Link } from "react-router-dom";
 import MemberScheduler from "./MemberScheduler";
 
@@ -228,7 +229,7 @@ export const MemberManagementDialog = ({
           </DialogHeader>
 
           <Tabs defaultValue="agenda" className="mt-6">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="agenda">
                 <Calendar className="h-4 w-4 mr-2" />
                 Agenda
@@ -240,6 +241,10 @@ export const MemberManagementDialog = ({
               <TabsTrigger value="programs">
                 <Dumbbell className="h-4 w-4 mr-2" />
                 Programma's
+              </TabsTrigger>
+              <TabsTrigger value="nutrition">
+                <Apple className="h-4 w-4 mr-2" />
+                Voeding
               </TabsTrigger>
               <TabsTrigger value="tasks">
                 <CheckSquare className="h-4 w-4 mr-2" />
@@ -331,6 +336,13 @@ export const MemberManagementDialog = ({
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="nutrition" className="space-y-4">
+              <NutritionGoalsAssignment 
+                memberId={memberId} 
+                memberUserId={memberUserId} 
+              />
             </TabsContent>
 
             <TabsContent value="tasks" className="space-y-4">
