@@ -18,6 +18,7 @@ import { BulkMessagingDialog } from "@/components/admin/BulkMessagingDialog";
 import { MemberComparison } from "@/components/admin/MemberComparison";
 import { PeriodizationPlanner } from "@/components/admin/PeriodizationPlanner";
 import { ProgressAlertsCard } from "@/components/admin/ProgressAlertsCard";
+import { CoachTasksCard } from "@/components/admin/CoachTasksCard";
 import { useTranslation } from "react-i18next";
 import BottomNav from "@/components/BottomNav";
 
@@ -205,6 +206,9 @@ const CoachDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
+            {/* Coach Tasks Card */}
+            <CoachTasksCard />
+
             <BulkActionToolbar
               selectedMembers={selectedMembers.map((id) => {
                 const member = members.find((m) => m.member_id === id);
