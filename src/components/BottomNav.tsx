@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, Dumbbell, User, MessageCircle, Users } from "lucide-react";
+import { Calendar, Dumbbell, User, MessageCircle, Users, LayoutGrid, ListChecks, Bell } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -10,13 +10,13 @@ const BottomNav = () => {
   
   const isCoach = hasRole("coach");
 
-  // Coach sees "Members" instead of "Chat" - direct access to their core task
+  // Coach navigation matches the design: Dashboard, Clients, Check-ins, Notifications
   const navItems = isCoach
     ? [
-        { path: "/coach/dashboard", icon: Users, labelKey: "coach.members" },
-        { path: "/admin/programs", icon: Dumbbell, labelKey: "nav.programs" },
-        { path: "/admin/checkins", icon: Calendar, labelKey: "coach.checkins" },
-        { path: "/account", icon: User, labelKey: "nav.account" },
+        { path: "/coach/dashboard", icon: LayoutGrid, labelKey: "nav.dashboard" },
+        { path: "/coach/clients", icon: Users, labelKey: "coach.clients" },
+        { path: "/admin/checkins", icon: ListChecks, labelKey: "coach.checkins" },
+        { path: "/coach/notifications", icon: Bell, labelKey: "nav.notifications" },
       ]
     : [
         { path: "/", icon: Calendar, labelKey: "time.today" },

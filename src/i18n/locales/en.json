@@ -44,7 +44,8 @@
     "analytics": "Analytics",
     "media": "Media",
     "checkIn": "Check-in",
-    "membership": "Membership"
+    "membership": "Membership",
+    "notifications": "Notifications"
   },
   "auth": {
     "login": "Log in",
@@ -295,6 +296,7 @@
   "coach": {
     "dashboard": "Coach Dashboard",
     "members": "Members",
+    "clients": "Clients",
     "myMembers": "My Members",
     "noMembersTitle": "No members yet",
     "noMembersDescription": "Members will appear here once assigned to you.",
