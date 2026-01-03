@@ -2,191 +2,212 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Label } from "@/components/ui/label";
-import { Users, TrendingUp, Calendar, Award, MessageCircle, UserPlus, Send } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
-import { ProgramAssigner } from "@/components/admin/ProgramAssigner";
-import { BulkActionToolbar } from "@/components/admin/BulkActionToolbar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BulkMessagingDialog } from "@/components/admin/BulkMessagingDialog";
-import { MemberComparison } from "@/components/admin/MemberComparison";
-import { PeriodizationPlanner } from "@/components/admin/PeriodizationPlanner";
-import { ProgressAlertsCard } from "@/components/admin/ProgressAlertsCard";
-import { CoachTasksCard } from "@/components/admin/CoachTasksCard";
-import { useTranslation } from "react-i18next";
+import { 
+  ClipboardCheck, 
+  Clock, 
+  ChevronRight, 
+  Smile, 
+  Plus,
+  ListTodo,
+  Users
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { format, formatDistanceToNow } from "date-fns";
+import { nl } from "date-fns/locale";
 import BottomNav from "@/components/BottomNav";
+import { useQuery } from "@tanstack/react-query";
 
 interface Member {
-  member_id: string;
-  member_user_id: string;
-  member_name: string | null;
-  member_avatar: string | null;
-}
-
-interface MemberStats {
-  total_workouts: number;
-  total_prs: number;
-  current_streak: number;
-  last_workout_date: string | null;
-}
-
-interface CheckIn {
   id: string;
-  checkin_week: number;
-  created_at: string;
-  notes: string | null;
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
+interface CoachTask {
+  id: string;
+  type: string;
+  title: string;
+  memberId: string;
+  memberName: string;
+  memberAvatar: string | null;
+  createdAt: string;
+  completed?: boolean;
 }
 
 const CoachDashboard = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const { t } = useTranslation();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [memberStats, setMemberStats] = useState<MemberStats | null>(null);
-  const [memberCheckIns, setMemberCheckIns] = useState<CheckIn[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [assigningMember, setAssigningMember] = useState<Member | null>(null);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [showBulkMessage, setShowBulkMessage] = useState(false);
+  const [coachName, setCoachName] = useState("");
 
-  useEffect(() => {
-    if (!user) return;
-    fetchMyMembers();
-  }, [user]);
-
-  const fetchMyMembers = async () => {
-    try {
-      setLoading(true);
-      
-      // Get coach's profile id
-      const { data: coachProfile } = await supabase
+  // Fetch coach profile
+  const { data: coachProfile } = useQuery({
+    queryKey: ["coach-profile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
         .from("profiles")
-        .select("id")
-        .eq("user_id", user!.id)
+        .select("id, display_name")
+        .eq("user_id", user.id)
         .single();
+      
+      if (data) {
+        setCoachName(data.display_name || "Coach");
+      }
+      return data;
+    },
+    enabled: !!user,
+  });
 
-      if (!coachProfile) return;
-
-      // Get all members assigned to this coach
-      const { data: membersData, error } = await supabase
+  // Fetch members
+  const { data: members = [], isLoading: membersLoading } = useQuery({
+    queryKey: ["coach-members", coachProfile?.id],
+    queryFn: async () => {
+      if (!coachProfile) return [];
+      const { data } = await supabase
         .from("profiles")
         .select("id, user_id, display_name, avatar_url")
         .eq("coach_id", coachProfile.id);
+      return (data || []) as Member[];
+    },
+    enabled: !!coachProfile,
+  });
 
-      if (error) throw error;
-
-      const formattedMembers = membersData?.map(m => ({
-        member_id: m.id,
-        member_user_id: m.user_id,
-        member_name: m.display_name,
-        member_avatar: m.avatar_url,
-      })) || [];
-
-      setMembers(formattedMembers);
+  // Fetch pending check-ins count
+  const { data: pendingCheckinsCount = 0 } = useQuery({
+    queryKey: ["pending-checkins-count", members],
+    queryFn: async () => {
+      if (members.length === 0) return 0;
       
-      if (formattedMembers.length > 0) {
-        setSelectedMember(formattedMembers[0]);
-        fetchMemberData(formattedMembers[0]);
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMemberData = async (member: Member) => {
-    try {
-      setStatsLoading(true);
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
       
-      // Fetch member stats
-      const { data: stats } = await supabase
-        .from("user_stats")
-        .select("*")
-        .eq("user_id", member.member_user_id)
-        .maybeSingle();
+      const { data } = await supabase
+        .from("daily_checkins")
+        .select("id")
+        .in("user_id", members.map(m => m.user_id))
+        .gte("checkin_date", threeDaysAgo.toISOString().split("T")[0]);
+      
+      return data?.length || 0;
+    },
+    enabled: members.length > 0,
+  });
 
-      setMemberStats(stats || {
-        total_workouts: 0,
-        total_prs: 0,
-        current_streak: 0,
-        last_workout_date: null,
-      });
+  // Fetch tasks
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ["coach-dashboard-tasks", coachProfile?.id, members],
+    queryFn: async () => {
+      if (!coachProfile || members.length === 0) return [];
+      
+      const allTasks: CoachTask[] = [];
 
-      // Fetch member check-ins
-      const { data: checkIns } = await supabase
-        .from("checkin_photos")
-        .select("id, checkin_week, created_at, notes")
-        .eq("user_id", member.member_user_id)
+      // Get unread messages
+      const { data: unreadMessages } = await supabase
+        .from("chat_messages")
+        .select("id, member_id, created_at, message")
+        .eq("coach_id", coachProfile.id)
+        .neq("sender_id", coachProfile.id)
+        .is("read_at", null)
         .order("created_at", { ascending: false })
         .limit(10);
 
-      setMemberCheckIns(checkIns || []);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setStatsLoading(false);
-    }
-  };
+      if (unreadMessages) {
+        const seenMembers = new Set();
+        unreadMessages.forEach((msg) => {
+          if (!seenMembers.has(msg.member_id)) {
+            seenMembers.add(msg.member_id);
+            const member = members.find((m) => m.id === msg.member_id);
+            if (member) {
+              allTasks.push({
+                id: `msg-${msg.id}`,
+                type: "message",
+                title: msg.message.length > 50 ? msg.message.substring(0, 50) + "..." : msg.message,
+                memberId: member.id,
+                memberName: member.display_name || "Naamloos",
+                memberAvatar: member.avatar_url,
+                createdAt: msg.created_at,
+              });
+            }
+          }
+        });
+      }
 
-  const handleMemberSelect = (member: Member) => {
-    setSelectedMember(member);
-    fetchMemberData(member);
-  };
+      // Get recent check-ins to review
+      const { data: recentCheckins } = await supabase
+        .from("daily_checkins")
+        .select("id, user_id, created_at")
+        .in("user_id", members.map((m) => m.user_id))
+        .gte("checkin_date", new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
+        .order("created_at", { ascending: false })
+        .limit(5);
 
-  const toggleMemberSelection = (memberId: string) => {
-    setSelectedMembers((prev) =>
-      prev.includes(memberId)
-        ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId]
-    );
-  };
+      if (recentCheckins) {
+        const seenMembers = new Set();
+        recentCheckins.forEach((checkin) => {
+          if (!seenMembers.has(checkin.user_id)) {
+            seenMembers.add(checkin.user_id);
+            const member = members.find((m) => m.user_id === checkin.user_id);
+            if (member) {
+              allTasks.push({
+                id: `checkin-${checkin.id}`,
+                type: "checkin",
+                title: "Nieuwe check-in ontvangen",
+                memberId: member.id,
+                memberName: member.display_name || "Naamloos",
+                memberAvatar: member.avatar_url,
+                createdAt: checkin.created_at,
+              });
+            }
+          }
+        });
+      }
 
-  const clearSelection = () => {
-    setSelectedMembers([]);
-  };
+      // Sort by date
+      allTasks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  if (loading) {
+      return allTasks.slice(0, 5);
+    },
+    enabled: !!coachProfile && members.length > 0,
+  });
+
+  // Calculate tasks remaining (unread messages count)
+  const { data: tasksRemainingCount = 0 } = useQuery({
+    queryKey: ["tasks-remaining-count", coachProfile?.id],
+    queryFn: async () => {
+      if (!coachProfile) return 0;
+      
+      const { data } = await supabase
+        .from("chat_messages")
+        .select("id")
+        .eq("coach_id", coachProfile.id)
+        .neq("sender_id", coachProfile.id)
+        .is("read_at", null);
+      
+      return data?.length || 0;
+    },
+    enabled: !!coachProfile,
+  });
+
+  const isLoading = membersLoading || tasksLoading;
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-6 pb-24">
-        <Skeleton className="h-8 w-48 mb-6" />
-        <div className="grid gap-4">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
+      <div className="min-h-screen bg-background pb-24">
+        <div className="p-6 space-y-6">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-6 w-24" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Skeleton className="h-24 rounded-xl" />
+            <Skeleton className="h-24 rounded-xl" />
+          </div>
+          <Skeleton className="h-40 rounded-xl" />
+          <Skeleton className="h-32 rounded-xl" />
         </div>
-        <BottomNav />
-      </div>
-    );
-  }
-
-  if (members.length === 0) {
-    return (
-      <div className="min-h-screen bg-background p-6 pb-24">
-        <h1 className="text-2xl font-bold tracking-tight mb-6">{t('coach.myMembers')}</h1>
-        <Card className="p-8 text-center">
-          <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-xl font-semibold mb-2">{t('coach.noMembersTitle')}</h2>
-          <p className="text-muted-foreground">
-            {t('coach.noMembersDescription')}
-          </p>
-        </Card>
         <BottomNav />
       </div>
     );
@@ -194,244 +215,156 @@ const CoachDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="p-6">
-        <h1 className="text-2xl font-bold tracking-tight mb-6">{t('coach.myMembers')}</h1>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl font-semibold">
+            👋 Hi {coachName.split(" ")[0]}
+          </h1>
+          <span className="text-muted-foreground text-sm">
+            {format(new Date(), "d MMM, yyyy", { locale: nl })}
+          </span>
+        </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">{t('common.all')}</TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="planning">Planning</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-4">
-            {/* Coach Tasks Card */}
-            <CoachTasksCard />
-
-            <BulkActionToolbar
-              selectedMembers={selectedMembers.map((id) => {
-                const member = members.find((m) => m.member_id === id);
-                return {
-                  id,
-                  user_id: member?.member_user_id || "",
-                  display_name: member?.member_name || null,
-                };
-              })}
-              onClearSelection={clearSelection}
-            />
-
-            {members.length > 0 && (
-              <div className="flex items-center gap-2 mb-4 p-3 border rounded-lg bg-muted/50">
-                <Checkbox
-                  checked={selectedMembers.length === members.length && members.length > 0}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedMembers(members.map((m) => m.member_id));
-                    } else {
-                      setSelectedMembers([]);
-                    }
-                  }}
-                />
-                <Label className="text-sm font-medium cursor-pointer">
-                  Selecteer alle members
-                </Label>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="p-4 bg-card border-0 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <ClipboardCheck className="h-4 w-4 text-primary" />
               </div>
-            )}
+              <span className="text-sm text-muted-foreground">Check-Ins Pending</span>
+            </div>
+            <p className="text-3xl font-bold">{pendingCheckinsCount}</p>
+          </Card>
 
-                {members.map((member) => (
-                  <Card
-                    key={member.member_id}
-                    className={`p-4 cursor-pointer transition-colors ${
-                      selectedMember?.member_id === member.member_id
-                        ? "border-primary"
-                        : "hover:bg-accent"
-                    }`}
-                    onClick={() => handleMemberSelect(member)}
+          <Card className="p-4 bg-card border-0 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-2 rounded-lg bg-orange-500/10">
+                <Clock className="h-4 w-4 text-orange-500" />
+              </div>
+              <span className="text-sm text-muted-foreground">Tasks Remaining</span>
+            </div>
+            <p className="text-3xl font-bold">{tasksRemainingCount}</p>
+          </Card>
+        </div>
+
+        {/* Tasks Section */}
+        <Card className="p-4 bg-card border-0 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-red-500/10">
+                <ListTodo className="h-4 w-4 text-red-500" />
+              </div>
+              <span className="font-semibold">Tasks</span>
+            </div>
+            <Link to="/admin/members" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              View All
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="border-t pt-4">
+            {tasks.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">
+                Geen openstaande taken
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {tasks.map((task) => (
+                  <Link 
+                    key={task.id} 
+                    to={`/coach/chat/${task.memberId}`}
+                    className="flex items-center gap-3 group"
                   >
-                    <div className="flex items-center gap-4">
-                      <Checkbox
-                        checked={selectedMembers.includes(member.member_id)}
-                        onCheckedChange={() => toggleMemberSelection(member.member_id)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <Avatar>
-                        <AvatarImage src={member.member_avatar || undefined} />
-                        <AvatarFallback>
-                          {member.member_name?.[0]?.toUpperCase() || "M"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <h3 className="font-semibold">
-                          {member.member_name || "Naamloos"}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">Member</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">Actief</Badge>
-                        <Link 
-                          to={`/coach/chat/${member.member_id}`}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Button size="sm" variant="ghost">
-                            <MessageCircle className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setAssigningMember(member);
-                          }}
-                        >
-                          <UserPlus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-          </TabsContent>
-
-          <TabsContent value="details" className="space-y-6">
-            {selectedMember && (
-              <>
-                <Card className="p-6">
-                  <div className="flex items-center gap-4 mb-6">
-                    <Avatar className="w-16 h-16">
-                      <AvatarImage src={selectedMember.member_avatar || undefined} />
-                      <AvatarFallback className="text-2xl">
-                        {selectedMember.member_name?.[0]?.toUpperCase() || "M"}
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={task.memberAvatar || undefined} />
+                      <AvatarFallback>
+                        {task.memberName[0]?.toUpperCase() || "M"}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <h2 className="text-2xl font-bold">
-                        {selectedMember.member_name || "Naamloos"}
-                      </h2>
-                      <p className="text-muted-foreground">Member</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                        {task.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(task.createdAt), { 
+                          addSuffix: true, 
+                          locale: nl 
+                        })}
+                      </p>
                     </div>
-                  </div>
-
-                  {statsLoading ? (
-                    <div className="grid grid-cols-2 gap-4">
-                      <Skeleton className="h-24" />
-                      <Skeleton className="h-24" />
-                      <Skeleton className="h-24" />
-                      <Skeleton className="h-24" />
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-4">
-                      <Card className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <TrendingUp className="w-4 h-4 text-accent" />
-                          <p className="text-sm text-muted-foreground">Workouts</p>
-                        </div>
-                        <p className="text-2xl font-bold">
-                          {memberStats?.total_workouts || 0}
-                        </p>
-                      </Card>
-
-                      <Card className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Award className="w-4 h-4 text-accent" />
-                          <p className="text-sm text-muted-foreground">PR's</p>
-                        </div>
-                        <p className="text-2xl font-bold">
-                          {memberStats?.total_prs || 0}
-                        </p>
-                      </Card>
-
-                      <Card className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="w-4 h-4 text-accent" />
-                          <p className="text-sm text-muted-foreground">Streak</p>
-                        </div>
-                        <p className="text-2xl font-bold">
-                          {memberStats?.current_streak || 0}
-                        </p>
-                      </Card>
-
-                      <Card className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="w-4 h-4 text-accent" />
-                          <p className="text-sm text-muted-foreground">Laatste workout</p>
-                        </div>
-                        <p className="text-sm font-medium">
-                          {memberStats?.last_workout_date
-                            ? new Date(memberStats.last_workout_date).toLocaleDateString('nl-NL')
-                            : "Nog niet"}
-                        </p>
-                      </Card>
-                    </div>
-                  )}
-                </Card>
-
-                <Card className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">{t('coach.recentCheckins')}</h3>
-                  {memberCheckIns.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">
-                      {t('coach.noCheckinsYet')}
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {memberCheckIns.map((checkIn) => (
-                        <Card key={checkIn.id} className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <span className="font-medium">Week {checkIn.checkin_week}</span>
-                            <span className="text-sm text-muted-foreground">
-                              {new Date(checkIn.created_at).toLocaleDateString('nl-NL')}
-                            </span>
-                          </div>
-                          {checkIn.notes && (
-                            <p className="text-sm text-muted-foreground">{checkIn.notes}</p>
-                          )}
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </Card>
-              </>
+                    <Checkbox className="h-5 w-5 rounded-full border-2" />
+                  </Link>
+                ))}
+              </div>
             )}
-          </TabsContent>
+          </div>
+        </Card>
 
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-4">
-            <ProgressAlertsCard members={members} />
-            <MemberComparison members={members} />
-          </TabsContent>
-
-          {/* Planning Tab */}
-          <TabsContent value="planning" className="space-y-4">
-            <PeriodizationPlanner />
-            <Button 
-              className="w-full gap-2" 
-              variant="outline"
-              onClick={() => setShowBulkMessage(true)}
-            >
-              <Send className="w-4 h-4" />
-              {t('coach.sendMessage')}
+        {/* Community Section */}
+        <Card className="p-4 bg-card border-0 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-orange-500/10">
+                <Smile className="h-4 w-4 text-orange-500" />
+              </div>
+              <span className="font-semibold">Community</span>
+            </div>
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground gap-1">
+              New
+              <Plus className="h-4 w-4" />
             </Button>
-          </TabsContent>
-        </Tabs>
+          </div>
+
+          <div className="border-t pt-4">
+            <p className="text-muted-foreground text-center py-4">
+              You haven't created any communities yet.
+            </p>
+          </div>
+        </Card>
+
+        {/* Members Quick Access */}
+        <Card className="p-4 bg-card border-0 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-blue-500/10">
+                <Users className="h-4 w-4 text-blue-500" />
+              </div>
+              <span className="font-semibold">Leden</span>
+            </div>
+            <Link to="/admin/members" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+              View All
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="border-t pt-4">
+            {members.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">
+                Nog geen leden toegewezen
+              </p>
+            ) : (
+              <div className="flex -space-x-2 overflow-hidden">
+                {members.slice(0, 8).map((member) => (
+                  <Avatar key={member.id} className="h-10 w-10 border-2 border-background">
+                    <AvatarImage src={member.avatar_url || undefined} />
+                    <AvatarFallback className="text-xs">
+                      {member.display_name?.[0]?.toUpperCase() || "M"}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {members.length > 8 && (
+                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center border-2 border-background">
+                    <span className="text-xs font-medium">+{members.length - 8}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
 
-      {assigningMember && (
-        <ProgramAssigner
-          open={!!assigningMember}
-          onOpenChange={(open) => !open && setAssigningMember(null)}
-          memberId={assigningMember.member_id}
-          memberName={assigningMember.member_name}
-          memberUserId={assigningMember.member_user_id}
-        />
-      )}
-
-      <BulkMessagingDialog
-        open={showBulkMessage}
-        onOpenChange={setShowBulkMessage}
-        members={members}
-        preSelectedMembers={selectedMembers}
-      />
-      
       <BottomNav />
     </div>
   );
