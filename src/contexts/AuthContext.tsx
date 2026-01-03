@@ -69,32 +69,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Use setTimeout to avoid deadlock
-          setTimeout(() => {
-            fetchUserRole(session.user.id);
-          }, 0);
-        } else {
-          setUserRole(null);
-          setApprovalStatus(null);
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Only synchronous state updates here
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        // While we (re)load role/approval, keep the app in a loading state
+        setLoading(true);
+
+        // Defer Supabase calls with setTimeout to avoid deadlocks
+        setTimeout(async () => {
+          await fetchUserRole(session.user.id);
+          setLoading(false);
+        }, 0);
+      } else {
+        setUserRole(null);
+        setApprovalStatus(null);
+        setLoading(false);
       }
-    );
+    });
 
     // Check for existing session and fetch role before setting loading to false
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         await fetchUserRole(session.user.id);
       }
-      
+
       setLoading(false);
     });
 
