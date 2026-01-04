@@ -1,4 +1,4 @@
-import { Dumbbell, MessageCircle, Loader2 } from "lucide-react";
+import { Dumbbell, MessageCircle, Loader2, CheckCircle2, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,12 +6,14 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 export const NoProgramState = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [isRequesting, setIsRequesting] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
 
   const handleRequestProgram = async () => {
     if (!user) return;
@@ -31,6 +33,7 @@ export const NoProgramState = () => {
           description: "Je hebt nog geen coach. Neem contact op met de beheerder.",
           variant: "destructive",
         });
+        setIsRequesting(false);
         return;
       }
 
@@ -46,10 +49,7 @@ export const NoProgramState = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Verzoek verzonden!",
-        description: "Je coach heeft een bericht ontvangen en zal snel een programma voor je klaarzetten.",
-      });
+      setRequestSent(true);
     } catch (error) {
       console.error("Error requesting program:", error);
       toast({
@@ -61,6 +61,31 @@ export const NoProgramState = () => {
       setIsRequesting(false);
     }
   };
+
+  // Show confirmation screen after request is sent
+  if (requestSent) {
+    return (
+      <Card className="border-dashed bg-muted/30">
+        <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4 animate-scale-in">
+            <CheckCircle2 className="w-7 h-7 text-green-600 dark:text-green-400" />
+          </div>
+          <h3 className="font-semibold text-foreground mb-2 text-lg">
+            Verzoek verzonden!
+          </h3>
+          <p className="text-sm text-muted-foreground max-w-xs mb-5">
+            Je coach heeft je bericht ontvangen en zal binnenkort een programma voor je klaarzetten.
+          </p>
+          <Link to="/chat">
+            <Button variant="outline" className="gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Bekijk chat
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-dashed">
