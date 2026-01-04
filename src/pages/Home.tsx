@@ -1,15 +1,16 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar, TrendingUp, Award, Play, Users, BookOpen, ArrowRight, CheckCircle2, Utensils } from "lucide-react";
+import { Calendar, TrendingUp, Award, Play, Users, BookOpen, ArrowRight, CheckCircle2, Utensils, PartyPopper } from "lucide-react";
 import ubeLogo from "@/assets/ube-logo.png";
 import defaultCoach from "@/assets/default-coach.jpg";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePrograms } from "@/hooks/usePrograms";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { DailyCheckinCard } from "@/components/checkin/DailyCheckinCard";
 import { DailyTasksCard } from "@/components/tasks/DailyTasksCard";
 import { UnplannedWorkoutDialog } from "@/components/workouts/UnplannedWorkoutDialog";
@@ -30,10 +31,12 @@ import BottomNav from "@/components/BottomNav";
 const Home = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { toast } = useToast();
   const { data: branding } = useBranding();
   const [userProgramId, setUserProgramId] = useState<string | null>(null);
   const [coachAvatar, setCoachAvatar] = useState<string | null>(null);
   const [weeklyProgress, setWeeklyProgress] = useState({ completed: 0, total: 0 });
+  const hasShownCongrats = useRef(false);
   const { data: programs = [], refetch: refetchPrograms, isLoading: programsLoading } = usePrograms();
   const queryClient = useQueryClient();
 
@@ -126,8 +129,24 @@ const Home = () => {
     fetchCoachAvatar();
   }, [user]);
 
+  // Show congratulations when all workouts are completed
+  useEffect(() => {
+    if (
+      weeklyProgress.total > 0 && 
+      weeklyProgress.completed === weeklyProgress.total && 
+      !hasShownCongrats.current
+    ) {
+      hasShownCongrats.current = true;
+      toast({
+        title: "Gefeliciteerd! 🎉",
+        description: "Je hebt alle workouts van deze week voltooid. Geweldig gedaan!",
+      });
+    }
+  }, [weeklyProgress, toast]);
+
   // Pull to refresh handler
   const handleRefresh = useCallback(async () => {
+    hasShownCongrats.current = false; // Reset so it can show again after refresh
     await Promise.all([
       refetchPrograms(),
       queryClient.invalidateQueries({ queryKey: ["branding"] }),
