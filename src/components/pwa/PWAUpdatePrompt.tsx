@@ -1,20 +1,45 @@
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
+// App version - increment this to force cache bust
+const APP_VERSION = '2025.01.04.1';
+
 export function PWAUpdatePrompt() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Clear all caches on app start to ensure fresh content
-    const clearAllCaches = async () => {
-      if ('caches' in window) {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map(name => caches.delete(name)));
-      }
-    };
-
-    // Run cache clearing on mount
-    clearAllCaches();
+    // Check stored version and clear cache if different
+    const storedVersion = localStorage.getItem('app_version');
+    if (storedVersion !== APP_VERSION) {
+      console.log(`App version changed: ${storedVersion} -> ${APP_VERSION}`);
+      
+      // Clear all caches
+      const clearAllCaches = async () => {
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          console.log('Clearing caches:', cacheNames);
+          await Promise.all(cacheNames.map(name => caches.delete(name)));
+        }
+        
+        // Update stored version
+        localStorage.setItem('app_version', APP_VERSION);
+        
+        // Unregister service workers and reload
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const registration of registrations) {
+            await registration.unregister();
+          }
+        }
+        
+        // Force reload to get fresh content
+        if (storedVersion !== null) {
+          window.location.reload();
+        }
+      };
+      
+      clearAllCaches();
+    }
 
     if ('serviceWorker' in navigator) {
       // Listen for new service worker becoming active - force reload
@@ -30,7 +55,7 @@ export function PWAUpdatePrompt() {
           console.log('Service worker update check failed:', e);
         }
         
-        // Check for updates every 30 seconds (more aggressive)
+        // Check for updates every 30 seconds (aggressive)
         setInterval(async () => {
           try {
             await reg.update();
@@ -61,11 +86,11 @@ export function PWAUpdatePrompt() {
         });
       });
 
-      // Also unregister and re-register service worker on visibility change
+      // Force update check when tab becomes visible
       document.addEventListener('visibilitychange', async () => {
         if (document.visibilityState === 'visible') {
-          const reg = await navigator.serviceWorker.ready;
           try {
+            const reg = await navigator.serviceWorker.ready;
             await reg.update();
           } catch (e) {
             console.log('Service worker update on visibility change failed:', e);
