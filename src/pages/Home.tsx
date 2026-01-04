@@ -300,8 +300,13 @@ const Home = () => {
           </ComponentErrorBoundary>
         </div>
 
+        {/* No Program State - show when no valid program */}
+        {!hasValidProgram && (
+          <NoProgramState />
+        )}
+
         {/* Your Training Plan - only show if program is assigned and has workouts */}
-        {userProgramId && thisWeek?.workouts && thisWeek.workouts.length > 0 && (
+        {hasValidProgram && thisWeek?.workouts && thisWeek.workouts.length > 0 && (
           <div className="space-y-4" data-tour="workouts">
             <div>
               <h2 className="text-xl font-bold text-foreground">{t('home.yourTrainingPlan')}</h2>
