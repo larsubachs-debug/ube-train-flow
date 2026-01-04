@@ -154,26 +154,20 @@ const Home = () => {
     ]);
   }, [refetchPrograms, queryClient]);
 
-  // Use assigned program or fallback to first available
-  const currentProgram = displayPrograms.find((p) => p.id === userProgramId) || displayPrograms[0];
+  // Use assigned program - only use DB programs, not static fallback
+  const currentProgram = programs.find((p) => p.id === userProgramId);
   const { progress, currentWeek, loading } = useUserProgress(currentProgram?.id);
 
-  // Find the actual week from the program data based on progress
-  const thisWeek =
-    currentProgram?.weeks.find((w) => w.weekNumber === (progress?.current_week_number || 1)) ||
-    currentProgram?.weeks[0];
+  // Check if user actually has a valid program with workouts
+  const hasValidProgram = currentProgram && currentProgram.weeks && currentProgram.weeks.length > 0;
 
-  if (!currentProgram) {
-    return (
-      <div className="min-h-screen bg-background pb-20">
-        <div className="px-6 pt-6">
-          <h1 className="text-2xl font-bold text-foreground mb-6">{t('home.today')}</h1>
-          <NoProgramState />
-        </div>
-        <BottomNav />
-      </div>
-    );
-  }
+  // Find the actual week from the program data based on progress
+  const thisWeek = hasValidProgram
+    ? currentProgram.weeks.find((w) => w.weekNumber === (progress?.current_week_number || 1)) ||
+      currentProgram.weeks[0]
+    : null;
+
+  // Remove early return - the training plan section is already conditional
 
   if (programsLoading && loading) {
     return <DashboardSkeleton />;
@@ -244,30 +238,36 @@ const Home = () => {
           </Link>
         </div>
 
-        {/* Program Phase Card */}
-        {loading ? <Card className="p-4 bg-foreground text-background">
-            <div className="flex items-start gap-4">
-              <Skeleton className="w-12 h-12 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-full" />
+        {/* Program Phase Card - only show if program exists */}
+        {hasValidProgram && (
+          loading ? (
+            <Card className="p-4 bg-foreground text-background">
+              <div className="flex items-start gap-4">
+                <Skeleton className="w-12 h-12 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
               </div>
-            </div>
-          </Card> : <Card className="p-4 bg-foreground text-background">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-background/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <img src={coachAvatar || defaultCoach} alt="Coach" className="w-full h-full object-cover scale-[1.1] object-center" />
+            </Card>
+          ) : (
+            <Card className="p-4 bg-foreground text-background">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-background/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <img src={coachAvatar || defaultCoach} alt="Coach" className="w-full h-full object-cover scale-[1.1] object-center" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-base font-bold mb-1">
+                    {currentWeek?.phase_name || `Weeks ${progress?.current_week_number || 1}-4, Accumulation`}
+                  </h3>
+                  <p className="text-sm opacity-90 leading-relaxed">
+                    {currentWeek?.description || "Je bouwt geleidelijk op met meer volume en intensiteit."}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className="text-base font-bold mb-1">
-                  {currentWeek?.phase_name || `Weeks ${progress?.current_week_number || 1}-4, Accumulation`}
-                </h3>
-                <p className="text-sm opacity-90 leading-relaxed">
-                  {currentWeek?.description || "You'll gradually increase the volume of work, like adding sets or reps. This..."}
-                </p>
-              </div>
-            </div>
-          </Card>}
+            </Card>
+          )
+        )}
 
         {/* Streak Indicator */}
         <div data-tour="streak">
