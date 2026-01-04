@@ -33,26 +33,76 @@ const Home = () => {
   const { data: branding } = useBranding();
   const [userProgramId, setUserProgramId] = useState<string | null>(null);
   const [coachAvatar, setCoachAvatar] = useState<string | null>(null);
+  const [weeklyProgress, setWeeklyProgress] = useState({ completed: 0, total: 0 });
   const { data: programs = [], refetch: refetchPrograms, isLoading: programsLoading } = usePrograms();
   const queryClient = useQueryClient();
 
   // Use database programs or fallback to static programs for display
   const displayPrograms = programs.length > 0 ? programs : staticPrograms;
 
-  // Get user's assigned program
+  // Get user's assigned program and weekly workout progress
   useEffect(() => {
     if (!user) return;
-    const fetchUserProgram = async () => {
-      const { data } = await supabase
+    const fetchUserProgramAndProgress = async () => {
+      // Get user's program
+      const { data: progressData } = await supabase
         .from("user_program_progress")
-        .select("program_id")
+        .select("program_id, current_week_number")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      setUserProgramId(data?.program_id || null);
+      
+      setUserProgramId(progressData?.program_id || null);
+
+      if (progressData?.program_id) {
+        // Get current week's workouts
+        const { data: weekData } = await supabase
+          .from("weeks")
+          .select("id")
+          .eq("program_id", progressData.program_id)
+          .eq("week_number", progressData.current_week_number || 1)
+          .maybeSingle();
+
+        if (weekData?.id) {
+          // Get workouts for this week
+          const { data: workouts } = await supabase
+            .from("workouts")
+            .select("id")
+            .eq("week_id", weekData.id);
+
+          const totalWorkouts = workouts?.length || 0;
+
+          if (totalWorkouts > 0) {
+            const workoutIds = workouts!.map(w => w.id);
+            
+            // Get completions for these workouts (current week only)
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() + diff);
+            startOfWeek.setHours(0, 0, 0, 0);
+            const startOfWeekStr = startOfWeek.toISOString().split('T')[0];
+
+            const { data: completions } = await supabase
+              .from("workout_completions")
+              .select("workout_id")
+              .eq("user_id", user.id)
+              .in("workout_id", workoutIds)
+              .gte("completion_date", startOfWeekStr);
+
+            // Count unique completed workouts
+            const uniqueCompleted = new Set(completions?.map(c => c.workout_id) || []).size;
+            
+            setWeeklyProgress({ completed: uniqueCompleted, total: totalWorkouts });
+          } else {
+            setWeeklyProgress({ completed: 0, total: 0 });
+          }
+        }
+      }
     };
-    fetchUserProgram();
+    fetchUserProgramAndProgress();
   }, [user]);
 
   // Get coach's avatar
@@ -110,9 +160,8 @@ const Home = () => {
     return <DashboardSkeleton />;
   }
 
-  const completedWorkouts = 3;
-  const totalWorkouts = 5;
-  const progressPercentage = (completedWorkouts / totalWorkouts) * 100;
+  const completedWorkouts = weeklyProgress.completed;
+  const totalWorkouts = weeklyProgress.total;
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
@@ -130,18 +179,23 @@ const Home = () => {
 
       <div className="px-6 space-y-6">
         {/* Weekly Progress */}
-        {branding?.show_weekly_progress !== false && <div className="space-y-3">
+        {branding?.show_weekly_progress !== false && totalWorkouts > 0 && (
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">{t('home.weeklyProgress')}</h2>
               <span className="text-sm text-muted-foreground">{completedWorkouts}/{totalWorkouts} {t('home.sessions')}</span>
             </div>
             
             <div className="flex gap-2">
-              {Array.from({
-            length: totalWorkouts
-          }).map((_, i) => <div key={i} className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${i < completedWorkouts ? 'bg-foreground' : 'bg-muted'}`} />)}
+              {Array.from({ length: totalWorkouts }).map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`flex-1 h-1.5 rounded-full transition-all duration-500 ${i < completedWorkouts ? 'bg-foreground' : 'bg-muted'}`} 
+                />
+              ))}
             </div>
-          </div>}
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-4 gap-3">
