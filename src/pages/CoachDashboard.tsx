@@ -13,7 +13,11 @@ import {
   Smile, 
   Plus,
   ListTodo,
-  Users
+  Users,
+  Dumbbell,
+  ClipboardList,
+  Palette,
+  Settings
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format, formatDistanceToNow } from "date-fns";
@@ -361,6 +365,68 @@ const CoachDashboard = () => {
                 )}
               </div>
             )}
+          </div>
+        </Card>
+
+        {/* Admin Tools */}
+        <Card className="p-4 bg-card border-0 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 rounded-lg bg-purple-500/10">
+              <Settings className="h-4 w-4 text-purple-500" />
+            </div>
+            <span className="font-semibold">Beheer</span>
+          </div>
+
+          <div className="space-y-2">
+            <Link to="/admin/members">
+              <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm">Ledenbeheer</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </Link>
+
+            <Link to="/admin/programs">
+              <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Dumbbell className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm">Programma's</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </Link>
+
+            <Link to="/admin/checkins">
+              <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <ClipboardList className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm">Check-in beheer</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </Link>
+
+            <Link to="/admin/tasks">
+              <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <ListTodo className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm">Takenbeheer</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </Link>
+
+            <Link to="/admin/branding">
+              <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Palette className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm">Branding & Stijl</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </Link>
           </div>
         </Card>
       </div>
