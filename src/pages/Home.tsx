@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DailyCheckinCard } from "@/components/checkin/DailyCheckinCard";
 import { DailyTasksCard } from "@/components/tasks/DailyTasksCard";
+import { DailyHabitsCard } from "@/components/habits/DailyHabitsCard";
 import { UnplannedWorkoutDialog } from "@/components/workouts/UnplannedWorkoutDialog";
 import { WeeklyTaskProgress } from "@/components/tasks/WeeklyTaskProgress";
 import { useBranding } from "@/hooks/useBranding";
@@ -293,6 +294,11 @@ const Home = () => {
             <DailyCheckinCard />
           </ComponentErrorBoundary>
         </div>
+
+        {/* Daily Habits */}
+        <ComponentErrorBoundary componentName="DailyHabitsCard">
+          <DailyHabitsCard />
+        </ComponentErrorBoundary>
 
         {/* Weekly Task Progress */}
         <ComponentErrorBoundary componentName="WeeklyTaskProgress">
