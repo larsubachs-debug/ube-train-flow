@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Sparkles, Flame } from "lucide-react";
+import { Loader2, Target, Flame } from "lucide-react";
 
 interface MemberHabit {
   id: string;
@@ -206,7 +206,7 @@ export const DailyHabitsCard = () => {
   return (
     <Card className="p-3 bg-muted/30 border-border/40">
       <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="h-5 w-5 text-muted-foreground" />
+        <Target className="h-5 w-5 text-muted-foreground" />
         <div className="flex-1">
           <p className="text-sm font-medium text-foreground">Dagelijkse Gewoontes</p>
           <p className="text-xs text-muted-foreground">{completedCount}/{habits.length} voltooid</p>
