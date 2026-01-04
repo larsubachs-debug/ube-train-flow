@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChevronRight, Crown, Settings, BookOpen, LogOut, Image, Users, Dumbbell, MessageCircle, ClipboardList, ListTodo, Palette, Moon, Sun } from "lucide-react";
+import { ChevronRight, Crown, Settings, BookOpen, LogOut, Image, MessageCircle, Moon, Sun } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ubeLogo from "@/assets/ube-logo.png";
@@ -126,123 +126,6 @@ const Account = () => {
 
         {/* Menu Items */}
         <div className="space-y-2 mb-6">
-          {isCoachOrAdmin && (
-            <>
-              <div className="mb-4 mt-6">
-                <h3 className="text-sm font-semibold text-muted-foreground px-4 mb-2">
-                  {t('account.adminTools').toUpperCase()}
-                </h3>
-              </div>
-              
-              <Link to="/admin/members">
-                <Card className="p-4 hover:bg-muted/50 transition-colors border-accent/20">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-accent/10 p-2 rounded-lg">
-                        <Users className="w-5 h-5 text-accent" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{t('account.memberManagement')}</p>
-                        <p className="text-sm text-muted-foreground">{t('account.approveCreate')}</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </Card>
-              </Link>
-
-              <Link to="/coach/dashboard">
-                <Card className="p-4 hover:bg-muted/50 transition-colors border-accent/20">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-accent/10 p-2 rounded-lg">
-                        <Users className="w-5 h-5 text-accent" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{t('account.myMembers')}</p>
-                        <p className="text-sm text-muted-foreground">{t('account.viewMemberProgress')}</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </Card>
-              </Link>
-
-              <Link to="/admin/programs">
-                <Card className="p-4 hover:bg-muted/50 transition-colors border-accent/20">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-accent/10 p-2 rounded-lg">
-                        <Dumbbell className="w-5 h-5 text-accent" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{t('account.programManagement')}</p>
-                        <p className="text-sm text-muted-foreground">{t('account.createEditPrograms')}</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </Card>
-              </Link>
-
-              <Link to="/admin/checkins">
-                <Card className="p-4 hover:bg-muted/50 transition-colors border-accent/20">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-accent/10 p-2 rounded-lg">
-                        <ClipboardList className="w-5 h-5 text-accent" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{t('account.checkinManagement')}</p>
-                        <p className="text-sm text-muted-foreground">{t('account.manageQuestions')}</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </Card>
-              </Link>
-
-              <Link to="/admin/tasks">
-                <Card className="p-4 hover:bg-muted/50 transition-colors border-accent/20">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-accent/10 p-2 rounded-lg">
-                        <ListTodo className="w-5 h-5 text-accent" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{t('account.taskManagement')}</p>
-                        <p className="text-sm text-muted-foreground">{t('account.manageTasks')}</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </Card>
-              </Link>
-
-              <Link to="/admin/branding">
-                <Card className="p-4 hover:bg-muted/50 transition-colors border-accent/20">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-accent/10 p-2 rounded-lg">
-                        <Palette className="w-5 h-5 text-accent" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{t('account.brandingStyling')}</p>
-                        <p className="text-sm text-muted-foreground">{t('account.customizeColors')}</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </Card>
-              </Link>
-
-              <div className="mb-4 mt-6">
-                <h3 className="text-sm font-semibold text-muted-foreground px-4 mb-2">
-                  {t('account.myAccount').toUpperCase()}
-                </h3>
-              </div>
-            </>
-          )}
 
           {!isCoachOrAdmin && (
             <Link to="/chat">
