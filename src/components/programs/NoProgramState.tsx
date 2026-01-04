@@ -38,12 +38,13 @@ export const NoProgramState = () => {
       }
 
       // Send a message to the coach requesting a program
+      // Note: sender_id must be the auth user ID for RLS, member_id is the profile ID
       const { error } = await supabase
         .from("chat_messages")
         .insert({
           member_id: profile.id,
           coach_id: profile.coach_id,
-          sender_id: profile.id,
+          sender_id: user.id,
           message: "Hoi! Ik zou graag een trainingsschema willen ontvangen. Kun je een programma voor mij klaarzetten?",
         });
 
