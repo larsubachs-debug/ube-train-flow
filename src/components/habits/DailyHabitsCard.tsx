@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Flame } from "lucide-react";
 
 interface MemberHabit {
   id: string;
@@ -15,6 +15,7 @@ interface MemberHabit {
     title: string;
     description: string | null;
   } | null;
+  streak?: number;
 }
 
 export const DailyHabitsCard = () => {
@@ -22,6 +23,7 @@ export const DailyHabitsCard = () => {
   const { toast } = useToast();
   const [habits, setHabits] = useState<MemberHabit[]>([]);
   const [completions, setCompletions] = useState<Set<string>>(new Set());
+  const [streaks, setStreaks] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -80,8 +82,47 @@ export const DailyHabitsCard = () => {
 
     const completedIds = new Set(todayCompletions?.map(c => c.member_habit_id) || []);
 
+    // Calculate streaks for each habit
+    const { data: allCompletions } = await supabase
+      .from('habit_completions')
+      .select('member_habit_id, completion_date')
+      .in('member_habit_id', habitIds)
+      .order('completion_date', { ascending: false });
+
+    const habitStreaks = new Map<string, number>();
+    
+    for (const habitId of habitIds) {
+      const habitCompletions = allCompletions
+        ?.filter(c => c.member_habit_id === habitId)
+        .map(c => c.completion_date)
+        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime()) || [];
+      
+      let streak = 0;
+      const now = new Date();
+      let checkDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      for (const completionDate of habitCompletions) {
+        const compDate = new Date(completionDate);
+        const checkDateStr = checkDate.toISOString().split('T')[0];
+        
+        if (completionDate === checkDateStr) {
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else if (streak === 0 && completionDate === new Date(checkDate.getTime() - 86400000).toISOString().split('T')[0]) {
+          // Allow yesterday if today not completed yet
+          streak++;
+          checkDate.setDate(checkDate.getDate() - 2);
+        } else {
+          break;
+        }
+      }
+      
+      habitStreaks.set(habitId, streak);
+    }
+
     setHabits(memberHabits as MemberHabit[]);
     setCompletions(completedIds);
+    setStreaks(habitStreaks);
     setLoading(false);
   };
 
@@ -175,6 +216,7 @@ export const DailyHabitsCard = () => {
       <div className="space-y-2">
         {habits.map((habit) => {
           const isCompleted = completions.has(habit.id);
+          const streak = streaks.get(habit.id) || 0;
           return (
             <div 
               key={habit.id}
@@ -191,6 +233,12 @@ export const DailyHabitsCard = () => {
               }`}>
                 {getTitle(habit)}
               </span>
+              {streak > 0 && (
+                <div className="flex items-center gap-1 text-xs text-orange-500">
+                  <Flame className="h-3 w-3" />
+                  <span className="font-medium">{streak}</span>
+                </div>
+              )}
             </div>
           );
         })}
