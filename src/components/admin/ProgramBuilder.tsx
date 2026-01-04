@@ -757,11 +757,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
   const [selectedWeekId, setSelectedWeekId] = useState<string>("week-1");
   const [selectedDayId, setSelectedDayId] = useState<string>("day-1");
-
-  // Show preview mode
-  if (isPreviewMode) {
-    return <ProgramPreview program={program} onClose={() => setIsPreviewMode(false)} />;
-  }
+  const [customTemplates, setCustomTemplates] = useState<WorkoutTemplate[]>([]);
 
   const selectedWeek = program.weeks.find(w => w.id === selectedWeekId);
   const selectedDay = selectedWeek?.days.find(d => d.id === selectedDayId);
@@ -787,6 +783,44 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
       }
     }
   }, [selectedWeekId, selectedWeek]);
+
+  // Load custom templates from database
+  useEffect(() => {
+    const loadCustomTemplates = async () => {
+      const { data } = await supabase
+        .from('workout_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (data) {
+        const templates: WorkoutTemplate[] = data.map(t => ({
+          id: t.id,
+          name: t.name,
+          category: t.category || 'Strength',
+          description: t.description || '',
+          exercises: (t.exercises as any[]).map(ex => ({
+            name: ex.name,
+            category: ex.category,
+            restTimer: ex.restTimer,
+            notes: ex.notes,
+            sets: ex.sets.map((s: any, idx: number) => ({
+              id: String(idx),
+              reps: s.reps,
+              weight: s.weight,
+              targetRPE: s.targetRPE,
+            })),
+          })),
+        }));
+        setCustomTemplates(templates);
+      }
+    };
+    loadCustomTemplates();
+  }, []);
+
+  // Show preview mode - AFTER all hooks
+  if (isPreviewMode) {
+    return <ProgramPreview program={program} onClose={() => setIsPreviewMode(false)} />;
+  }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -937,40 +971,6 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     }
   };
 
-  // Load custom templates from database
-  const [customTemplates, setCustomTemplates] = useState<WorkoutTemplate[]>([]);
-  
-  useEffect(() => {
-    const loadCustomTemplates = async () => {
-      const { data } = await supabase
-        .from('workout_templates')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (data) {
-        const templates: WorkoutTemplate[] = data.map(t => ({
-          id: t.id,
-          name: t.name,
-          category: t.category || 'Strength',
-          description: t.description || '',
-          exercises: (t.exercises as any[]).map(ex => ({
-            name: ex.name,
-            category: ex.category,
-            restTimer: ex.restTimer,
-            notes: ex.notes,
-            sets: ex.sets.map((s: any, idx: number) => ({
-              id: String(idx),
-              reps: s.reps,
-              weight: s.weight,
-              targetRPE: s.targetRPE,
-            })),
-          })),
-        }));
-        setCustomTemplates(templates);
-      }
-    };
-    loadCustomTemplates();
-  }, []);
 
   // Delete custom template
   const deleteCustomTemplate = async (templateId: string) => {
