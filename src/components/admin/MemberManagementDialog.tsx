@@ -13,12 +13,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { 
   User, Dumbbell, CheckSquare, Activity, TrendingUp, 
-  Calendar, Award, Save, UserPlus, MessageCircle, Apple 
+  Calendar, Award, Save, UserPlus, MessageCircle, Apple, Target 
 } from "lucide-react";
 import { ProgramAssigner } from "./ProgramAssigner";
 import { TaskAssignment } from "@/components/tasks/TaskAssignment";
 import { AdminCheckinAssignment } from "@/components/checkin/AdminCheckinAssignment";
 import { NutritionGoalsAssignment } from "./NutritionGoalsAssignment";
+import { HabitAssignment } from "./HabitAssignment";
 import { Link } from "react-router-dom";
 import MemberScheduler from "./MemberScheduler";
 
@@ -229,7 +230,7 @@ export const MemberManagementDialog = ({
           </DialogHeader>
 
           <Tabs defaultValue="agenda" className="mt-6">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="agenda">
                 <Calendar className="h-4 w-4 mr-2" />
                 Agenda
@@ -245,6 +246,10 @@ export const MemberManagementDialog = ({
               <TabsTrigger value="nutrition">
                 <Apple className="h-4 w-4 mr-2" />
                 Voeding
+              </TabsTrigger>
+              <TabsTrigger value="habits">
+                <Target className="h-4 w-4 mr-2" />
+                Gewoontes
               </TabsTrigger>
               <TabsTrigger value="tasks">
                 <CheckSquare className="h-4 w-4 mr-2" />
@@ -340,6 +345,13 @@ export const MemberManagementDialog = ({
 
             <TabsContent value="nutrition" className="space-y-4">
               <NutritionGoalsAssignment 
+                memberId={memberId} 
+                memberUserId={memberUserId} 
+              />
+            </TabsContent>
+
+            <TabsContent value="habits" className="space-y-4">
+              <HabitAssignment 
                 memberId={memberId} 
                 memberUserId={memberUserId} 
               />

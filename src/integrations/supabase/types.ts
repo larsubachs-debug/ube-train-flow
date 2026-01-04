@@ -921,6 +921,83 @@ export type Database = {
           },
         ]
       }
+      habit_completions: {
+        Row: {
+          completed_at: string | null
+          completion_date: string
+          created_at: string | null
+          id: string
+          member_habit_id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completion_date?: string
+          created_at?: string | null
+          id?: string
+          member_habit_id: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completion_date?: string
+          created_at?: string | null
+          id?: string
+          member_habit_id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_completions_member_habit_id_fkey"
+            columns: ["member_habit_id"]
+            isOneToOne: false
+            referencedRelation: "member_habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits_library: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          frequency: string | null
+          icon: string | null
+          id: string
+          is_public: boolean | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          frequency?: string | null
+          icon?: string | null
+          id?: string
+          is_public?: boolean | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          frequency?: string | null
+          icon?: string | null
+          id?: string
+          is_public?: boolean | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           coach_id: string
@@ -1097,6 +1174,76 @@ export type Database = {
             columns: ["question_id"]
             isOneToOne: false
             referencedRelation: "checkin_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_habits: {
+        Row: {
+          assigned_by: string | null
+          created_at: string | null
+          custom_description: string | null
+          custom_icon: string | null
+          custom_title: string | null
+          end_date: string | null
+          frequency: string | null
+          habit_id: string | null
+          id: string
+          is_active: boolean | null
+          member_id: string
+          start_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string | null
+          custom_description?: string | null
+          custom_icon?: string | null
+          custom_title?: string | null
+          end_date?: string | null
+          frequency?: string | null
+          habit_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          member_id: string
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string | null
+          custom_description?: string | null
+          custom_icon?: string | null
+          custom_title?: string | null
+          end_date?: string | null
+          frequency?: string | null
+          habit_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          member_id?: string
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_habits_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_habits_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "coach_members"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "member_habits_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
