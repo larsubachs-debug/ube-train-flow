@@ -517,8 +517,6 @@ const Habits = () => {
           )}
         </div>
       </div>
-
-      <BottomNav />
     </div>
   );
 };
