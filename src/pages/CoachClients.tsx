@@ -121,7 +121,7 @@ const CoachClients = () => {
             filteredMembers.map((member) => (
               <div
                 key={member.id}
-                onClick={() => navigate(`/coach/member/${member.id}`)}
+                onClick={() => navigate(`/coach/chat/${member.id}`)}
                 className="flex items-center justify-between py-3 border-b border-border cursor-pointer hover:bg-muted/30 transition-colors rounded-lg px-2 -mx-2"
               >
                 <div className="flex items-center gap-3">
