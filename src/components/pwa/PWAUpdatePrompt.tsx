@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 // App version - increment this to force cache bust
-const APP_VERSION = '2025.01.04.1';
+const APP_VERSION = '2026.01.05.1';
 
 export function PWAUpdatePrompt() {
   const { toast } = useToast();
