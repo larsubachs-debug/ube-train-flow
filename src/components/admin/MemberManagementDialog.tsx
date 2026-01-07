@@ -84,21 +84,33 @@ export const MemberManagementDialog = ({
   const { data: programs = [] } = useQuery({
     queryKey: ["member-programs", memberUserId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: progressRows, error: progressError } = await supabase
         .from("user_program_progress")
-        .select(`
-          *,
-          program:program_id (
-            id,
-            name,
-            description
-          )
-        `)
+        .select("*")
         .eq("user_id", memberUserId)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+      if (progressError) throw progressError;
+
+      const programIds = Array.from(
+        new Set((progressRows || []).map((r) => r.program_id).filter(Boolean))
+      );
+
+      if (programIds.length === 0) return [];
+
+      const { data: programRows, error: programError } = await supabase
+        .from("programs")
+        .select("id, name, description")
+        .in("id", programIds);
+
+      if (programError) throw programError;
+
+      const programById = new Map((programRows || []).map((p) => [p.id, p]));
+
+      return (progressRows || []).map((row: any) => ({
+        ...row,
+        program: programById.get(row.program_id) || null,
+      }));
     },
     enabled: open,
   });
