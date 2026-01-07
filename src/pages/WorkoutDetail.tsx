@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -36,6 +36,7 @@ interface SetData {
 
 const WorkoutDetail = () => {
   const { workoutId } = useParams();
+  const navigate = useNavigate();
   const [notes, setNotes] = useState("");
   const [currentSection, setCurrentSection] = useState<Section>('warmup');
   const [selectedExercise, setSelectedExercise] = useState<{ name: string; videoUrl?: string } | null>(null);
@@ -336,6 +337,10 @@ const WorkoutDetail = () => {
 
   const handleWorkoutComplete = () => {
     setShowSummary(true);
+    // Navigate to home page after a short delay to let user see the success message
+    setTimeout(() => {
+      navigate('/');
+    }, 1500);
   };
 
   const handleShareWorkout = () => {
