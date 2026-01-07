@@ -423,52 +423,68 @@ const WorkoutDetail = () => {
           const repsNum = parseInt(lift.reps || "0");
           const targetWeight = targetWeights[liftIndex] || 0;
           const showWarmupTracker = showWarmup[liftIndex] || false;
-          
+
           const exerciseContent = (
-            <div key={`detail-${lift.id}`} className={`space-y-4 ${!groupType ? 'border-b border-border/10 pb-8 last:border-0' : ''}`}>
+            <div
+              key={`detail-${lift.id}`}
+              className={`space-y-4 ${
+                !groupType ? "border-b border-border/10 pb-8 last:border-0" : ""
+              }`}
+            >
               {/* Exercise Header with Controls */}
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm text-muted-foreground">Barbell</p>
-                    <SupersetIndicator 
-                      groupType={groupType} 
-                      isActive={!!groupType}
-                    />
+                    <SupersetIndicator groupType={groupType} isActive={!!groupType} />
                   </div>
                   <h3 className="text-xl font-bold">{lift.name}</h3>
-                  
+
                   {/* Video button - prominent placement */}
                   {(lift.videoUrl || lift.name) && (
                     <div className="mt-2">
                       <ExerciseVideoButton
                         exerciseName={lift.name}
                         videoUrl={lift.videoUrl}
-                        onVideoClick={(name, url) => setSelectedExercise({ name, videoUrl: url })}
+                        onVideoClick={(name, url) =>
+                          setSelectedExercise({ name, videoUrl: url })
+                        }
                         variant="prominent"
                       />
                     </div>
                   )}
                 </div>
+
                 <div className="flex gap-1 flex-wrap justify-end">
                   {/* Warmup toggle */}
                   <button
-                    onClick={() => setShowWarmup((prev) => ({ ...prev, [liftIndex]: !prev[liftIndex] }))}
+                    onClick={() =>
+                      setShowWarmup((prev) => ({
+                        ...prev,
+                        [liftIndex]: !prev[liftIndex],
+                      }))
+                    }
                     className={`p-2.5 rounded-lg transition-colors ${
-                      showWarmupTracker ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700' : 'hover:bg-muted/20'
+                      showWarmupTracker
+                        ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700"
+                        : "hover:bg-muted/20"
                     }`}
                     title="Warm-up sets"
                   >
                     <Flame className="h-5 w-5" />
                   </button>
+
                   {/* Plate calculator */}
                   <PlateCalculator targetWeight={targetWeight} />
+
                   {/* Group type selector */}
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button 
+                      <button
                         className={`p-2.5 rounded-lg transition-colors ${
-                          groupType ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-muted/20'
+                          groupType
+                            ? "bg-blue-100 dark:bg-blue-900/30"
+                            : "hover:bg-muted/20"
                         }`}
                         title="Groepering"
                       >
@@ -479,14 +495,19 @@ const WorkoutDetail = () => {
                       <div className="space-y-2">
                         <h4 className="font-semibold text-sm mb-2">Groepering</h4>
                         {[
-                          { type: null, label: 'Geen' },
-                          { type: 'superset' as GroupType, label: 'Superset' },
-                          { type: 'circuit' as GroupType, label: 'Circuit' },
-                          { type: 'dropset' as GroupType, label: 'Dropset' },
+                          { type: null, label: "Geen" },
+                          { type: "superset" as GroupType, label: "Superset" },
+                          { type: "circuit" as GroupType, label: "Circuit" },
+                          { type: "dropset" as GroupType, label: "Dropset" },
                         ].map((option) => (
                           <button
                             key={option.label}
-                            onClick={() => setExerciseGroupTypes((prev) => ({ ...prev, [liftIndex]: option.type }))}
+                            onClick={() =>
+                              setExerciseGroupTypes((prev) => ({
+                                ...prev,
+                                [liftIndex]: option.type,
+                              }))
+                            }
                             className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                               exerciseGroupTypes[liftIndex] === option.type
                                 ? "bg-primary text-primary-foreground"
@@ -499,6 +520,7 @@ const WorkoutDetail = () => {
                       </div>
                     </PopoverContent>
                   </Popover>
+
                   {/* Rest timer config */}
                   <Popover>
                     <PopoverTrigger asChild>
@@ -513,31 +535,43 @@ const WorkoutDetail = () => {
                           {[60, 90, 120, 180].map((seconds) => (
                             <button
                               key={seconds}
-                              onClick={() => setRestTimes((prev) => ({ ...prev, [liftIndex]: seconds }))}
+                              onClick={() =>
+                                setRestTimes((prev) => ({
+                                  ...prev,
+                                  [liftIndex]: seconds,
+                                }))
+                              }
                               className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                                 restTimes[liftIndex] === seconds
                                   ? "bg-primary text-primary-foreground"
                                   : "hover:bg-muted/20"
                               }`}
                             >
-                              {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, "0")}
+                              {Math.floor(seconds / 60)}:
+                              {(seconds % 60).toString().padStart(2, "0")}
                             </button>
                           ))}
                         </div>
                         <p className="text-xs text-muted-foreground">
                           Huidige: {Math.floor((restTimes[liftIndex] || 90) / 60)}:
-                          {((restTimes[liftIndex] || 90) % 60).toString().padStart(2, "0")}
+                          {((restTimes[liftIndex] || 90) % 60)
+                            .toString()
+                            .padStart(2, "0")}
                         </p>
                       </div>
                     </PopoverContent>
                   </Popover>
+
                   <button
-                    onClick={() => setShowRPEHistory({ exerciseName: lift.name, liftIndex })}
+                    onClick={() =>
+                      setShowRPEHistory({ exerciseName: lift.name, liftIndex })
+                    }
                     className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors"
                     title="RPE Geschiedenis"
                   >
                     <BarChart3 className="h-5 w-5" />
                   </button>
+
                   <button
                     onClick={() => setShowLeaderboard({ exerciseName: lift.name })}
                     className="p-2.5 hover:bg-muted/20 rounded-lg transition-colors"
@@ -545,10 +579,13 @@ const WorkoutDetail = () => {
                   >
                     <Users className="h-5 w-5" />
                   </button>
+
                   <ExerciseVideoButton
                     exerciseName={lift.name}
                     videoUrl={lift.videoUrl}
-                    onVideoClick={(name, url) => setSelectedExercise({ name, videoUrl: url })}
+                    onVideoClick={(name, url) =>
+                      setSelectedExercise({ name, videoUrl: url })
+                    }
                     variant="icon"
                   />
                 </div>
@@ -559,164 +596,186 @@ const WorkoutDetail = () => {
                 <WarmupSetTracker
                   exerciseName={lift.name}
                   targetWeight={targetWeight}
-                  onWarmupComplete={() => setShowWarmup((prev) => ({ ...prev, [liftIndex]: false }))}
+                  onWarmupComplete={() =>
+                    setShowWarmup((prev) => ({ ...prev, [liftIndex]: false }))
+                  }
                 />
               )}
 
-            {/* Sets Table */}
-            <div className="space-y-2.5">
-              {Array.from({ length: lift.sets || 6 }).map((_, setIdx) => {
-                const currentRPE = rpeValues[liftIndex]?.[setIdx] || 5;
-                const currentWeight = weightValues[liftIndex]?.[setIdx] || 0;
-                const isCompleted = setsCompleted[liftIndex]?.[setIdx] || false;
-                const isPR = prStatus[liftIndex]?.[setIdx] || false;
-                
-                return (
-                  <div key={setIdx} className="flex items-center gap-3 relative">
-                    <span className="text-base font-medium w-6 text-center">{setIdx + 1}</span>
-                    <div className="flex items-center gap-2 relative">
-                      <Input
-                        type="number"
-                        placeholder="50"
-                        value={currentWeight || ""}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value) || 0;
-                          setWeightValues((prev) => ({
-                            ...prev,
-                            [liftIndex]: {
-                              ...prev[liftIndex],
-                              [setIdx]: value,
-                            },
-                          }));
-                          // Update target weight for warmup calculator
-                          if (setIdx === 0 && value > 0) {
-                            setTargetWeights((prev) => ({ ...prev, [liftIndex]: value }));
-                          }
-                          // Check for PR when weight changes
-                          if (value > 0) {
-                            checkForPR(liftIndex, setIdx, lift.name, value);
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const value = parseFloat(e.target.value) || 0;
-                          if (value > 0) {
-                            checkForPR(liftIndex, setIdx, lift.name, value);
-                            // Show 1RM calculator
-                            setShow1RMCalc((prev) => ({
+              {/* Sets Table */}
+              <div className="space-y-2.5">
+                {Array.from({ length: lift.sets || 6 }).map((_, setIdx) => {
+                  const currentRPE = rpeValues[liftIndex]?.[setIdx] || 5;
+                  const currentWeight = weightValues[liftIndex]?.[setIdx] || 0;
+                  const isCompleted = setsCompleted[liftIndex]?.[setIdx] || false;
+                  const isPR = prStatus[liftIndex]?.[setIdx] || false;
+
+                  return (
+                    <div key={setIdx} className="flex items-center gap-3 relative">
+                      <span className="text-base font-medium w-6 text-center">
+                        {setIdx + 1}
+                      </span>
+
+                      <div className="flex items-center gap-2 relative">
+                        <Input
+                          type="number"
+                          placeholder="50"
+                          value={currentWeight || ""}
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value) || 0;
+                            setWeightValues((prev) => ({
                               ...prev,
                               [liftIndex]: {
                                 ...prev[liftIndex],
-                                [setIdx]: true,
+                                [setIdx]: value,
                               },
                             }));
-                          }
-                        }}
-                        disabled={isCompleted}
-                        className={`w-20 h-10 text-sm border-0 rounded-xl text-center font-medium ${
-                          isCompleted ? "bg-muted/50" : isPR ? "bg-amber-100 dark:bg-amber-900/20 border-2 border-amber-500" : "bg-muted/30"
-                        }`}
-                      />
-                      {isPR && !isCompleted && (
-                        <Badge className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-1.5 py-0.5 pointer-events-none">
-                          <Trophy className="h-3 w-3 mr-0.5" />
-                          PR
-                        </Badge>
-                      )}
-                      <span className="text-xs text-muted-foreground">kg</span>
-                    </div>
-                    
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button
-                          disabled={isCompleted}
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted/40 transition-colors relative ${
-                            isCompleted ? "bg-muted/50" : "bg-muted/30"
-                          }`}
-                        >
-                          {currentRPE > 5 && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
-                              {currentRPE}
-                            </span>
-                          )}
-                          ✕
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 pointer-events-auto">
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-semibold text-sm">RPE (Rate of Perceived Exertion)</h4>
-                            <span className="text-2xl font-bold text-primary">{currentRPE}</span>
-                          </div>
-                          <Slider
-                            value={[currentRPE]}
-                            onValueChange={(value) => {
-                              setRpeValues(prev => ({
+
+                            if (setIdx === 0 && value > 0) {
+                              setTargetWeights((prev) => ({
+                                ...prev,
+                                [liftIndex]: value,
+                              }));
+                            }
+
+                            if (value > 0) {
+                              checkForPR(liftIndex, setIdx, lift.name, value);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const value = parseFloat(e.target.value) || 0;
+                            if (value > 0) {
+                              checkForPR(liftIndex, setIdx, lift.name, value);
+                              setShow1RMCalc((prev) => ({
                                 ...prev,
                                 [liftIndex]: {
                                   ...prev[liftIndex],
-                                  [setIdx]: value[0]
-                                }
+                                  [setIdx]: true,
+                                },
                               }));
-                            }}
-                            min={1}
-                            max={10}
-                            step={0.5}
-                            className="w-full"
-                          />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>1 - Zeer licht</span>
-                            <span>10 - Maximaal</span>
+                            }
+                          }}
+                          disabled={isCompleted}
+                          className={`w-20 h-10 text-sm border-0 rounded-xl text-center font-medium ${
+                            isCompleted
+                              ? "bg-muted/50"
+                              : isPR
+                                ? "bg-amber-100 dark:bg-amber-900/20 border-2 border-amber-500"
+                                : "bg-muted/30"
+                          }`}
+                        />
+                        {isPR && !isCompleted && (
+                          <Badge className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-1.5 py-0.5 pointer-events-none">
+                            <Trophy className="h-3 w-3 mr-0.5" />
+                            PR
+                          </Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground">kg</span>
+                      </div>
+
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            disabled={isCompleted}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted/40 transition-colors relative ${
+                              isCompleted ? "bg-muted/50" : "bg-muted/30"
+                            }`}
+                          >
+                            {currentRPE > 5 && (
+                              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
+                                {currentRPE}
+                              </span>
+                            )}
+                            ✕
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 pointer-events-auto">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-sm">
+                                RPE (Rate of Perceived Exertion)
+                              </h4>
+                              <span className="text-2xl font-bold text-primary">
+                                {currentRPE}
+                              </span>
+                            </div>
+                            <Slider
+                              value={[currentRPE]}
+                              onValueChange={(value) => {
+                                setRpeValues((prev) => ({
+                                  ...prev,
+                                  [liftIndex]: {
+                                    ...prev[liftIndex],
+                                    [setIdx]: value[0],
+                                  },
+                                }));
+                              }}
+                              min={1}
+                              max={10}
+                              step={0.5}
+                              className="w-full"
+                            />
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>1 - Zeer licht</span>
+                              <span>10 - Maximaal</span>
+                            </div>
                           </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                    
-                    <div className="flex items-center gap-1.5 bg-muted/30 px-3 py-2 rounded-xl">
-                      <span className="text-sm font-semibold">{lift.reps}</span>
-                      <span className="text-xs text-muted-foreground">reps</span>
+                        </PopoverContent>
+                      </Popover>
+
+                      <div className="flex items-center gap-1.5 bg-muted/30 px-3 py-2 rounded-xl">
+                        <span className="text-sm font-semibold">{lift.reps}</span>
+                        <span className="text-xs text-muted-foreground">reps</span>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          handleSetComplete(
+                            liftIndex,
+                            setIdx,
+                            lift.name,
+                            parseInt(lift.reps || "0")
+                          )
+                        }
+                        disabled={isCompleted}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ml-auto ${
+                          isCompleted
+                            ? "bg-[#86efac] text-[#059669]"
+                            : "bg-muted/30 hover:bg-[#86efac] hover:text-[#059669]"
+                        }`}
+                      >
+                        ✓
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleSetComplete(liftIndex, setIdx, lift.name, parseInt(lift.reps || "0"))}
-                      disabled={isCompleted}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ml-auto ${
-                        isCompleted
-                          ? "bg-[#86efac] text-[#059669]"
-                          : "bg-muted/30 hover:bg-[#86efac] hover:text-[#059669]"
-                      }`}
-                    >
-                      ✓
-                    </button>
-          </div>
+                  );
+                })}
+              </div>
+
+              {/* 1RM Calculator */}
+              {(() => {
+                for (let i = 0; i < (lift.sets || 6); i++) {
+                  const weight = weightValues[liftIndex]?.[i] || 0;
+                  if (weight > 0 && (setsCompleted[liftIndex]?.[i] || show1RMCalc[liftIndex]?.[i])) {
+                    return (
+                      <div className="mt-4">
+                        <OneRMCalculator weight={weight} reps={repsNum} />
+                      </div>
+                    );
+                  }
+                }
+                return null;
+              })()}
+            </div>
           );
 
-          // Wrap in SupersetWrapper if grouped
           return groupType ? (
             <SupersetWrapper key={`wrapper-${lift.id}`} groupType={groupType}>
               {exerciseContent}
             </SupersetWrapper>
-          ) : exerciseContent;
-        })}
-            </div>
-
-            {/* 1RM Calculator */}
-            {(() => {
-              // Find first completed set with weight to show 1RM
-              for (let i = 0; i < (lift.sets || 6); i++) {
-                const weight = weightValues[liftIndex]?.[i] || 0;
-                if (weight > 0 && (setsCompleted[liftIndex]?.[i] || show1RMCalc[liftIndex]?.[i])) {
-                  return (
-                    <div className="mt-4">
-                      <OneRMCalculator weight={weight} reps={repsNum} />
-                    </div>
-                  );
-                }
-              }
-              return null;
-            })()}
-          </div>
+          ) : (
+            exerciseContent
           );
         })}
-
 
         {/* Complete Button */}
         <div ref={completeRef} className="pt-6 scroll-mt-24">
