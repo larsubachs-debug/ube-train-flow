@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { programs as staticPrograms } from "@/data/programs";
+
 import { usePrograms } from "@/hooks/usePrograms";
 import { ArrowLeft, Calendar, TrendingUp, Check, Play, BarChart3, Timer, Trophy, Link2, Users, Video, Flame } from "lucide-react";
 import { WorkoutCompleteButton } from "@/components/workouts/WorkoutCompleteButton";
@@ -77,16 +77,14 @@ const WorkoutDetail = () => {
   const conditioningRef = useRef<HTMLDivElement>(null);
   const completeRef = useRef<HTMLDivElement>(null);
 
-  // Fallback to static programs if database is empty
-  const displayPrograms = programs.length > 0 ? programs : staticPrograms;
-
+  // Only use database programs - no fallback to static data
   // Find workout across all programs
   let workout;
   let program;
   
-  for (const prog of displayPrograms) {
-    for (const week of prog.weeks) {
-      const found = week.workouts.find((w) => w.id === workoutId);
+  for (const prog of programs) {
+    for (const week of prog.weeks || []) {
+      const found = week.workouts?.find((w) => w.id === workoutId);
       if (found) {
         workout = found;
         program = prog;
@@ -101,7 +99,62 @@ const WorkoutDetail = () => {
   }
 
   if (!workout || !program) {
-    return <div className="p-6">Workout not found</div>;
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
+          <div className="flex items-center gap-3 p-4">
+            <Link to="/">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <h1 className="text-xl font-bold text-foreground">Workout niet gevonden</h1>
+          </div>
+        </div>
+        <div className="p-6 text-center space-y-4">
+          <p className="text-muted-foreground">Deze workout bestaat niet of is nog niet aan je toegewezen.</p>
+          <Link to="/">
+            <Button>Terug naar Home</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if workout has any exercises
+  const hasExercises = (workout.warmUp?.length || 0) + (workout.mainLifts?.length || 0) + 
+                       (workout.accessories?.length || 0) + (workout.conditioning?.length || 0) > 0;
+
+  if (!hasExercises) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
+          <div className="flex items-center gap-3 p-4">
+            <Link to={`/programs/${program.id}`}>
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">{workout.name}</h1>
+              <p className="text-sm text-muted-foreground">{program.name}</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6 text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
+            <Calendar className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h2 className="text-lg font-semibold text-foreground">Nog geen oefeningen</h2>
+          <p className="text-muted-foreground max-w-sm mx-auto">
+            Deze workout heeft nog geen oefeningen. Je coach zal binnenkort de oefeningen toevoegen.
+          </p>
+          <Link to={`/programs/${program.id}`}>
+            <Button variant="outline">Terug naar programma</Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   // Function to get available sections
