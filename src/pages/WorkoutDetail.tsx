@@ -385,21 +385,6 @@ const WorkoutDetail = () => {
       </div>
 
       <div className="px-6 py-6 space-y-8">
-        {/* EMOM Timer */}
-        <EMOMTimer totalMinutes={workout.duration} />
-
-        {/* EMOM Info */}
-        <div className="border-b border-border/10 pb-6">
-          <p className="text-base mb-3">
-            <span className="text-muted-foreground">EMOM |</span>{" "}
-            <span className="font-semibold">Every 1 min</span>{" "}
-            <span className="text-muted-foreground">for</span>{" "}
-            <span className="font-semibold">{workout.duration}mins</span>
-          </p>
-          <p className="text-base text-muted-foreground flex items-center gap-2">
-            <span className="text-lg">🔄</span> 6
-          </p>
-        </div>
 
         {/* Main Lifts Overview */}
         {workout.mainLifts.length > 0 && (
