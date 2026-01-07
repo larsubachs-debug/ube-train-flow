@@ -59,15 +59,17 @@ export const ProgramAssigner = ({
     setLoading(true);
 
     try {
-      // Check if user already has progress for this program
-      const { data: existing } = await supabase
+      // If member already has this program somewhere in history, allow re-assigning
+      // unless it's already the most recent assigned program.
+      const { data: latest } = await supabase
         .from("user_program_progress")
-        .select("id")
+        .select("program_id")
         .eq("user_id", memberUserId)
-        .eq("program_id", selectedProgram)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      if (existing) {
+      if (latest?.program_id === selectedProgram) {
         toast({
           title: "Info",
           description: "Member is al toegewezen aan dit programma",
@@ -76,7 +78,7 @@ export const ProgramAssigner = ({
         return;
       }
 
-      // Create new progress entry
+      // Create new progress entry (makes this program the active/latest one)
       const { error } = await supabase.from("user_program_progress").insert({
         user_id: memberUserId,
         program_id: selectedProgram,
