@@ -81,9 +81,13 @@ const MemberScheduler = ({ memberId, memberName }: MemberSchedulerProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!date || !title || !coachProfile) return;
-
+    
     const selectedWorkout = allWorkouts.find((w) => w.id === selectedWorkoutId);
+    
+    // For workout type with selected workout, title is auto-filled, otherwise title is required
+    const hasValidTitle = title || (eventType === "workout" && selectedWorkout);
+    
+    if (!date || !hasValidTitle || !coachProfile) return;
 
     await createEvent.mutateAsync({
       member_id: memberId,
