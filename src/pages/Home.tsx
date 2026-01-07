@@ -47,25 +47,41 @@ const Home = () => {
   // Get user's assigned program and weekly workout progress
   useEffect(() => {
     if (!user) return;
+
     const fetchUserProgramAndProgress = async () => {
-      // Get user's program
-      const { data: progressData } = await supabase
+      // Get user's most recent valid program (sometimes old assignments point to deleted programs)
+      const { data: progressRows } = await supabase
         .from("user_program_progress")
-        .select("program_id, current_week_number")
+        .select("program_id, current_week_number, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      setUserProgramId(progressData?.program_id || null);
+        .limit(10);
 
-      if (progressData?.program_id) {
+      let chosen: { program_id: string; current_week_number: number | null } | null = null;
+
+      for (const row of progressRows || []) {
+        if (!row?.program_id) continue;
+        const { data: programExists } = await supabase
+          .from("programs")
+          .select("id")
+          .eq("id", row.program_id)
+          .maybeSingle();
+
+        if (programExists?.id) {
+          chosen = { program_id: row.program_id, current_week_number: row.current_week_number };
+          break;
+        }
+      }
+
+      setUserProgramId(chosen?.program_id || null);
+
+      if (chosen?.program_id) {
         // Get current week's workouts
         const { data: weekData } = await supabase
           .from("weeks")
           .select("id")
-          .eq("program_id", progressData.program_id)
-          .eq("week_number", progressData.current_week_number || 1)
+          .eq("program_id", chosen.program_id)
+          .eq("week_number", chosen.current_week_number || 1)
           .maybeSingle();
 
         if (weekData?.id) {
