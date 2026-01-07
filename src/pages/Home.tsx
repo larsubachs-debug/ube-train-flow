@@ -344,10 +344,38 @@ const Home = () => {
             <div className="space-y-3">
               {thisWeek.workouts.slice(0, 3).map((workout, index) => {
                 const totalExercises = (workout.warmUp?.length || 0) + (workout.mainLifts?.length || 0) + (workout.accessories?.length || 0);
+                
+                // Motivational messages for completed workouts
+                const motivationalMessages = [
+                  "Beast Mode! 💪",
+                  "Crushed It! 🔥",
+                  "Champion! 🏆",
+                  "Unstoppable! ⚡",
+                  "Legend! 🌟",
+                  "Warrior! 🦁",
+                  "On Fire! 🔥",
+                  "Nailed It! ✨",
+                  "Hero! 🎯",
+                  "Machine! 🤖"
+                ];
+                const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+                
                 return (
                   <Link key={workout.id} to={`/programs/${currentProgram.id}/workout/${workout.id}`} className="block">
-                    <Card className="p-4 hover:shadow-md transition-shadow bg-card border border-border">
-                      <div className="flex items-start justify-between mb-3">
+                    <Card className={`p-4 hover:shadow-md transition-shadow bg-card border border-border relative overflow-hidden ${workout.completed ? 'ring-2 ring-accent' : ''}`}>
+                      {/* Completed stamp overlay */}
+                      {workout.completed && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                          <div className="bg-accent/90 text-accent-foreground px-6 py-3 rounded-lg transform -rotate-12 shadow-lg border-4 border-accent-foreground/20">
+                            <div className="text-center">
+                              <p className="text-2xl font-black tracking-tight">{randomMessage}</p>
+                              <p className="text-xs font-semibold opacity-80 uppercase tracking-widest">Voltooid</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className={`flex items-start justify-between mb-3 ${workout.completed ? 'opacity-40' : ''}`}>
                         <div className="flex-1">
                           <p className="text-xs text-muted-foreground mb-1">Thurs 7th</p>
                           <h3 className="text-lg font-bold text-foreground">{workout.name}</h3>
@@ -363,7 +391,7 @@ const Home = () => {
                         )}
                       </div>
 
-                      <div className="grid grid-cols-4 gap-3">
+                      <div className={`grid grid-cols-4 gap-3 ${workout.completed ? 'opacity-40' : ''}`}>
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">{t('home.time')}</p>
                           <p className="text-sm font-bold text-foreground">{workout.duration}:00</p>
