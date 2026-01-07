@@ -70,8 +70,8 @@ const MemberScheduler = ({ memberId, memberName }: MemberSchedulerProps) => {
 
   // Flatten all workouts from all programs
   const allWorkouts = programs?.flatMap((program) =>
-    program.weeks.flatMap((week) =>
-      week.workouts.map((workout) => ({
+    (program.weeks || []).flatMap((week) =>
+      (week.workouts || []).map((workout) => ({
         id: workout.id,
         name: `${program.name} - Week ${week.weekNumber} - ${workout.name}`,
         duration: workout.duration,
