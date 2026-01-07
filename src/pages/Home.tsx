@@ -37,6 +37,7 @@ const Home = () => {
   const [userProgramId, setUserProgramId] = useState<string | null>(null);
   const [coachAvatar, setCoachAvatar] = useState<string | null>(null);
   const [weeklyProgress, setWeeklyProgress] = useState({ completed: 0, total: 0 });
+  const [completedWorkoutIds, setCompletedWorkoutIds] = useState<Set<string>>(new Set());
   const hasShownCongrats = useRef(false);
   const { data: programs = [], refetch: refetchPrograms, isLoading: programsLoading } = usePrograms();
   const queryClient = useQueryClient();
@@ -112,10 +113,11 @@ const Home = () => {
               .in("workout_id", workoutIds)
               .gte("completion_date", startOfWeekStr);
 
-            // Count unique completed workouts
-            const uniqueCompleted = new Set(completions?.map(c => c.workout_id) || []).size;
+            // Track completed workout IDs for stamp display
+            const completedIds = new Set(completions?.map(c => c.workout_id) || []);
+            setCompletedWorkoutIds(completedIds);
             
-            setWeeklyProgress({ completed: uniqueCompleted, total: totalWorkouts });
+            setWeeklyProgress({ completed: completedIds.size, total: totalWorkouts });
           } else {
             setWeeklyProgress({ completed: 0, total: 0 });
           }
@@ -344,8 +346,9 @@ const Home = () => {
             <div className="space-y-3">
               {thisWeek.workouts.slice(0, 3).map((workout, index) => {
                 const totalExercises = (workout.warmUp?.length || 0) + (workout.mainLifts?.length || 0) + (workout.accessories?.length || 0);
+                const isCompleted = completedWorkoutIds.has(workout.id);
                 
-                // Motivational messages for completed workouts
+                // Motivational messages for completed workouts - use workout.id as seed for consistent message
                 const motivationalMessages = [
                   "Beast Mode! 💪",
                   "Crushed It! 🔥",
@@ -358,29 +361,31 @@ const Home = () => {
                   "Hero! 🎯",
                   "Machine! 🤖"
                 ];
-                const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+                // Use a hash of the workout id to get a consistent but "random" message per workout
+                const messageIndex = workout.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % motivationalMessages.length;
+                const motivationalMessage = motivationalMessages[messageIndex];
                 
                 return (
                   <Link key={workout.id} to={`/programs/${currentProgram.id}/workout/${workout.id}`} className="block">
-                    <Card className={`p-4 hover:shadow-md transition-shadow bg-card border border-border relative overflow-hidden ${workout.completed ? 'ring-2 ring-accent' : ''}`}>
+                    <Card className={`p-4 hover:shadow-md transition-shadow bg-card border border-border relative overflow-hidden ${isCompleted ? 'ring-2 ring-accent' : ''}`}>
                       {/* Completed stamp overlay */}
-                      {workout.completed && (
+                      {isCompleted && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                           <div className="bg-accent/90 text-accent-foreground px-6 py-3 rounded-lg transform -rotate-12 shadow-lg border-4 border-accent-foreground/20">
                             <div className="text-center">
-                              <p className="text-2xl font-black tracking-tight">{randomMessage}</p>
+                              <p className="text-2xl font-black tracking-tight">{motivationalMessage}</p>
                               <p className="text-xs font-semibold opacity-80 uppercase tracking-widest">Voltooid</p>
                             </div>
                           </div>
                         </div>
                       )}
                       
-                      <div className={`flex items-start justify-between mb-3 ${workout.completed ? 'opacity-40' : ''}`}>
+                      <div className={`flex items-start justify-between mb-3 ${isCompleted ? 'opacity-40' : ''}`}>
                         <div className="flex-1">
                           <p className="text-xs text-muted-foreground mb-1">Thurs 7th</p>
                           <h3 className="text-lg font-bold text-foreground">{workout.name}</h3>
                         </div>
-                        {workout.completed ? (
+                        {isCompleted ? (
                           <div className="w-10 h-10 rounded-full border-2 border-foreground flex items-center justify-center flex-shrink-0">
                             <CheckCircle2 className="w-6 h-6 text-foreground" />
                           </div>
@@ -391,7 +396,7 @@ const Home = () => {
                         )}
                       </div>
 
-                      <div className={`grid grid-cols-4 gap-3 ${workout.completed ? 'opacity-40' : ''}`}>
+                      <div className={`grid grid-cols-4 gap-3 ${isCompleted ? 'opacity-40' : ''}`}>
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">{t('home.time')}</p>
                           <p className="text-sm font-bold text-foreground">{workout.duration}:00</p>
