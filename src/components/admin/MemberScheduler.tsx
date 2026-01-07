@@ -49,7 +49,7 @@ const MemberScheduler = ({ memberId, memberName }: MemberSchedulerProps) => {
   const [selectedWorkoutId, setSelectedWorkoutId] = useState("");
 
   const { data: events, isLoading } = useScheduledEvents(memberId);
-  const { data: programs } = usePrograms();
+  const { data: programs, isLoading: programsLoading } = usePrograms();
   const createEvent = useCreateScheduledEvent();
   const deleteEvent = useDeleteScheduledEvent();
 
@@ -153,14 +153,20 @@ const MemberScheduler = ({ memberId, memberName }: MemberSchedulerProps) => {
                   <Label>Selecteer Workout (optioneel)</Label>
                   <Select value={selectedWorkoutId} onValueChange={setSelectedWorkoutId}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Kies een workout..." />
+                      <SelectValue placeholder={programsLoading ? "Laden..." : "Kies een workout..."} />
                     </SelectTrigger>
                     <SelectContent>
-                      {allWorkouts.map((workout) => (
-                        <SelectItem key={workout.id} value={workout.id}>
-                          {workout.name}
-                        </SelectItem>
-                      ))}
+                      {programsLoading ? (
+                        <div className="p-2 text-sm text-muted-foreground">Workouts laden...</div>
+                      ) : allWorkouts.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground">Geen workouts gevonden. Maak eerst een programma aan.</div>
+                      ) : (
+                        allWorkouts.map((workout) => (
+                          <SelectItem key={workout.id} value={workout.id}>
+                            {workout.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
