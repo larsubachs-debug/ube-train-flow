@@ -373,8 +373,8 @@ const Home = () => {
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                           <div className="bg-accent/90 text-accent-foreground px-6 py-3 rounded-lg transform -rotate-12 shadow-lg border-4 border-accent-foreground/20">
                             <div className="text-center">
-                              <p className="text-2xl font-black tracking-tight">{motivationalMessage}</p>
-                              <p className="text-xs font-semibold opacity-80 uppercase tracking-widest">Voltooid</p>
+                              <p className="text-2xl font-black tracking-tight">U did it</p>
+                              <p className="text-lg font-bold">{user?.user_metadata?.display_name || user?.email?.split('@')[0]}</p>
                             </div>
                           </div>
                         </div>
