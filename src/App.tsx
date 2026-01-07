@@ -90,6 +90,8 @@ const router = createBrowserRouter(
         { path: "/onboarding", element: <Onboarding /> },
         { path: "/", element: <ProtectedRoute><Home /></ProtectedRoute> },
         { path: "/programs", element: <ProtectedRoute><Programs /></ProtectedRoute> },
+        { path: "/programs/:programId", element: <ProtectedRoute><ProgramDetail /></ProtectedRoute> },
+        { path: "/programs/:programId/workout/:workoutId", element: <ProtectedRoute><WorkoutDetail /></ProtectedRoute> },
         { path: "/program/:programId", element: <ProtectedRoute><ProgramDetail /></ProtectedRoute> },
         { path: "/workout/:workoutId", element: <ProtectedRoute><WorkoutDetail /></ProtectedRoute> },
         { path: "/check-in", element: <ProtectedRoute><CheckIn /></ProtectedRoute> },
