@@ -374,7 +374,7 @@ const Home = () => {
                           <div className="bg-accent/90 text-accent-foreground px-6 py-3 rounded-lg transform -rotate-12 shadow-lg border-4 border-accent-foreground/20">
                             <div className="text-center">
                               <p className="text-2xl font-black tracking-tight">U did it</p>
-                              <p className="text-lg font-bold">{user?.user_metadata?.display_name || user?.email?.split('@')[0]}</p>
+                              <p className="text-lg font-bold">{(user?.user_metadata?.display_name || user?.email?.split('@')[0] || '').split(' ')[0]}</p>
                             </div>
                           </div>
                         </div>
