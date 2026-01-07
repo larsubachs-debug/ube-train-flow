@@ -1251,13 +1251,26 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
 
           for (const exercise of day.exercises) {
             const exerciseId = `exercise-${workoutId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Map exercise categories to valid database values
+            const mapCategoryToDatabase = (cat: string): string => {
+              const catLower = cat.toLowerCase();
+              // Map common categories to valid database values
+              if (['strength', 'compound', 'main', 'primary'].includes(catLower)) return 'mainlift';
+              if (['accessory', 'isolation', 'secondary', 'auxiliary'].includes(catLower)) return 'accessory';
+              if (['warmup', 'warm-up', 'warm up', 'mobility'].includes(catLower)) return 'warmup';
+              if (['conditioning', 'cardio', 'hiit', 'finisher'].includes(catLower)) return 'conditioning';
+              // Default to accessory if category doesn't match
+              return 'accessory';
+            };
+            
             const { error: exerciseError } = await supabase
               .from("exercises")
               .insert({
                 id: exerciseId,
                 workout_id: workoutId,
                 name: exercise.name,
-                category: exercise.category.toLowerCase(),
+                category: mapCategoryToDatabase(exercise.category),
                 sets: exercise.sets.length,
                 reps: exercise.sets[0]?.reps || "10",
                 weight: parseFloat(exercise.sets[0]?.weight || "0"),
