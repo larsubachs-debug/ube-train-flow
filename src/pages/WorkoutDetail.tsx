@@ -395,10 +395,7 @@ const WorkoutDetail = () => {
                   key={lift.id} 
                   className="flex items-center justify-between py-3 bg-muted/20 rounded-lg px-4"
                 >
-                  <div className="flex items-center gap-3 flex-1">
-                    <span className="text-sm text-muted-foreground font-medium">Min {liftIndex}-{liftIndex + 1}</span>
-                    <h3 className="font-semibold text-base">{lift.name}</h3>
-                  </div>
+                  <h3 className="font-semibold text-base flex-1">{lift.name}</h3>
                   <p className="text-sm">
                     <span className="font-semibold">{lift.reps}</span>
                     <span className="text-muted-foreground ml-1">reps</span>
