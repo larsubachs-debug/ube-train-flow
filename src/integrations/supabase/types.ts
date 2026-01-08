@@ -921,6 +921,57 @@ export type Database = {
           },
         ]
       }
+      food_catalog: {
+        Row: {
+          brand: string | null
+          calories_per_serving: number
+          carbs_per_serving: number
+          category: string | null
+          created_at: string
+          created_by: string | null
+          fat_per_serving: number
+          id: string
+          is_public: boolean
+          name: string
+          protein_per_serving: number
+          serving_size: number
+          serving_unit: string
+          updated_at: string
+        }
+        Insert: {
+          brand?: string | null
+          calories_per_serving?: number
+          carbs_per_serving?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          fat_per_serving?: number
+          id?: string
+          is_public?: boolean
+          name: string
+          protein_per_serving?: number
+          serving_size?: number
+          serving_unit?: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string | null
+          calories_per_serving?: number
+          carbs_per_serving?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          fat_per_serving?: number
+          id?: string
+          is_public?: boolean
+          name?: string
+          protein_per_serving?: number
+          serving_size?: number
+          serving_unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       food_logs: {
         Row: {
           calories: number
