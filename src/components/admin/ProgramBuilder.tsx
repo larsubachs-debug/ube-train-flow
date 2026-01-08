@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronRight, Dumbbell, Library, ArrowLeft, Save, Eye, Pencil, Play, Clock, Target, FileDown, Users } from "lucide-react";
+import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronRight, Dumbbell, Library, ArrowLeft, Save, Eye, Pencil, Play, Clock, Target, FileDown, Users, Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseLeaderboard } from "@/components/workouts/ExerciseLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,6 +58,7 @@ interface Exercise {
   category: string;
   restTimer: string;
   muscleGroup?: string;
+  videoUrl?: string;
 }
 
 interface Day {
@@ -528,6 +529,20 @@ const SortableExerciseCard = ({
                 </Button>
               </div>
 
+              {/* Video URL */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block flex items-center gap-1">
+                  <Video className="h-3 w-3" />
+                  Video URL
+                </label>
+                <Input
+                  placeholder="YouTube, Vimeo of directe URL..."
+                  value={exercise.videoUrl || ""}
+                  onChange={(e) => onUpdate(exercise.id, 'videoUrl', e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+
               {/* Notes */}
               <Textarea
                 placeholder="Notities (optioneel)"
@@ -803,6 +818,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
             category: ex.category,
             restTimer: ex.restTimer,
             notes: ex.notes,
+            videoUrl: ex.videoUrl || ex.video_url,
             sets: ex.sets.map((s: any, idx: number) => ({
               id: String(idx),
               reps: s.reps,
@@ -1275,6 +1291,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                 reps: exercise.sets[0]?.reps || "10",
                 weight: parseFloat(exercise.sets[0]?.weight || "0"),
                 notes: exercise.notes || null,
+                video_url: exercise.videoUrl || null,
                 display_order: day.exercises.indexOf(exercise),
               });
 
