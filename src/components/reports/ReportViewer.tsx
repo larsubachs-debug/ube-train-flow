@@ -51,51 +51,16 @@ export function ReportViewer({ report }: ReportViewerProps) {
     return isNaN(parsed.getTime()) ? new Date() : parsed;
   };
 
-  // Mock data for preview when no real data exists
-  const mockData: ReportData = {
-    user: {
-      name: "Demo Gebruiker",
-    },
-    period: {
-      start: report.period_start || new Date().toISOString().split('T')[0],
-      end: report.period_end || new Date().toISOString().split('T')[0],
-      type: report.report_type,
-      generatedAt: report.created_at || new Date().toISOString(),
-    },
-    training: {
-      totalWorkouts: 12,
-      totalVolume: 45820,
-      averageRPE: 7.4,
-      exerciseBreakdown: [
-        { name: "Squat", sets: 24, volume: 12500 },
-        { name: "Bench Press", sets: 20, volume: 9800 },
-        { name: "Deadlift", sets: 16, volume: 14200 },
-        { name: "Overhead Press", sets: 16, volume: 4200 },
-        { name: "Barbell Row", sets: 18, volume: 5120 },
-      ],
-    },
-    nutrition: {
-      daysLogged: 21,
-      averageCalories: 2450,
-      averageProtein: 165,
-      averageCarbs: 280,
-      averageFat: 78,
-    },
-    body: {
-      measurementsCount: 4,
-      weightChange: -1.2,
-      latestWeight: 82.5,
-      latestBodyFat: 14.8,
-    },
-    wellness: {
-      checkinsCompleted: 18,
-      habitsCompleted: 42,
-    },
-  };
+  // Use report data directly - return early if no data
+  if (!rawData) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        <p>Geen rapportgegevens beschikbaar.</p>
+      </div>
+    );
+  }
 
-  // Use real data if available, otherwise use mock data
-  const data = rawData && rawData.training?.totalWorkouts > 0 ? rawData : mockData;
-  const isUsingMockData = !rawData || rawData.training?.totalWorkouts === 0;
+  const data = rawData;
 
   const handleDownloadPDF = async () => {
     if (!reportRef.current || isGeneratingPDF) return;
@@ -197,13 +162,6 @@ export function ReportViewer({ report }: ReportViewerProps) {
 
   return (
     <div className="space-y-0">
-      {/* Demo Data Banner - excluded from PDF */}
-      {isUsingMockData && (
-        <div className="bg-amber-500/20 border border-amber-500/30 text-amber-200 px-4 py-3 rounded-t-xl text-sm text-center">
-          📊 Dit is een voorbeeld rapport met demo data. Voeg trainingen, voeding en metingen toe om je echte resultaten te zien.
-        </div>
-      )}
-
       {/* Action Buttons - Outside PDF */}
       <div className="flex justify-end gap-2 p-4 bg-slate-900 border-b border-slate-800">
         <Button 
