@@ -28,6 +28,7 @@ import { ComponentErrorBoundary } from "@/components/ComponentErrorBoundary";
 import { NoProgramState } from "@/components/programs/NoProgramState";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import BottomNav from "@/components/BottomNav";
+import { PeriodReportButton } from "@/components/home/PeriodReportButton";
 
 const Home = () => {
   const { t } = useTranslation();
@@ -271,6 +272,9 @@ const Home = () => {
             </Link>
           </div>
         </div>
+
+        {/* Period Report Button */}
+        <PeriodReportButton />
 
         {/* Program Phase Card - only show if program exists */}
         {hasValidProgram && (
