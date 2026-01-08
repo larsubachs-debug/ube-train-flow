@@ -339,9 +339,17 @@ const Home = () => {
         {/* Your Training Plan - only show if program is assigned and has workouts */}
         {hasValidProgram && thisWeek?.workouts && thisWeek.workouts.length > 0 && (
           <div className="space-y-4" data-tour="workouts">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">{t('home.yourTrainingPlan')}</h2>
-              <p className="text-sm text-muted-foreground mt-1">{t('home.nextWeekDrops')}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">{t('home.yourTrainingPlan')}</h2>
+                <p className="text-sm text-muted-foreground mt-1">{t('home.nextWeekDrops')}</p>
+              </div>
+              <Link to="/programs">
+                <Button variant="outline" size="sm">
+                  {t('nav.programs')}
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
             </div>
 
             <div className="space-y-3">
