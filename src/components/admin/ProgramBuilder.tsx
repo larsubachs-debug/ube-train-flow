@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronRight, Dumbbell, Library, ArrowLeft, Save, Eye, Pencil, Play, Clock, Target, FileDown, Users, Video } from "lucide-react";
+import { Plus, Trash2, GripVertical, Copy, ChevronDown, ChevronRight, Dumbbell, Library, ArrowLeft, Save, Eye, Pencil, Play, Clock, Target, FileDown, Users, Video, Upload, Link } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ExerciseLeaderboard } from "@/components/workouts/ExerciseLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +34,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ExerciseLibrary } from "./ExerciseLibrary";
+import { MediaUploadZone } from "@/components/media/MediaUploadZone";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -529,18 +530,49 @@ const SortableExerciseCard = ({
                 </Button>
               </div>
 
-              {/* Video URL */}
-              <div>
+              {/* Video */}
+              <div className="space-y-2">
                 <label className="text-xs text-muted-foreground mb-1 block flex items-center gap-1">
                   <Video className="h-3 w-3" />
-                  Video URL
+                  Instructievideo
                 </label>
-                <Input
-                  placeholder="YouTube, Vimeo of directe URL..."
-                  value={exercise.videoUrl || ""}
-                  onChange={(e) => onUpdate(exercise.id, 'videoUrl', e.target.value)}
-                  className="h-8 text-sm"
-                />
+                
+                {exercise.videoUrl ? (
+                  <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                    <Play className="h-4 w-4 text-primary" />
+                    <span className="text-xs truncate flex-1">{exercise.videoUrl}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onUpdate(exercise.id, 'videoUrl', '')}
+                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="YouTube, Vimeo of URL..."
+                        value={exercise.videoUrl || ""}
+                        onChange={(e) => onUpdate(exercise.id, 'videoUrl', e.target.value)}
+                        className="h-8 text-sm flex-1"
+                      />
+                    </div>
+                    <MediaUploadZone
+                      bucket="exercise-media"
+                      folder="videos"
+                      accept="video"
+                      aspectRatio="16:9"
+                      maxSizeMB={100}
+                      onUploadComplete={(mediaId, publicUrl) => {
+                        onUpdate(exercise.id, 'videoUrl', publicUrl);
+                      }}
+                      className="min-h-[80px]"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Notes */}
