@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar, TrendingUp, Award, Play, Users, BookOpen, ArrowRight, CheckCircle2, Utensils, PartyPopper, Target, User } from "lucide-react";
+import { ProgramEffectsCard } from "@/components/home/ProgramEffectsCard";
 import ubeLogo from "@/assets/ube-logo.png";
 import defaultCoach from "@/assets/default-coach.jpg";
 import { useUserProgress } from "@/hooks/useUserProgress";
@@ -276,35 +277,14 @@ const Home = () => {
         {/* Period Report Button */}
         <PeriodReportButton />
 
-        {/* Program Phase Card - only show if program exists */}
-        {hasValidProgram && (
-          loading ? (
-            <Card className="p-4 bg-foreground text-background">
-              <div className="flex items-start gap-4">
-                <Skeleton className="w-12 h-12 rounded-full" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              </div>
-            </Card>
-          ) : (
-            <Card className="p-4 bg-foreground text-background">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-background/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  <img src={coachAvatar || defaultCoach} alt="Coach" className="w-full h-full object-cover scale-[1.1] object-center" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-base font-bold mb-1">
-                    {currentWeek?.phase_name || `Weeks ${progress?.current_week_number || 1}-4, Accumulation`}
-                  </h3>
-                  <p className="text-sm opacity-90 leading-relaxed">
-                    {currentWeek?.description || "Je bouwt geleidelijk op met meer volume en intensiteit."}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          )
+        {/* Program Effects Card - AI-powered insights */}
+        {hasValidProgram && currentProgram && (
+          <ProgramEffectsCard
+            program={currentProgram}
+            currentWeek={thisWeek}
+            weekNumber={progress?.current_week_number || 1}
+            coachAvatar={coachAvatar}
+          />
         )}
 
         {/* Streak Indicator */}
