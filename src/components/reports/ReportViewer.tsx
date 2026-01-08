@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useReports, type UserReport, type ReportData } from "@/hooks/useReports";
+import ubeLogo from "@/assets/ube-logo.png";
 import {
   Dumbbell,
   Utensils,
@@ -195,21 +196,20 @@ Gegenereerd op ${format(safeParseDate(data.period.generatedAt), "d MMMM yyyy 'om
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-slate-400 text-sm font-medium tracking-wider uppercase mb-1">
-                {data.user.name}'s
-              </p>
               <h1 className="text-3xl font-bold tracking-tight">
-                {getReportTypeLabel(report.report_type)} PERFORMANCE
+                All About {data.user.name.split(' ')[0]}
               </h1>
-              <h2 className="text-2xl font-light text-slate-300">
-                ASSESSMENT
-              </h2>
-              <p className="text-lg text-primary mt-2 font-medium">
+              <p className="text-lg text-slate-400 mt-1">
+                {getReportTypeLabel(report.report_type)} REPORT
+              </p>
+              <p className="text-base text-primary mt-2 font-medium">
                 {format(safeParseDate(data.period.start), "MMMM yyyy", { locale: nl }).toUpperCase()}
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col items-end gap-4">
+            <img src={ubeLogo} alt="U.be" className="h-10 w-auto invert" />
+            <div className="flex gap-2">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -237,6 +237,7 @@ Gegenereerd op ${format(safeParseDate(data.period.generatedAt), "d MMMM yyyy 'om
             >
               <Trash2 className="h-5 w-5" />
             </Button>
+            </div>
           </div>
         </div>
       </div>
