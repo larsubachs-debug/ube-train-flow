@@ -858,6 +858,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
         category: libraryExercise.category || 'Strength',
         restTimer: '01:00',
         notes: libraryExercise.description || '',
+        videoUrl: libraryExercise.video_url || '',
         sets: [
           { id: `set-1`, reps: '10', weight: '20', targetRPE: '7' },
           { id: `set-2`, reps: '10', weight: '20', targetRPE: '7' },
