@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Clock, Users, ChefHat, Search, Filter, Plus } from "lucide-react";
-import { useRecipes, Recipe } from "@/hooks/useRecipes";
+import { Heart, Clock, Users, ChefHat, Search, Filter, Plus, WifiOff } from "lucide-react";
+import { useOfflineRecipes } from "@/hooks/useOfflineRecipes";
+import type { Recipe } from "@/hooks/useRecipes";
 import { RecipeDetailDialog } from "./RecipeDetailDialog";
 import { cn } from "@/lib/utils";
 
@@ -95,7 +96,7 @@ interface RecipesListProps {
 }
 
 export const RecipesList = ({ showFavoritesOnly = false }: RecipesListProps) => {
-  const { recipes, loading, toggleFavorite, fetchRecipeWithIngredients } = useRecipes();
+  const { recipes, loading, isFromCache, isOnline, toggleFavorite, fetchRecipeWithIngredients } = useOfflineRecipes();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -129,6 +130,16 @@ export const RecipesList = ({ showFavoritesOnly = false }: RecipesListProps) => 
 
   return (
     <div className="space-y-4">
+      {/* Offline indicator */}
+      {isFromCache && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm">
+          <WifiOff className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <span className="text-amber-700 dark:text-amber-400">
+            Je bekijkt opgeslagen recepten (offline modus)
+          </span>
+        </div>
+      )}
+
       {/* Search & Filters */}
       <div className="flex gap-2">
         <div className="relative flex-1">
