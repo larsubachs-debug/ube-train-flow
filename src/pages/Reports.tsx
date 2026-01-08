@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, subDays, subMonths, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,18 +23,63 @@ import {
   BarChart3,
   Loader2
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 
 type ReportType = "week" | "month" | "year";
 
 const Reports = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"generate" | "history">("generate");
   const [reportType, setReportType] = useState<ReportType>("week");
   const [selectedPeriod, setSelectedPeriod] = useState("current");
   const [shareWithCoach, setShareWithCoach] = useState(false);
   const [selectedReport, setSelectedReport] = useState<UserReport | null>(null);
+  const [autoGenerating, setAutoGenerating] = useState(false);
 
   const { reports, isLoading, generateReport } = useReports();
+
+  // Auto-generate report from URL params
+  useEffect(() => {
+    const urlType = searchParams.get("type") as ReportType | null;
+    const urlStart = searchParams.get("start");
+    const urlEnd = searchParams.get("end");
+
+    if (urlType && urlStart && urlEnd && !autoGenerating) {
+      setAutoGenerating(true);
+      
+      // Check if report already exists for this period
+      const existingReport = reports?.find(
+        r => r.report_type === urlType && 
+             r.period_start === urlStart && 
+             r.period_end === urlEnd &&
+             r.status === "completed"
+      );
+
+      if (existingReport) {
+        setSelectedReport(existingReport);
+        navigate("/reports", { replace: true });
+      } else {
+        // Generate the report
+        generateReport.mutate({
+          reportType: urlType,
+          periodStart: urlStart,
+          periodEnd: urlEnd,
+          shareWithCoach: false,
+        }, {
+          onSuccess: (newReport) => {
+            if (newReport) {
+              setSelectedReport(newReport);
+            }
+            navigate("/reports", { replace: true });
+          },
+          onError: () => {
+            navigate("/reports", { replace: true });
+          }
+        });
+      }
+    }
+  }, [searchParams, reports, autoGenerating, generateReport, navigate]);
 
   const getPeriodDates = () => {
     const now = new Date();
@@ -98,6 +143,20 @@ const Reports = () => {
     const { start, end } = getPeriodDates();
     return `${format(new Date(start), "d MMM", { locale: nl })} - ${format(new Date(end), "d MMM yyyy", { locale: nl })}`;
   };
+
+  // Show loading state when auto-generating
+  if (autoGenerating && generateReport.isPending) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <TopNav />
+        <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="text-muted-foreground">Rapport wordt gegenereerd...</p>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   if (selectedReport) {
     return (
