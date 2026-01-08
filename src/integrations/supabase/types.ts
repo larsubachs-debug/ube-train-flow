@@ -1992,6 +1992,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_reports: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          file_name: string | null
+          file_path: string | null
+          id: string
+          period_end: string
+          period_start: string
+          report_data: Json | null
+          report_type: string
+          shared_with_coach: boolean | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          period_end: string
+          period_start: string
+          report_data?: Json | null
+          report_type: string
+          shared_with_coach?: boolean | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          report_data?: Json | null
+          report_type?: string
+          shared_with_coach?: boolean | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
