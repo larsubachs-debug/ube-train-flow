@@ -5,10 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MealType } from "@/hooks/useFoodLogs";
 import { useFoodCatalog, FoodCatalogItem } from "@/hooks/useFoodCatalog";
-import { Search, Plus, ArrowLeft, ChevronRight } from "lucide-react";
+import { useRecentFoods, RecentFood } from "@/hooks/useRecentFoods";
+import { Search, Plus, ArrowLeft, ChevronRight, ScanBarcode, Clock, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDebounce } from "@/hooks/useDebounce";
+import { BarcodeScanner } from "./BarcodeScanner";
+import { toast } from "sonner";
 
 interface AddFoodDialogProps {
   open: boolean;
@@ -25,7 +28,19 @@ interface AddFoodDialogProps {
   isLoading: boolean;
 }
 
-type DialogStep = "search" | "quantity" | "manual";
+type DialogStep = "search" | "quantity" | "manual" | "barcode";
+
+interface OpenFoodFactsProduct {
+  product_name?: string;
+  brands?: string;
+  nutriments?: {
+    "energy-kcal_100g"?: number;
+    carbohydrates_100g?: number;
+    fat_100g?: number;
+    proteins_100g?: number;
+  };
+  serving_size?: string;
+}
 
 export const AddFoodDialog = ({
   open,
@@ -39,6 +54,7 @@ export const AddFoodDialog = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<FoodCatalogItem | null>(null);
   const [quantity, setQuantity] = useState("1");
+  const [isFetchingBarcode, setIsFetchingBarcode] = useState(false);
   
   // Manual entry fields
   const [name, setName] = useState("");
@@ -49,6 +65,7 @@ export const AddFoodDialog = ({
 
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { data: catalogItems = [], isLoading: isSearching } = useFoodCatalog(debouncedSearch);
+  const { data: recentFoods = [] } = useRecentFoods(5);
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -69,6 +86,17 @@ export const AddFoodDialog = ({
     setSelectedItem(item);
     setQuantity("1");
     setStep("quantity");
+  };
+
+  const handleSelectRecentFood = (item: RecentFood) => {
+    // For recent foods, go directly to add with quantity 1
+    onAdd({
+      name: item.name,
+      calories: item.calories,
+      carbs: item.carbs,
+      fat: item.fat,
+      protein: item.protein,
+    });
   };
 
   const handleAddFromCatalog = () => {
@@ -98,12 +126,66 @@ export const AddFoodDialog = ({
     });
   };
 
+  const handleBarcodeScan = async (barcode: string) => {
+    setStep("search");
+    setIsFetchingBarcode(true);
+
+    try {
+      // Fetch product info from Open Food Facts API
+      const response = await fetch(
+        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`
+      );
+      const data = await response.json();
+
+      if (data.status === 1 && data.product) {
+        const product: OpenFoodFactsProduct = data.product;
+        const nutriments = product.nutriments || {};
+
+        // Create a catalog-like item from the scanned product
+        const scannedItem: FoodCatalogItem = {
+          id: barcode,
+          name: product.product_name || "Onbekend product",
+          brand: product.brands || null,
+          serving_size: 100,
+          serving_unit: "gram",
+          calories_per_serving: Math.round(nutriments["energy-kcal_100g"] || 0),
+          carbs_per_serving: Math.round((nutriments.carbohydrates_100g || 0) * 10) / 10,
+          fat_per_serving: Math.round((nutriments.fat_100g || 0) * 10) / 10,
+          protein_per_serving: Math.round((nutriments.proteins_100g || 0) * 10) / 10,
+          category: null,
+        };
+
+        setSelectedItem(scannedItem);
+        setQuantity("1");
+        setStep("quantity");
+        toast.success(`Product gevonden: ${scannedItem.name}`);
+      } else {
+        toast.error("Product niet gevonden in database");
+      }
+    } catch (error) {
+      console.error("Barcode lookup error:", error);
+      toast.error("Kon product niet ophalen");
+    } finally {
+      setIsFetchingBarcode(false);
+    }
+  };
+
   const calculatedNutrition = selectedItem && quantity ? {
     calories: Math.round(selectedItem.calories_per_serving * (parseFloat(quantity) || 0)),
     carbs: Math.round(selectedItem.carbs_per_serving * (parseFloat(quantity) || 0) * 10) / 10,
     fat: Math.round(selectedItem.fat_per_serving * (parseFloat(quantity) || 0) * 10) / 10,
     protein: Math.round(selectedItem.protein_per_serving * (parseFloat(quantity) || 0) * 10) / 10,
   } : null;
+
+  // Show barcode scanner as overlay
+  if (step === "barcode") {
+    return (
+      <BarcodeScanner
+        onScan={handleBarcodeScan}
+        onClose={() => setStep("search")}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -131,7 +213,7 @@ export const AddFoodDialog = ({
         {/* Search Step */}
         {step === "search" && (
           <div className="flex flex-col flex-1 overflow-hidden">
-            <div className="px-4 py-3">
+            <div className="px-4 py-3 space-y-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -142,10 +224,57 @@ export const AddFoodDialog = ({
                   autoFocus
                 />
               </div>
+              
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setStep("barcode")}
+                disabled={isFetchingBarcode}
+              >
+                {isFetchingBarcode ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <ScanBarcode className="h-4 w-4 mr-2" />
+                )}
+                {isFetchingBarcode ? "Product ophalen..." : "Scan barcode"}
+              </Button>
             </div>
 
             <ScrollArea className="flex-1 px-4">
               <div className="space-y-1 pb-4">
+                {/* Recent Foods Section - only show when no search query */}
+                {!searchQuery && recentFoods.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>Recent gebruikt</span>
+                    </div>
+                    {recentFoods.map((item, index) => (
+                      <button
+                        key={`recent-${index}`}
+                        onClick={() => handleSelectRecentFood(item)}
+                        className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors flex items-center justify-between group"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{item.name}</div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                            <span>{item.calories} kcal</span>
+                            <span>•</span>
+                            <span>K: {item.carbs}g</span>
+                            <span>•</span>
+                            <span>V: {item.fat}g</span>
+                            <span>•</span>
+                            <span>E: {item.protein}g</span>
+                          </div>
+                        </div>
+                        <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    ))}
+                    <div className="border-t my-3" />
+                  </div>
+                )}
+
+                {/* Catalog Items */}
                 {catalogItems.map((item) => (
                   <button
                     key={item.id}
