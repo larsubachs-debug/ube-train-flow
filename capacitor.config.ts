@@ -4,10 +4,6 @@ const config: CapacitorConfig = {
   appId: 'app.ubeonline.training',
   appName: 'ube-train-flow',
   webDir: 'dist',
-  server: {
-    url: 'https://0664518d-b2db-462b-9281-c5d31fabe679.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
