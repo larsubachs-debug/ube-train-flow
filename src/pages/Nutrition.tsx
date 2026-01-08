@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   ChevronLeft, 
   ChevronRight, 
+  ChevronDown,
   Plus, 
   MoreHorizontal,
   Utensils,
@@ -12,8 +13,10 @@ import {
   BookOpen,
   RefreshCw,
   Flame,
-  Trash2
+  Trash2,
+  Clock
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useTranslation } from "react-i18next";
 import { useFoodLogs, MealType } from "@/hooks/useFoodLogs";
 import { AddFoodDialog } from "@/components/nutrition/AddFoodDialog";
@@ -87,18 +90,33 @@ const recipeBooks = [
     name: "High-Protein Power",
     recipeCount: 12,
     gradient: "from-pink-200 via-pink-100 to-rose-50",
+    recipes: [
+      { id: 1, name: "Griekse Yoghurt Bowl", time: "10 min", calories: 320, protein: 28 },
+      { id: 2, name: "Kipfilet met Quinoa", time: "25 min", calories: 450, protein: 42 },
+      { id: 3, name: "Ei Wrap met Avocado", time: "15 min", calories: 380, protein: 24 },
+    ],
   },
   {
     id: 2,
     name: "Snelle Recepten",
     recipeCount: 16,
     gradient: "from-orange-200 via-amber-100 to-yellow-50",
+    recipes: [
+      { id: 1, name: "Overnight Oats", time: "5 min", calories: 350, protein: 12 },
+      { id: 2, name: "Tonijn Salade", time: "10 min", calories: 280, protein: 32 },
+      { id: 3, name: "Smoothie Bowl", time: "5 min", calories: 290, protein: 15 },
+    ],
   },
   {
     id: 3,
     name: "Meal Prep Favoriet",
     recipeCount: 8,
     gradient: "from-green-200 via-emerald-100 to-teal-50",
+    recipes: [
+      { id: 1, name: "Kip Teriyaki Bowl", time: "30 min", calories: 520, protein: 38 },
+      { id: 2, name: "Groentelasagne", time: "45 min", calories: 380, protein: 22 },
+      { id: 3, name: "Buddha Bowl", time: "20 min", calories: 420, protein: 18 },
+    ],
   },
 ];
 
@@ -484,24 +502,53 @@ const Nutrition = () => {
         {activeTab === "recipes" && (
           <div className="space-y-4">
             {recipeBooks.map((book) => (
-              <Card 
-                key={book.id} 
-                className={`relative overflow-hidden h-48 bg-gradient-to-br ${book.gradient} border-0 cursor-pointer hover:shadow-lg transition-shadow`}
-              >
-                <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                  <h3 className="text-xl font-bold text-foreground mb-2">{book.name}</h3>
-                  <Badge variant="secondary" className="w-fit bg-background/80 backdrop-blur-sm">
-                    {book.recipeCount} RECEPTEN
-                  </Badge>
-                </div>
-                
-                {/* Decorative icon */}
-                <div className="absolute right-4 bottom-4">
-                  <Button variant="ghost" size="icon" className="bg-background/50 backdrop-blur-sm">
-                    <BookOpen className="h-4 w-4" />
-                  </Button>
-                </div>
-              </Card>
+              <Collapsible key={book.id}>
+                <Card className="overflow-hidden border-0">
+                  <CollapsibleTrigger asChild>
+                    <div 
+                      className={`relative h-32 bg-gradient-to-br ${book.gradient} cursor-pointer hover:opacity-95 transition-opacity`}
+                    >
+                      <div className="absolute inset-0 p-4 flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-bold text-foreground mb-1">{book.name}</h3>
+                          <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
+                            {book.recipeCount} RECEPTEN
+                          </Badge>
+                        </div>
+                        <ChevronDown className="h-5 w-5 text-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <div className="bg-card border-t border-border">
+                      {book.recipes.map((recipe, index) => (
+                        <div 
+                          key={recipe.id} 
+                          className={`p-4 flex items-center justify-between ${
+                            index !== book.recipes.length - 1 ? "border-b border-border" : ""
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <h4 className="font-medium">{recipe.name}</h4>
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {recipe.time}
+                              </span>
+                              <span>{recipe.calories} kcal</span>
+                              <span>{recipe.protein}g eiwit</span>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            Bekijk
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
             ))}
             
             {/* Empty state prompt */}
