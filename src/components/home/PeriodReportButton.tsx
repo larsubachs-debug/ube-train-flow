@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 type CompletedPeriod = {
   type: "week" | "month" | "year";
@@ -12,21 +15,17 @@ type CompletedPeriod = {
 const getCompletedPeriod = (): CompletedPeriod | null => {
   const now = new Date();
   const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday
-  const dayOfMonth = now.getDate();
-  const month = now.getMonth(); // 0-11
   
   // Check if previous week is complete (it's Monday or later)
-  // A week is "complete" after Sunday ends, so on Monday we can report previous week
-  if (dayOfWeek >= 1) { // Monday or later
+  if (dayOfWeek >= 1) {
     const prevWeekEnd = new Date(now);
-    prevWeekEnd.setDate(now.getDate() - dayOfWeek); // Last Sunday
+    prevWeekEnd.setDate(now.getDate() - dayOfWeek);
     prevWeekEnd.setHours(23, 59, 59, 999);
     
     const prevWeekStart = new Date(prevWeekEnd);
-    prevWeekStart.setDate(prevWeekEnd.getDate() - 6); // Previous Monday
+    prevWeekStart.setDate(prevWeekEnd.getDate() - 6);
     prevWeekStart.setHours(0, 0, 0, 0);
     
-    // Get week number of the year
     const startOfYear = new Date(prevWeekStart.getFullYear(), 0, 1);
     const days = Math.floor((prevWeekStart.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
     const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
@@ -39,45 +38,89 @@ const getCompletedPeriod = (): CompletedPeriod | null => {
     };
   }
   
-  // Check if previous month is complete (it's the 1st or later of a new month)
-  if (dayOfMonth >= 1 && month > 0) {
-    const prevMonthEnd = new Date(now.getFullYear(), month, 0); // Last day of prev month
-    const prevMonthStart = new Date(now.getFullYear(), month - 1, 1);
-    
-    const monthNames = [
-      "Januari", "Februari", "Maart", "April", "Mei", "Juni",
-      "Juli", "Augustus", "September", "Oktober", "November", "December"
-    ];
-    
-    return {
-      type: "month",
-      label: monthNames[month - 1],
-      periodStart: prevMonthStart.toISOString().split('T')[0],
-      periodEnd: prevMonthEnd.toISOString().split('T')[0],
-    };
-  }
-  
-  // Check if previous year is complete (it's January)
-  if (month === 0) {
-    const prevYear = now.getFullYear() - 1;
-    
-    return {
-      type: "year",
-      label: String(prevYear),
-      periodStart: `${prevYear}-01-01`,
-      periodEnd: `${prevYear}-12-31`,
-    };
-  }
-  
   return null;
 };
 
 export const PeriodReportButton = () => {
+  const { user } = useAuth();
+  const [hasEnoughData, setHasEnoughData] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasViewed, setHasViewed] = useState(false);
+  
   const completedPeriod = getCompletedPeriod();
   
-  if (!completedPeriod) return null;
+  // Check if report was already viewed this period
+  useEffect(() => {
+    if (!completedPeriod) return;
+    
+    const viewedKey = `report_viewed_${completedPeriod.periodStart}_${completedPeriod.periodEnd}`;
+    const viewed = localStorage.getItem(viewedKey) === 'true';
+    setHasViewed(viewed);
+  }, [completedPeriod?.periodStart, completedPeriod?.periodEnd]);
   
-  // Create search params to pre-fill the report page
+  // Check if user has enough data for the period
+  useEffect(() => {
+    if (!user || !completedPeriod) {
+      setIsLoading(false);
+      return;
+    }
+    
+    const checkData = async () => {
+      setIsLoading(true);
+      
+      try {
+        // Check for workout completions in the period
+        const { count: workoutCount } = await supabase
+          .from("workout_completions")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("completion_date", completedPeriod.periodStart)
+          .lte("completion_date", completedPeriod.periodEnd);
+        
+        // Check for food logs in the period
+        const { count: foodCount } = await supabase
+          .from("food_logs")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("log_date", completedPeriod.periodStart)
+          .lte("log_date", completedPeriod.periodEnd);
+        
+        // Check for body metrics in the period
+        const { count: metricsCount } = await supabase
+          .from("body_metrics")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("recorded_at", completedPeriod.periodStart)
+          .lte("recorded_at", completedPeriod.periodEnd);
+        
+        // User needs at least some activity to see report button
+        const hasData = (workoutCount || 0) > 0 || (foodCount || 0) > 0 || (metricsCount || 0) > 0;
+        setHasEnoughData(hasData);
+      } catch (error) {
+        console.error("Error checking data:", error);
+        setHasEnoughData(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkData();
+  }, [user, completedPeriod?.periodStart, completedPeriod?.periodEnd]);
+  
+  // Mark report as viewed when clicking
+  const handleClick = () => {
+    if (!completedPeriod) return;
+    
+    const viewedKey = `report_viewed_${completedPeriod.periodStart}_${completedPeriod.periodEnd}`;
+    localStorage.setItem(viewedKey, 'true');
+    setHasViewed(true);
+  };
+  
+  // Don't render if no period, loading, no data, or already viewed
+  if (!completedPeriod || isLoading || !hasEnoughData || hasViewed) {
+    return null;
+  }
+  
   const searchParams = new URLSearchParams({
     type: completedPeriod.type,
     start: completedPeriod.periodStart,
@@ -85,7 +128,7 @@ export const PeriodReportButton = () => {
   });
   
   return (
-    <Link to={`/reports?${searchParams.toString()}`} className="block">
+    <Link to={`/reports?${searchParams.toString()}`} className="block" onClick={handleClick}>
       <Button 
         variant="outline" 
         className="w-full justify-start gap-3 h-auto py-3 bg-accent/10 border-accent/20 hover:bg-accent/20"
@@ -95,10 +138,10 @@ export const PeriodReportButton = () => {
         </div>
         <div className="text-left">
           <p className="font-semibold text-foreground">
-            Open {completedPeriod.type === "week" ? "week" : completedPeriod.type === "month" ? "maand" : "jaar"} {completedPeriod.label} rapport
+            Open {completedPeriod.label} rapport
           </p>
           <p className="text-xs text-muted-foreground">
-            Bekijk je prestaties van afgelopen {completedPeriod.type === "week" ? "week" : completedPeriod.type === "month" ? "maand" : "jaar"}
+            Bekijk je prestaties van afgelopen week
           </p>
         </div>
       </Button>
