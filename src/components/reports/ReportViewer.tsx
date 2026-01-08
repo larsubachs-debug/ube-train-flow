@@ -38,16 +38,23 @@ export function ReportViewer({ report }: ReportViewerProps) {
   const { deleteReport, toggleShareWithCoach } = useReports();
   const rawData = report.report_data as ReportData | null;
 
+  // Safe date parsing helper
+  const safeParseDate = (dateStr: string | null | undefined): Date => {
+    if (!dateStr) return new Date();
+    const parsed = new Date(dateStr);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+
   // Mock data for preview when no real data exists
   const mockData: ReportData = {
     user: {
       name: "Demo Gebruiker",
     },
     period: {
-      start: report.period_start,
-      end: report.period_end,
+      start: report.period_start || new Date().toISOString().split('T')[0],
+      end: report.period_end || new Date().toISOString().split('T')[0],
       type: report.report_type,
-      generatedAt: report.created_at,
+      generatedAt: report.created_at || new Date().toISOString(),
     },
     training: {
       totalWorkouts: 12,
@@ -87,7 +94,7 @@ export function ReportViewer({ report }: ReportViewerProps) {
   const handleDownloadPDF = () => {
     const content = `
 VOORTGANGSRAPPORT - ${data.user.name}
-${format(new Date(data.period.start), "d MMMM yyyy", { locale: nl })} - ${format(new Date(data.period.end), "d MMMM yyyy", { locale: nl })}
+${format(safeParseDate(data.period.start), "d MMMM yyyy", { locale: nl })} - ${format(safeParseDate(data.period.end), "d MMMM yyyy", { locale: nl })}
 
 ═══════════════════════════════════════════════════════════════
 
@@ -128,7 +135,7 @@ Habits voltooid:       ${data.wellness.habitsCompleted}
 
 ═══════════════════════════════════════════════════════════════
 
-Gegenereerd op ${format(new Date(data.period.generatedAt), "d MMMM yyyy 'om' HH:mm", { locale: nl })}
+Gegenereerd op ${format(safeParseDate(data.period.generatedAt), "d MMMM yyyy 'om' HH:mm", { locale: nl })}
     `.trim();
 
     const blob = new Blob([content], { type: "text/plain" });
@@ -198,7 +205,7 @@ Gegenereerd op ${format(new Date(data.period.generatedAt), "d MMMM yyyy 'om' HH:
                 ASSESSMENT
               </h2>
               <p className="text-lg text-primary mt-2 font-medium">
-                {format(new Date(data.period.start), "MMMM yyyy", { locale: nl }).toUpperCase()}
+                {format(safeParseDate(data.period.start), "MMMM yyyy", { locale: nl }).toUpperCase()}
               </p>
             </div>
           </div>
