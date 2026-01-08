@@ -15,6 +15,20 @@ const urlBase64ToUint8Array = (base64String: string) => {
   return outputArray;
 };
 
+const getVapidPublicKey = async (): Promise<string | null> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('get-vapid-public-key');
+    if (error) {
+      console.error('Error fetching VAPID key:', error);
+      return null;
+    }
+    return data?.publicKey || null;
+  } catch (error) {
+    console.error('Error fetching VAPID key:', error);
+    return null;
+  }
+};
+
 export const requestNotificationPermission = async () => {
   if (!('Notification' in window)) {
     console.log('This browser does not support notifications');
@@ -41,14 +55,17 @@ export const subscribeToPushNotifications = async (userId: string) => {
     const hasPermission = await requestNotificationPermission();
     if (!hasPermission) return null;
 
+    // Get VAPID public key from backend
+    const vapidPublicKey = await getVapidPublicKey();
+    if (!vapidPublicKey) {
+      console.error('Could not get VAPID public key');
+      return null;
+    }
+
     // Register service worker
     const registration = await navigator.serviceWorker.ready;
 
     // Subscribe to push notifications
-    // Note: You need to generate VAPID keys and add them to your edge function
-    // For now, we'll use a placeholder - in production, get this from your backend
-    const vapidPublicKey = 'YOUR_VAPID_PUBLIC_KEY_HERE'; // TODO: Replace with actual key
-    
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
