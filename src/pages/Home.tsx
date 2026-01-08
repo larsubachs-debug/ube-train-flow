@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar, TrendingUp, Award, Play, Users, BookOpen, ArrowRight, CheckCircle2, Utensils, PartyPopper, Target } from "lucide-react";
+import { Calendar, TrendingUp, Award, Play, Users, BookOpen, ArrowRight, CheckCircle2, Utensils, PartyPopper, Target, User } from "lucide-react";
 import ubeLogo from "@/assets/ube-logo.png";
 import defaultCoach from "@/assets/default-coach.jpg";
 import { useUserProgress } from "@/hooks/useUserProgress";
@@ -231,7 +231,7 @@ const Home = () => {
         )}
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-6 gap-2">
           <Link to="/nutrition" className="group">
             <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
               <Utensils className="w-5 h-5 text-muted-foreground" />
@@ -260,6 +260,12 @@ const Home = () => {
             <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
               <Users className="w-5 h-5 text-muted-foreground" />
               <span className="text-[10px] font-medium text-foreground text-center">{t('nav.community')}</span>
+            </div>
+          </Link>
+          <Link to="/account" className="group">
+            <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
+              <User className="w-5 h-5 text-muted-foreground" />
+              <span className="text-[10px] font-medium text-foreground text-center">{t('nav.account')}</span>
             </div>
           </Link>
         </div>
