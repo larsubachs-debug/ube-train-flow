@@ -178,6 +178,11 @@ export const DailyCheckinDialog = ({ open, onOpenChange, onComplete }: DailyChec
         <Textarea
           value={responses[question.id] || ''}
           onChange={(e) => setResponses({ ...responses, [question.id]: e.target.value })}
+          onFocus={(e) => {
+            setTimeout(() => {
+              e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+          }}
           placeholder="Jouw antwoord..."
           rows={3}
         />
@@ -187,7 +192,7 @@ export const DailyCheckinDialog = ({ open, onOpenChange, onComplete }: DailyChec
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" style={{ paddingBottom: 'calc(1rem + var(--keyboard-height, 0px))' }}>
         <DialogHeader>
           <DialogTitle className="text-2xl">Dagelijkse Check-in</DialogTitle>
         </DialogHeader>
