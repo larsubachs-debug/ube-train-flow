@@ -13,7 +13,7 @@ import {
   RefreshCw,
   Flame
 } from "lucide-react";
-import BottomNav from "@/components/BottomNav";
+
 import { useTranslation } from "react-i18next";
 
 type NutritionTab = "log" | "plans" | "recipes";
@@ -143,7 +143,7 @@ const Nutrition = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background border-b border-border">
         <div className="px-4 py-4">
@@ -461,8 +461,6 @@ const Nutrition = () => {
           </div>
         )}
       </div>
-
-      <BottomNav />
     </div>
   );
 };
