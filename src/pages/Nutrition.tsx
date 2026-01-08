@@ -20,6 +20,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useTranslation } from "react-i18next";
 import { useFoodLogs, MealType } from "@/hooks/useFoodLogs";
 import { AddFoodDialog } from "@/components/nutrition/AddFoodDialog";
+import { RecipesList } from "@/components/nutrition/RecipesList";
+import { WeeklyMealPlan } from "@/components/nutrition/WeeklyMealPlan";
+import { ShoppingListCard } from "@/components/nutrition/ShoppingListCard";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import {
