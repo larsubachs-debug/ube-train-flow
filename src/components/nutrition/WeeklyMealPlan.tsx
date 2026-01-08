@@ -11,9 +11,11 @@ import {
   Utensils,
   Coffee,
   Salad,
-  Cookie
+  Cookie,
+  WifiOff
 } from "lucide-react";
-import { useMealPlans, MealPlanItem } from "@/hooks/useMealPlans";
+import { useOfflineMealPlans } from "@/hooks/useOfflineMealPlans";
+import type { MealPlanItem } from "@/hooks/useMealPlans";
 import { useShoppingList } from "@/hooks/useShoppingList";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +37,7 @@ const DAYS_SHORT = ['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za'];
 const DAYS_FULL = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
 
 export const WeeklyMealPlan = () => {
-  const { activeMealPlan, loading } = useMealPlans();
+  const { activeMealPlan, loading, isFromCache, isOnline } = useOfflineMealPlans();
   const { generateFromMealPlan } = useShoppingList();
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
 
@@ -91,14 +93,23 @@ export const WeeklyMealPlan = () => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          {activeMealPlan.name}
-        </CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            {activeMealPlan.name}
+          </CardTitle>
+          {isFromCache && (
+            <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              <WifiOff className="h-3 w-3 mr-1" />
+              Offline
+            </Badge>
+          )}
+        </div>
         <Button 
           variant="outline" 
           size="sm"
           onClick={handleGenerateShoppingList}
+          disabled={!isOnline}
         >
           <ShoppingCart className="h-4 w-4 mr-2" />
           Boodschappenlijst

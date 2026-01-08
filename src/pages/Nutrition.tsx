@@ -18,11 +18,13 @@ import {
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useTranslation } from "react-i18next";
-import { useFoodLogs, MealType } from "@/hooks/useFoodLogs";
+import { useOfflineFoodLogs } from "@/hooks/useOfflineFoodLogs";
+import { MealType } from "@/hooks/useFoodLogs";
 import { AddFoodDialog } from "@/components/nutrition/AddFoodDialog";
 import { RecipesList } from "@/components/nutrition/RecipesList";
 import { WeeklyMealPlan } from "@/components/nutrition/WeeklyMealPlan";
 import { ShoppingListCard } from "@/components/nutrition/ShoppingListCard";
+import { OfflineBanner } from "@/components/ui/OfflineIndicator";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -141,7 +143,7 @@ const Nutrition = () => {
     label: "Ontbijt",
   });
 
-  const { loggedMeals, totals, isLoading, addFoodLog, deleteFoodLog } = useFoodLogs(currentDate);
+  const { loggedMeals, totals, isLoading, isOnline, hasPendingActions, addFoodLog, deleteFoodLog } = useOfflineFoodLogs(currentDate);
 
   const formatDate = (date: Date) => {
     const today = new Date();
@@ -182,6 +184,9 @@ const Nutrition = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Offline Banner */}
+      <OfflineBanner />
+      
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background border-b border-border">
         <div className="px-4 py-4">
