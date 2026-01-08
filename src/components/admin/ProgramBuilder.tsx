@@ -1099,6 +1099,35 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
     setSelectedDayId(newDay.id);
   };
 
+  const duplicateDay = (dayId: string) => {
+    if (!selectedWeek) return;
+    const day = selectedWeek.days.find(d => d.id === dayId);
+    if (!day) return;
+
+    const newDay: Day = {
+      ...day,
+      id: `day-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: `${day.name} (kopie)`,
+      exercises: day.exercises.map(ex => ({
+        ...ex,
+        id: `ex-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        sets: ex.sets.map(s => ({ 
+          ...s, 
+          id: `set-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` 
+        })),
+      })),
+    };
+
+    const updatedWeeks = program.weeks.map(week =>
+      week.id === selectedWeekId
+        ? { ...week, days: [...week.days, newDay] }
+        : week
+    );
+    setProgram({ ...program, weeks: updatedWeeks });
+    setSelectedDayId(newDay.id);
+    toast({ description: "Dag gekopieerd" });
+  };
+
   const deleteDay = (dayId: string) => {
     if (!selectedWeek || selectedWeek.days.length <= 1) {
       toast({ description: "Je moet minstens 1 dag hebben", variant: "destructive" });
@@ -1536,12 +1565,22 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                             }}
                             className="text-lg font-medium border-0 px-0 h-auto focus-visible:ring-0 bg-transparent w-32"
                           />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => duplicateDay(selectedDayId)}
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            title="Dag kopiëren"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
                           {selectedWeek && selectedWeek.days.length > 1 && (
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => deleteDay(selectedDayId)}
                               className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              title="Dag verwijderen"
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
