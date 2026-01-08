@@ -15,6 +15,8 @@ import { PWAUpdatePrompt } from "./components/pwa/PWAUpdatePrompt";
 import { PWAInstallBanner } from "./components/pwa/PWAInstallBanner";
 import TopNav from "./components/TopNav";
 import { UbyFeedbackWidget } from "./components/beta/UbyFeedbackWidget";
+import { useCapacitor } from "@/hooks/useCapacitor";
+import { useKeyboardAvoidance } from "@/hooks/useKeyboardAvoidance";
 
 // Lazy load all pages for better bundle splitting
 const Onboarding = lazy(() => import("./pages/Onboarding"));
@@ -136,6 +138,9 @@ const router = createBrowserRouter(
 );
 
 const App = () => {
+  useCapacitor();
+  useKeyboardAvoidance();
+
   const [showSplash, setShowSplash] = useState(true);
   const [hasShownSplash, setHasShownSplash] = useState(false);
 
