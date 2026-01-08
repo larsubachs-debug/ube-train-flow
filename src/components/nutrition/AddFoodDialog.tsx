@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MealType } from "@/hooks/useFoodLogs";
 import { useFoodCatalog, FoodCatalogItem } from "@/hooks/useFoodCatalog";
+import { useOpenFoodFacts, OpenFoodFactsItem, fetchProductByBarcode } from "@/hooks/useOpenFoodFacts";
 import { useRecentFoods, RecentFood } from "@/hooks/useRecentFoods";
-import { Search, Plus, ArrowLeft, ChevronRight, ScanBarcode, Clock, Loader2 } from "lucide-react";
+import { Search, Plus, ArrowLeft, ChevronRight, ScanBarcode, Clock, Loader2, Database, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -30,17 +31,7 @@ interface AddFoodDialogProps {
 
 type DialogStep = "search" | "quantity" | "manual" | "barcode";
 
-interface OpenFoodFactsProduct {
-  product_name?: string;
-  brands?: string;
-  nutriments?: {
-    "energy-kcal_100g"?: number;
-    carbohydrates_100g?: number;
-    fat_100g?: number;
-    proteins_100g?: number;
-  };
-  serving_size?: string;
-}
+type CombinedFoodItem = (FoodCatalogItem & { source?: "local" }) | OpenFoodFactsItem;
 
 export const AddFoodDialog = ({
   open,
@@ -52,7 +43,7 @@ export const AddFoodDialog = ({
 }: AddFoodDialogProps) => {
   const [step, setStep] = useState<DialogStep>("search");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedItem, setSelectedItem] = useState<FoodCatalogItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<CombinedFoodItem | null>(null);
   const [quantity, setQuantity] = useState("1");
   const [isFetchingBarcode, setIsFetchingBarcode] = useState(false);
   
@@ -64,8 +55,21 @@ export const AddFoodDialog = ({
   const [protein, setProtein] = useState("");
 
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const { data: catalogItems = [], isLoading: isSearching } = useFoodCatalog(debouncedSearch);
+  const { data: catalogItems = [], isLoading: isSearchingLocal } = useFoodCatalog(debouncedSearch);
+  const { data: offItems = [], isLoading: isSearchingOFF } = useOpenFoodFacts(debouncedSearch);
   const { data: recentFoods = [] } = useRecentFoods(5);
+
+  const isSearching = isSearchingLocal || isSearchingOFF;
+
+  // Combine results: local first, then Open Food Facts (deduplicated by name similarity)
+  const combinedResults: CombinedFoodItem[] = [
+    ...catalogItems.map((item) => ({ ...item, source: "local" as const })),
+    ...offItems.filter((offItem) => 
+      !catalogItems.some((localItem) => 
+        localItem.name.toLowerCase() === offItem.name.toLowerCase()
+      )
+    ),
+  ];
 
   // Reset state when dialog opens/closes
   useEffect(() => {
@@ -82,14 +86,13 @@ export const AddFoodDialog = ({
     }
   }, [open]);
 
-  const handleSelectItem = (item: FoodCatalogItem) => {
+  const handleSelectItem = (item: CombinedFoodItem) => {
     setSelectedItem(item);
     setQuantity("1");
     setStep("quantity");
   };
 
   const handleSelectRecentFood = (item: RecentFood) => {
-    // For recent foods, go directly to add with quantity 1
     onAdd({
       name: item.name,
       calories: item.calories,
@@ -131,34 +134,13 @@ export const AddFoodDialog = ({
     setIsFetchingBarcode(true);
 
     try {
-      // Fetch product info from Open Food Facts API
-      const response = await fetch(
-        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`
-      );
-      const data = await response.json();
+      const product = await fetchProductByBarcode(barcode);
 
-      if (data.status === 1 && data.product) {
-        const product: OpenFoodFactsProduct = data.product;
-        const nutriments = product.nutriments || {};
-
-        // Create a catalog-like item from the scanned product
-        const scannedItem: FoodCatalogItem = {
-          id: barcode,
-          name: product.product_name || "Onbekend product",
-          brand: product.brands || null,
-          serving_size: 100,
-          serving_unit: "gram",
-          calories_per_serving: Math.round(nutriments["energy-kcal_100g"] || 0),
-          carbs_per_serving: Math.round((nutriments.carbohydrates_100g || 0) * 10) / 10,
-          fat_per_serving: Math.round((nutriments.fat_100g || 0) * 10) / 10,
-          protein_per_serving: Math.round((nutriments.proteins_100g || 0) * 10) / 10,
-          category: null,
-        };
-
-        setSelectedItem(scannedItem);
+      if (product) {
+        setSelectedItem(product);
         setQuantity("1");
         setStep("quantity");
-        toast.success(`Product gevonden: ${scannedItem.name}`);
+        toast.success(`Product gevonden: ${product.name}`);
       } else {
         toast.error("Product niet gevonden in database");
       }
@@ -217,7 +199,7 @@ export const AddFoodDialog = ({
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Zoek voedingsmiddel..."
+                  placeholder="Zoek in miljoenen producten..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -274,18 +256,21 @@ export const AddFoodDialog = ({
                   </div>
                 )}
 
-                {/* Catalog Items */}
-                {catalogItems.map((item) => (
+                {/* Combined Results */}
+                {combinedResults.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => handleSelectItem(item)}
                     className="w-full text-left p-3 rounded-lg hover:bg-muted transition-colors flex items-center justify-between group"
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">
+                      <div className="font-medium truncate flex items-center gap-2">
                         {item.name}
                         {item.brand && (
-                          <span className="text-muted-foreground font-normal"> ({item.brand})</span>
+                          <span className="text-muted-foreground font-normal">({item.brand})</span>
+                        )}
+                        {"source" in item && item.source === "openfoodfacts" && (
+                          <Globe className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
@@ -307,14 +292,23 @@ export const AddFoodDialog = ({
                 ))}
 
                 {isSearching && (
-                  <div className="p-4 text-center text-muted-foreground">
-                    Zoeken...
+                  <div className="p-4 text-center text-muted-foreground flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Zoeken in database...</span>
                   </div>
                 )}
 
-                {!isSearching && catalogItems.length === 0 && searchQuery.length >= 2 && (
+                {!isSearching && combinedResults.length === 0 && searchQuery.length >= 2 && (
                   <div className="p-4 text-center text-muted-foreground">
                     Geen resultaten gevonden
+                  </div>
+                )}
+
+                {/* Info text when showing results */}
+                {!isSearching && combinedResults.length > 0 && searchQuery.length >= 2 && (
+                  <div className="pt-2 pb-1 text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+                    <Globe className="h-3 w-3" />
+                    <span>Resultaten uit Open Food Facts database</span>
                   </div>
                 )}
               </div>
@@ -337,10 +331,13 @@ export const AddFoodDialog = ({
         {step === "quantity" && selectedItem && (
           <div className="p-4 space-y-4">
             <div className="bg-muted/50 rounded-lg p-4">
-              <h3 className="font-medium">
+              <h3 className="font-medium flex items-center gap-2">
                 {selectedItem.name}
                 {selectedItem.brand && (
-                  <span className="text-muted-foreground font-normal"> ({selectedItem.brand})</span>
+                  <span className="text-muted-foreground font-normal">({selectedItem.brand})</span>
+                )}
+                {"source" in selectedItem && selectedItem.source === "openfoodfacts" && (
+                  <Globe className="h-3 w-3 text-muted-foreground" />
                 )}
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
