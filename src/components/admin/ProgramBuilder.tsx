@@ -1563,7 +1563,7 @@ export const ProgramBuilder = ({ onComplete, onCancel, initialData }: ProgramBui
                               );
                               setProgram({ ...program, weeks: updatedWeeks });
                             }}
-                            className="text-lg font-medium border-0 px-0 h-auto focus-visible:ring-0 bg-transparent w-32"
+                            className="text-lg font-medium h-9 w-40 hover:border-primary/50 focus:border-primary"
                           />
                           <Button
                             variant="ghost"
