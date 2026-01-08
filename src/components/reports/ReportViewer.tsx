@@ -1,5 +1,8 @@
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
+import { useRef, useState } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -38,6 +41,8 @@ interface ReportViewerProps {
 export function ReportViewer({ report }: ReportViewerProps) {
   const { deleteReport, toggleShareWithCoach } = useReports();
   const rawData = report.report_data as ReportData | null;
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // Safe date parsing helper
   const safeParseDate = (dateStr: string | null | undefined): Date => {
@@ -92,60 +97,73 @@ export function ReportViewer({ report }: ReportViewerProps) {
   const data = rawData && rawData.training?.totalWorkouts > 0 ? rawData : mockData;
   const isUsingMockData = !rawData || rawData.training?.totalWorkouts === 0;
 
-  const handleDownloadPDF = () => {
-    const content = `
-VOORTGANGSRAPPORT - ${data.user.name}
-${format(safeParseDate(data.period.start), "d MMMM yyyy", { locale: nl })} - ${format(safeParseDate(data.period.end), "d MMMM yyyy", { locale: nl })}
-
-═══════════════════════════════════════════════════════════════
-
-TRAINING OVERZICHT
-───────────────────────────────────────────────────────────────
-Workouts voltooid:     ${data.training.totalWorkouts}
-Totaal volume:         ${data.training.totalVolume.toLocaleString()} kg
-Gemiddelde RPE:        ${data.training.averageRPE}
-
-Top Oefeningen:
-${data.training.exerciseBreakdown.slice(0, 5).map((e, i) => `  ${i + 1}. ${e.name} - ${e.sets} sets, ${e.volume.toLocaleString()} kg`).join('\n')}
-
-═══════════════════════════════════════════════════════════════
-
-VOEDING (gemiddeld per dag)
-───────────────────────────────────────────────────────────────
-Dagen gelogd:          ${data.nutrition.daysLogged}
-Calorieën:             ${data.nutrition.averageCalories} kcal
-Eiwit:                 ${data.nutrition.averageProtein}g
-Koolhydraten:          ${data.nutrition.averageCarbs}g
-Vet:                   ${data.nutrition.averageFat}g
-
-═══════════════════════════════════════════════════════════════
-
-LICHAAMSMETINGEN
-───────────────────────────────────────────────────────────────
-Aantal metingen:       ${data.body.measurementsCount}
-Gewichtsverandering:   ${data.body.weightChange !== null ? `${data.body.weightChange > 0 ? "+" : ""}${data.body.weightChange} kg` : "N/A"}
-Huidig gewicht:        ${data.body.latestWeight ? `${data.body.latestWeight} kg` : "N/A"}
-Vetpercentage:         ${data.body.latestBodyFat ? `${data.body.latestBodyFat}%` : "N/A"}
-
-═══════════════════════════════════════════════════════════════
-
-WELLNESS & HABITS
-───────────────────────────────────────────────────────────────
-Check-ins voltooid:    ${data.wellness.checkinsCompleted}
-Habits voltooid:       ${data.wellness.habitsCompleted}
-
-═══════════════════════════════════════════════════════════════
-
-Gegenereerd op ${format(safeParseDate(data.period.generatedAt), "d MMMM yyyy 'om' HH:mm", { locale: nl })}
-    `.trim();
-
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `rapport-${report.report_type}-${report.period_start}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleDownloadPDF = async () => {
+    if (!reportRef.current || isGeneratingPDF) return;
+    
+    setIsGeneratingPDF(true);
+    
+    try {
+      const element = reportRef.current;
+      
+      // Create canvas from the report element
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher resolution
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#0f172a', // Dark background to match design
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Calculate PDF dimensions (A4)
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Calculate image dimensions to fit the PDF
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const scaledWidth = imgWidth * ratio;
+      const scaledHeight = imgHeight * ratio;
+      
+      // Center the image
+      const x = (pdfWidth - scaledWidth) / 2;
+      
+      // Add pages if content is longer than one page
+      let position = 0;
+      const pageHeight = pdfHeight;
+      const contentHeight = scaledHeight;
+      
+      if (contentHeight <= pageHeight) {
+        // Content fits on one page
+        pdf.addImage(imgData, 'PNG', x, 0, scaledWidth, scaledHeight);
+      } else {
+        // Content needs multiple pages
+        const totalPages = Math.ceil(contentHeight / pageHeight);
+        for (let i = 0; i < totalPages; i++) {
+          if (i > 0) {
+            pdf.addPage();
+          }
+          pdf.addImage(imgData, 'PNG', x, -i * pageHeight, scaledWidth, scaledHeight);
+        }
+      }
+      
+      // Download the PDF
+      const firstName = data.user.name.split(' ')[0].toLowerCase();
+      pdf.save(`all-about-${firstName}-${report.report_type}-${report.period_start}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
   };
 
   const getReportTypeLabel = (type: string) => {
@@ -179,71 +197,77 @@ Gegenereerd op ${format(safeParseDate(data.period.generatedAt), "d MMMM yyyy 'om
 
   return (
     <div className="space-y-0">
-      {/* Demo Data Banner */}
+      {/* Demo Data Banner - excluded from PDF */}
       {isUsingMockData && (
         <div className="bg-amber-500/20 border border-amber-500/30 text-amber-200 px-4 py-3 rounded-t-xl text-sm text-center">
           📊 Dit is een voorbeeld rapport met demo data. Voeg trainingen, voeding en metingen toe om je echte resultaten te zien.
         </div>
       )}
+
+      {/* Action Buttons - Outside PDF */}
+      <div className="flex justify-end gap-2 p-4 bg-slate-900 border-b border-slate-800">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleDownloadPDF}
+          disabled={isGeneratingPDF}
+          className="text-white hover:bg-white/10"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          {isGeneratingPDF ? "Genereren..." : "Download PDF"}
+        </Button>
+        <Button
+          variant={report.shared_with_coach ? "default" : "ghost"}
+          size="sm"
+          onClick={() => toggleShareWithCoach.mutate({ 
+            reportId: report.id, 
+            share: !report.shared_with_coach 
+          })}
+          className={report.shared_with_coach ? "" : "text-white hover:bg-white/10"}
+        >
+          <Share2 className="h-4 w-4 mr-2" />
+          {report.shared_with_coach ? "Gedeeld" : "Delen"}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => deleteReport.mutate(report.id)}
+          className="text-white hover:bg-white/10"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Verwijder
+        </Button>
+      </div>
       
-      {/* Premium Header */}
-      <div className={`bg-slate-900 text-white p-8 ${isUsingMockData ? '' : 'rounded-t-xl'}`}>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-6">
-            <Avatar className="h-20 w-20 border-4 border-white/20">
-              <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                {getInitials(data.user.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                All About {data.user.name.split(' ')[0]}
-              </h1>
-              <p className="text-lg text-slate-400 mt-1">
-                {getReportTypeLabel(report.report_type)} REPORT
-              </p>
-              <p className="text-base text-primary mt-2 font-medium">
-                {format(safeParseDate(data.period.start), "MMMM yyyy", { locale: nl }).toUpperCase()}
-              </p>
+      {/* Report Content - wrapped in ref for PDF generation */}
+      <div ref={reportRef} className="bg-background">
+        {/* Premium Header */}
+        <div className="bg-slate-900 text-white p-8">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-6">
+              <Avatar className="h-20 w-20 border-4 border-white/20">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                  {getInitials(data.user.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  All About {data.user.name.split(' ')[0]}
+                </h1>
+                <p className="text-lg text-slate-400 mt-1">
+                  {getReportTypeLabel(report.report_type)} REPORT
+                </p>
+                <p className="text-base text-primary mt-2 font-medium">
+                  {format(safeParseDate(data.period.start), "MMMM yyyy", { locale: nl }).toUpperCase()}
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col items-end gap-4">
             <img src={ubeLogo} alt="U.be" className="h-10 w-auto invert" />
-            <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleDownloadPDF}
-              className="text-white hover:bg-white/10"
-            >
-              <Download className="h-5 w-5" />
-            </Button>
-            <Button
-              variant={report.shared_with_coach ? "default" : "ghost"}
-              size="icon"
-              onClick={() => toggleShareWithCoach.mutate({ 
-                reportId: report.id, 
-                share: !report.shared_with_coach 
-              })}
-              className={report.shared_with_coach ? "" : "text-white hover:bg-white/10"}
-            >
-              <Share2 className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => deleteReport.mutate(report.id)}
-              className="text-white hover:bg-white/10"
-            >
-              <Trash2 className="h-5 w-5" />
-            </Button>
-            </div>
           </div>
         </div>
-      </div>
 
-      {/* Stats Overview Row */}
-      <div className="bg-slate-800 text-white p-6 grid grid-cols-4 gap-4">
+        {/* Stats Overview Row */}
+        <div className="bg-slate-800 text-white p-6 grid grid-cols-4 gap-4">
         <div className="text-center">
           <p className="text-3xl font-bold">{data.training.totalWorkouts}</p>
           <p className="text-xs text-slate-400 uppercase tracking-wider">Workouts</p>
@@ -276,11 +300,11 @@ Gegenereerd op ${format(safeParseDate(data.period.generatedAt), "d MMMM yyyy 'om
             )}
           </div>
           <p className="text-xs text-slate-400 uppercase tracking-wider">Gewicht (kg)</p>
+          </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="bg-background rounded-b-xl border border-t-0 p-6 space-y-6">
+        {/* Main Content */}
+        <div className="bg-background rounded-b-xl border border-t-0 p-6 space-y-6">
         
         {/* Training Breakdown Section */}
         <section>
@@ -588,13 +612,15 @@ Gegenereerd op ${format(safeParseDate(data.period.generatedAt), "d MMMM yyyy 'om
           </section>
         </div>
 
-        {/* Footer */}
-        <div className="pt-6 border-t">
+        {/* Footer inside PDF */}
+        <div className="pt-6 pb-4 border-t bg-background">
           <p className="text-xs text-center text-muted-foreground">
-            Rapport gegenereerd op {format(new Date(data.period.generatedAt), "d MMMM yyyy 'om' HH:mm", { locale: nl })}
+            Rapport gegenereerd op {format(safeParseDate(data.period.generatedAt), "d MMMM yyyy 'om' HH:mm", { locale: nl })}
           </p>
         </div>
       </div>
+      {/* End of reportRef wrapper */}
     </div>
+  </div>
   );
 }
