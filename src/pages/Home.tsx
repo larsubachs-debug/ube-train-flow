@@ -38,7 +38,7 @@ const Home = () => {
   const [coachAvatar, setCoachAvatar] = useState<string | null>(null);
   const [weeklyProgress, setWeeklyProgress] = useState({ completed: 0, total: 0 });
   const [completedWorkoutIds, setCompletedWorkoutIds] = useState<Set<string>>(new Set());
-  const hasShownCongrats = useRef(false);
+  const hasShownCongrats = useRef(sessionStorage.getItem('weeklyCongratsShown') === 'true');
   const { data: programs = [], refetch: refetchPrograms, isLoading: programsLoading } = usePrograms();
   const queryClient = useQueryClient();
 
@@ -148,7 +148,7 @@ const Home = () => {
     fetchCoachAvatar();
   }, [user]);
 
-  // Show congratulations when all workouts are completed
+  // Show congratulations when all workouts are completed (once per session)
   useEffect(() => {
     if (
       weeklyProgress.total > 0 && 
@@ -156,6 +156,7 @@ const Home = () => {
       !hasShownCongrats.current
     ) {
       hasShownCongrats.current = true;
+      sessionStorage.setItem('weeklyCongratsShown', 'true');
       toast({
         title: "Gefeliciteerd! 🎉",
         description: "Je hebt alle workouts van deze week voltooid. Geweldig gedaan!",
@@ -165,7 +166,7 @@ const Home = () => {
 
   // Pull to refresh handler
   const handleRefresh = useCallback(async () => {
-    hasShownCongrats.current = false; // Reset so it can show again after refresh
+    // Don't reset congrats - only show once per session
     await Promise.all([
       refetchPrograms(),
       queryClient.invalidateQueries({ queryKey: ["branding"] }),
