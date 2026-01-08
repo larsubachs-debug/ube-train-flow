@@ -318,15 +318,25 @@ const CustomExerciseDialog = ({ exercise, onClose }: { exercise?: ExerciseLibrar
 
           <div>
             <label className="text-sm font-medium mb-2 block">Exercise Video</label>
-            <MediaUploadZone
-              bucket="exercise-media"
-              folder="videos"
-              accept="video"
-              aspectRatio="16:9"
-              maxSizeMB={100}
-              onUploadComplete={handleVideoUpload}
-              currentMediaUrl={videoUrl}
-            />
+            <div className="space-y-3">
+              <Input
+                placeholder="YouTube, Vimeo of directe video URL..."
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+              />
+              <div className="text-xs text-muted-foreground">
+                Of upload een video:
+              </div>
+              <MediaUploadZone
+                bucket="exercise-media"
+                folder="videos"
+                accept="video"
+                aspectRatio="16:9"
+                maxSizeMB={100}
+                onUploadComplete={handleVideoUpload}
+                currentMediaUrl={videoUrl && !videoUrl.includes('youtube') && !videoUrl.includes('vimeo') ? videoUrl : undefined}
+              />
+            </div>
           </div>
 
           <Button 
