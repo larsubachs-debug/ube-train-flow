@@ -346,7 +346,7 @@ const Home = () => {
               </div>
               <Link to="/programs">
                 <Button variant="outline" size="sm">
-                  {t('nav.programs')}
+                  Jouw programma
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
               </Link>
