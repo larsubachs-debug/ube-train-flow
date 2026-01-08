@@ -230,44 +230,46 @@ const Home = () => {
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-6 gap-2">
-          <Link to="/nutrition" className="group">
-            <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
-              <Utensils className="w-5 h-5 text-muted-foreground" />
-              <span className="text-[10px] font-medium text-foreground text-center">Voeding</span>
-            </div>
-          </Link>
-          <Link to="/habits" className="group">
-            <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
-              <Target className="w-5 h-5 text-muted-foreground" />
-              <span className="text-[10px] font-medium text-foreground text-center">Gewoontes</span>
-            </div>
-          </Link>
-          <Link to="/education" className="group">
-            <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
-              <BookOpen className="w-5 h-5 text-muted-foreground" />
-              <span className="text-[10px] font-medium text-foreground text-center">{t('home.guides')}</span>
-            </div>
-          </Link>
-          <Link to="/dashboard" className="group">
-            <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
-              <Calendar className="w-5 h-5 text-muted-foreground" />
-              <span className="text-[10px] font-medium text-foreground text-center">{t('home.kpi')}</span>
-            </div>
-          </Link>
-          <Link to="/community" className="group">
-            <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
-              <Users className="w-5 h-5 text-muted-foreground" />
-              <span className="text-[10px] font-medium text-foreground text-center">{t('nav.community')}</span>
-            </div>
-          </Link>
-          <Link to="/account" className="group">
-            <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80">
-              <User className="w-5 h-5 text-muted-foreground" />
-              <span className="text-[10px] font-medium text-foreground text-center">{t('nav.account')}</span>
-            </div>
-          </Link>
+        {/* Quick Actions - Horizontal Scroll */}
+        <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
+          <div className="flex gap-3 w-max">
+            <Link to="/nutrition" className="group">
+              <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80 w-16">
+                <Utensils className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] font-medium text-foreground text-center">Voeding</span>
+              </div>
+            </Link>
+            <Link to="/habits" className="group">
+              <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80 w-16">
+                <Target className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] font-medium text-foreground text-center">Gewoontes</span>
+              </div>
+            </Link>
+            <Link to="/education" className="group">
+              <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80 w-16">
+                <BookOpen className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] font-medium text-foreground text-center">{t('home.guides')}</span>
+              </div>
+            </Link>
+            <Link to="/dashboard" className="group">
+              <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80 w-16">
+                <Calendar className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] font-medium text-foreground text-center">{t('home.kpi')}</span>
+              </div>
+            </Link>
+            <Link to="/community" className="group">
+              <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80 w-16">
+                <Users className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] font-medium text-foreground text-center">{t('nav.community')}</span>
+              </div>
+            </Link>
+            <Link to="/account" className="group">
+              <div className="bg-muted rounded-2xl p-3 flex flex-col items-center gap-2 transition-colors hover:bg-muted/80 w-16">
+                <User className="w-5 h-5 text-muted-foreground" />
+                <span className="text-[10px] font-medium text-foreground text-center">{t('nav.account')}</span>
+              </div>
+            </Link>
+          </div>
         </div>
 
         {/* Program Phase Card - only show if program exists */}
