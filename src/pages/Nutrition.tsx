@@ -11,10 +11,20 @@ import {
   CalendarDays,
   BookOpen,
   RefreshCw,
-  Flame
+  Flame,
+  Trash2
 } from "lucide-react";
-
 import { useTranslation } from "react-i18next";
+import { useFoodLogs, MealType } from "@/hooks/useFoodLogs";
+import { AddFoodDialog } from "@/components/nutrition/AddFoodDialog";
+import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type NutritionTab = "log" | "plans" | "recipes";
 
@@ -92,7 +102,7 @@ const recipeBooks = [
   },
 ];
 
-const mealTypes = [
+const mealTypes: { id: MealType; label: string; emoji: string }[] = [
   { id: "breakfast", label: "Ontbijt", emoji: "🥐" },
   { id: "lunch", label: "Lunch", emoji: "🥪" },
   { id: "dinner", label: "Diner", emoji: "🍽️" },
@@ -101,21 +111,16 @@ const mealTypes = [
 
 const Nutrition = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<NutritionTab>("log");
   const [currentDate, setCurrentDate] = useState(new Date());
-  
-  // Demo: empty log for today
-  const [loggedMeals, setLoggedMeals] = useState<Record<string, any[]>>({
-    breakfast: [],
-    lunch: [],
-    dinner: [],
-    snacks: [],
+  const [addFoodDialog, setAddFoodDialog] = useState<{ open: boolean; mealType: MealType; label: string }>({
+    open: false,
+    mealType: "breakfast",
+    label: "Ontbijt",
   });
 
-  const totalCalories = Object.values(loggedMeals).flat().reduce((sum, meal) => sum + (meal?.calories || 0), 0);
-  const totalCarbs = Object.values(loggedMeals).flat().reduce((sum, meal) => sum + (meal?.carbs || 0), 0);
-  const totalFat = Object.values(loggedMeals).flat().reduce((sum, meal) => sum + (meal?.fat || 0), 0);
-  const totalProtein = Object.values(loggedMeals).flat().reduce((sum, meal) => sum + (meal?.protein || 0), 0);
+  const { loggedMeals, totals, isLoading, addFoodLog, deleteFoodLog } = useFoodLogs(currentDate);
 
   const formatDate = (date: Date) => {
     const today = new Date();
@@ -134,6 +139,18 @@ const Nutrition = () => {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + (direction === "next" ? 1 : -1));
     setCurrentDate(newDate);
+  };
+
+  const handleAddFood = (data: { name: string; calories: number; carbs: number; fat: number; protein: number }) => {
+    addFoodLog.mutate({
+      meal_type: addFoodDialog.mealType,
+      name: data.name,
+      calories: data.calories,
+      carbs: data.carbs,
+      fat: data.fat,
+      protein: data.protein,
+      log_date: format(currentDate, "yyyy-MM-dd"),
+    });
   };
 
   const tabs = [
@@ -214,11 +231,11 @@ const Nutrition = () => {
                       stroke="hsl(var(--accent))"
                       strokeWidth="8"
                       strokeLinecap="round"
-                      strokeDasharray={`${(totalCalories / 2000) * 264} 264`}
+                      strokeDasharray={`${(totals.calories / 2000) * 264} 264`}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold">{totalCalories}</span>
+                    <span className="text-2xl font-bold">{totals.calories}</span>
                     <span className="text-xs text-muted-foreground">cal</span>
                   </div>
                 </div>
@@ -227,23 +244,23 @@ const Nutrition = () => {
                 <div className="flex-1 grid grid-cols-3 gap-4 pl-6">
                   <div className="text-center">
                     <p className="text-sm font-semibold text-blue-500">
-                      {totalCalories > 0 ? Math.round((totalCarbs * 4 / (totalCalories || 1)) * 100) : 0}%
+                      {totals.calories > 0 ? Math.round((totals.carbs * 4 / totals.calories) * 100) : 0}%
                     </p>
-                    <p className="text-lg font-bold">{totalCarbs}g</p>
+                    <p className="text-lg font-bold">{Math.round(totals.carbs)}g</p>
                     <p className="text-xs text-muted-foreground">Koolh.</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm font-semibold text-pink-500">
-                      {totalCalories > 0 ? Math.round((totalFat * 9 / (totalCalories || 1)) * 100) : 0}%
+                      {totals.calories > 0 ? Math.round((totals.fat * 9 / totals.calories) * 100) : 0}%
                     </p>
-                    <p className="text-lg font-bold">{totalFat}g</p>
+                    <p className="text-lg font-bold">{Math.round(totals.fat)}g</p>
                     <p className="text-xs text-muted-foreground">Vet</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm font-semibold text-cyan-500">
-                      {totalCalories > 0 ? Math.round((totalProtein * 4 / (totalCalories || 1)) * 100) : 0}%
+                      {totals.calories > 0 ? Math.round((totals.protein * 4 / totals.calories) * 100) : 0}%
                     </p>
-                    <p className="text-lg font-bold">{totalProtein}g</p>
+                    <p className="text-lg font-bold">{Math.round(totals.protein)}g</p>
                     <p className="text-xs text-muted-foreground">Eiwit</p>
                   </div>
                 </div>
@@ -265,15 +282,52 @@ const Nutrition = () => {
                 
                 {loggedMeals[mealType.id]?.length > 0 ? (
                   <div className="space-y-2">
-                    {loggedMeals[mealType.id].map((meal: any, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between py-2 border-t border-border">
-                        <span>{meal.name}</span>
-                        <span className="text-muted-foreground">{meal.calories} cal</span>
+                    {loggedMeals[mealType.id].map((meal) => (
+                      <div key={meal.id} className="flex items-center justify-between py-2 border-t border-border">
+                        <div className="flex-1">
+                          <span className="font-medium">{meal.name}</span>
+                          <div className="flex gap-2 text-xs text-muted-foreground mt-0.5">
+                            <span>{Math.round(meal.carbs)}g K</span>
+                            <span>{Math.round(meal.fat)}g V</span>
+                            <span>{Math.round(meal.protein)}g E</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">{meal.calories} cal</span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deleteFoodLog.mutate(meal.id)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Verwijderen
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                     ))}
+                    <button 
+                      className="w-full py-2 text-left text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => setAddFoodDialog({ open: true, mealType: mealType.id, label: mealType.label })}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        Meer toevoegen
+                      </span>
+                    </button>
                   </div>
                 ) : (
-                  <button className="w-full py-3 text-left text-muted-foreground hover:text-foreground transition-colors border-t border-border">
+                  <button 
+                    className="w-full py-3 text-left text-muted-foreground hover:text-foreground transition-colors border-t border-border"
+                    onClick={() => setAddFoodDialog({ open: true, mealType: mealType.id, label: mealType.label })}
+                  >
                     <span className="flex items-center gap-2">
                       <Plus className="h-4 w-4" />
                       Voeding toevoegen
@@ -461,6 +515,15 @@ const Nutrition = () => {
           </div>
         )}
       </div>
+
+      <AddFoodDialog
+        open={addFoodDialog.open}
+        onOpenChange={(open) => setAddFoodDialog((prev) => ({ ...prev, open }))}
+        mealType={addFoodDialog.mealType}
+        mealLabel={addFoodDialog.label}
+        onAdd={handleAddFood}
+        isLoading={addFoodLog.isPending}
+      />
     </div>
   );
 };
