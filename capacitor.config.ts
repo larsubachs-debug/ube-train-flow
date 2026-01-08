@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.0664518db2db462b9281c5d31fabe679',
+  appId: 'app.ubeonline.training',
   appName: 'ube-train-flow',
   webDir: 'dist',
   server: {
